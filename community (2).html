@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Community Combo Sheets</title>
+<style>
+  :root { --bg:#0b0d10; --fg:#e8eef2; --muted:#9fb0bf; --card:#11161b; --accent:#4da3ff; --accent2:#6ee7b7; }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial;}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px;}
+  h1{font-size:1.6rem;margin:0 0 10px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 16px}
+  .btn{background:var(--accent);color:#001730;border:0;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+  .btn.sm{padding:6px 10px;font-weight:600;border-radius:8px}
+  .btn.ghost{background:#1a2430;color:var(--fg)}
+  .input,.select{background:#0f141a;border:1px solid #1e2a36;color:var(--fg);border-radius:10px;padding:9px 12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid #1a2330;border-radius:14px;padding:14px}
+  .muted{color:var(--muted)}
+  .pill{display:inline-block;padding:4px 8px;border:1px solid #253449;border-radius:999px;font-size:12px;margin-right:6px;margin-top:6px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .footer{margin:22px 0 8px;color:var(--muted);font-size:12px}
+  a{color:var(--accent2)}
+  .empty{opacity:.8;border:1px dashed #2a394c;padding:16px;border-radius:12px;text-align:center}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Community Combo Sheets</h1>
+    <div class="toolbar">
+      <a id="submitBtn" class="btn" target="_blank" rel="noopener">+ Enviar combo</a>
+      <a href="./" class="btn ghost">Abrir la app</a>
+      <input id="q" class="input" placeholder="Buscar por título o arquetipo…">
+      <select id="tag" class="select"><option value="">Todas las etiquetas</option></select>
+    </div>
+
+    <div id="list" class="grid"></div>
+    <div id="empty" class="empty" style="display:none">No hay combos que coincidan con el filtro.</div>
+
+    <div class="footer">Tip: Ordenado por 👍 (reacciones) en GitHub Issues.</div>
+  </div>
+
+<script>
+const GH_OWNER = "aaoollaaooll";
+const GH_REPO  = "YGOH-COMBO-MAKER";
+const LABEL    = "combo"; // cambia si usas otro label
+
+const submitUrl = `https://github.com/${GH_OWNER}/${GH_REPO}/issues/new?labels=${encodeURIComponent(LABEL)},community&template=combo-sheet.yml&title=%5BCOMBO%5D%20Arquetipo%20-%20T%C3%ADtulo`;
+document.getElementById('submitBtn').href = submitUrl;
+
+function norm(s){return (s||"").toLowerCase();}
+
+async function fetchCommunityCombos({ page=1, perPage=50 }={}) {
+  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/issues?state=open&labels=${encodeURIComponent(LABEL)}&page=${page}&per_page=${perPage}`;
+  const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+  if (!res.ok) throw new Error("GitHub API " + res.status);
+  const issues = await res.json();
+  return issues.map(issue => ({
+    id: issue.id,
+    number: issue.number,
+    title: issue.title,
+    author: issue.user && issue.user.login,
+    url: issue.html_url,
+    reactions: issue.reactions || {},
+    createdAt: issue.created_at,
+    combo: extractComboFromBody(issue.body || "")
+  })).filter(x => !!x.combo);
+}
+
+function extractComboFromBody(body) {
+  // Busca el primer bloque ```json ... ```
+  const m = body.match(/```json\\n([\\s\\S]*?)```/i);
+  if (!m) return null;
+  try {
+    const data = JSON.parse(m[1]);
+    return data && typeof data === 'object' ? data : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function renderList(items) {
+  const list = document.getElementById('list');
+  const empty = document.getElementById('empty');
+  list.innerHTML = "";
+  if (!items.length) { empty.style.display = ""; return; }
+  empty.style.display = "none";
+
+  // construir set de etiquetas
+  const tagSel = document.getElementById('tag');
+  const allTags = Array.from(new Set(items.flatMap(x => (x.combo.tags || []))));
+  const current = tagSel.value;
+  tagSel.innerHTML = '<option value="">Todas las etiquetas</option>' + allTags.map(t=>`<option ${t===current?'selected':''} value="${t}">${t}</option>`).join("");
+
+  for (const item of items) {
+    const c = item.combo;
+    const tags = (c.tags || []).map(t=>`<span class="pill">${t}</span>`).join(" ");
+    const arch = (c.archetype || []).join(", ");
+
+    const el = document.createElement('div');
+    el.className = "card";
+    el.innerHTML = `
+      <div class="muted" style="font-size:12px">#${item.number} — por ${item.author || "?"}</div>
+      <div style="font-weight:700;margin:6px 0 2px">${c.title || item.title || "(sin título)"}</div>
+      <div class="muted" style="font-size:13px">${arch}</div>
+      <div class="row" style="margin:8px 0 10px">${tags}</div>
+      <div class="row">
+        <a class="btn sm" href="${item.url}" target="_blank" rel="noopener">Ver en GitHub</a>
+        <button class="btn sm" data-number="${item.number}">Abrir en la app</button>
+        <div class="muted" style="font-size:12px;margin-left:auto">👍 ${(item.reactions["+1"]||0)}</div>
+      </div>
+    `;
+    el.querySelector("button.btn").addEventListener("click", () => openInApp(c));
+    list.appendChild(el);
+  }
+}
+
+function openInApp(combo) {
+  try {
+    localStorage.setItem('ygohcm:lastImportedCombo', JSON.stringify(combo));
+    alert('Combo guardado. Abre la app (botón arriba) y usa el importador (ver instrucciones).');
+  } catch (e) {
+    alert('No se pudo guardar el combo en este navegador.');
+  }
+}
+
+(async function init() {
+  const q = document.getElementById('q');
+  const tag = document.getElementById('tag');
+  let data = [];
+  try {
+    data = await fetchCommunityCombos({ perPage: 50 });
+  } catch (e) {
+    console.error(e);
+  }
+
+  function applyFilter() {
+    const qq = norm(q.value);
+    const tg = tag.value;
+    const filtered = data
+      .filter(x => x.combo)
+      .filter(x => !qq || norm(x.combo.title).includes(qq) || (x.combo.archetype||[]).some(a => norm(a).includes(qq)))
+      .filter(x => !tg || (x.combo.tags||[]).includes(tg))
+      .sort((a,b) => (b.reactions["+1"]||0) - (a.reactions["+1"]||0));
+    renderList(filtered);
+  }
+
+  q.addEventListener('input', applyFilter);
+  tag.addEventListener('change', applyFilter);
+  renderList(data);
+  applyFilter();
+})();
+</script>
+</body>
+</html>
