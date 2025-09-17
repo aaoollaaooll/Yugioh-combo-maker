@@ -1,0 +1,48 @@
+name: "Combo Sheet"
+description: "Proponer una hoja de combo para la comunidad"
+title: "[COMBO] <arquetipo/idea> - <título corto>"
+labels: ["combo", "community"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por compartir un combo. Rellena los campos y pega el JSON al final.
+  - type: input
+    id: title
+    attributes:
+      label: Título del combo
+      placeholder: "Salamangreat Gazelle 1-Card Starter"
+    validations:
+      required: true
+  - type: input
+    id: archetype
+    attributes:
+      label: Arquetipo(s)
+      placeholder: "Salamangreat, Code Talker"
+  - type: textarea
+    id: json
+    attributes:
+      label: JSON del combo (usa el esquema recomendado)
+      description: "Pega aquí tu JSON entre comillas triples."
+      value: |
+        ```json
+        {
+          "id": "",
+          "title": "",
+          "archetype": [],
+          "author": {"name": "", "source": "issue"},
+          "lang": "es",
+          "tags": [],
+          "difficulty": 1,
+          "engineVersion": "1.3.12",
+          "createdAt": "",
+          "startingHand": [],
+          "steps": [],
+          "finalBoard": [],
+          "chokePoints": [],
+          "notesHtml": "<p></p>",
+          "version": 1
+        }
+        ```
+    validations:
+      required: true
