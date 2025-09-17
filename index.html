@@ -1459,19 +1459,26 @@
                 // Manually trigger update to ensure state is saved after command
                 handleInput();
             }; 
-
-            return (
-                <div className="rich-text-editor bg-[var(--color-surface)]/50 rounded-lg border border-[var(--color-border)]/30">
-                    <div className="toolbar flex items-center gap-2 mb-2 p-2 bg-slate-900/50 rounded-t-md">
-                        <button onClick={() => execCmd('bold')} className="w-8 h-8 hover:bg-slate-700 rounded"><b>B</b></button>
-                        <button onClick={() => execCmd('italic')} className="w-8 h-8 hover:bg-slate-700 rounded"><i>I</i></button>
-                        <button onClick={() => execCmd('underline')} className="w-8 h-8 hover:bg-slate-700 rounded"><u>U</u></button>
-                        <button onClick={() => execCmd('insertUnorderedList')} className="w-8 h-8 hover:bg-slate-700 rounded">•</button>
-                        <input type="color" onChange={(e) => execCmd('foreColor', e.target.value)} title="Text Color" className="w-8 h-8 bg-transparent border-none cursor-pointer" />
-                    </div>
-                    <div ref={editorRef} contentEditable={true} onInput={handleInput} dangerouslySetInnerHTML={{ __html: value }} className="p-2 h-full min-h-[8rem] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] rounded-b-md break-words" style={{ direction: 'ltr', textAlign: 'left' }}></div>
-                </div>
-            );
+            
+            return ( 
+                <div className="rich-text-editor bg-[var(--color-surface-light)] rounded-lg"> 
+                    <div className="toolbar flex items-center gap-2 mb-2 p-2 bg-slate-900/50 rounded-t-md border-b border-[var(--color-border)]"> 
+                        <button onClick={() => execCmd('bold')} className="w-8 h-8 rounded hover:bg-slate-700"><b>B</b></button> 
+                        <button onClick={() => execCmd('italic')} className="w-8 h-8 rounded hover:bg-slate-700"><i>I</i></button> 
+                        <button onClick={() => execCmd('underline')} className="w-8 h-8 rounded hover:bg-slate-700"><u>U</u></button> 
+                        <button onClick={() => execCmd('insertUnorderedList')} className="w-8 h-8 rounded hover:bg-slate-700">•</button> 
+                        <input type="color" onChange={(e) => execCmd('foreColor', e.target.value)} title="Text Color" className="w-8 h-8 p-1 bg-transparent border-none rounded cursor-pointer" /> 
+                    </div> 
+                    <div
+  ref={editorRef}
+  contentEditable={true}
+  className="p-3 min-h-[8rem] outline-none rounded-b-md leading-relaxed focus:ring-2 focus:ring-[var(--color-primary)]"
+  onInput={handleInput}
+  onBlur={handleInput}
+  style={{ direction: 'ltr', unicodeBidi: 'plaintext', textAlign: 'left', transform: 'none' }}
+></div> 
+                </div> 
+            ); 
         };
 
         const ExportOptionsModal = ({ show, onClose, onConfirm, exportOptions, setExportOptions, t }) => { if (!show) return null; return ( <div className="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm flex items-center justify-center z-50 p-4"> <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-6 max-w-md w-full relative"> <h3 className="text-xl font-bold mb-6 text-violet-300 text-center">{t('exportOptionsTitle')}</h3> <div className="space-y-4 mb-8"> {Object.keys(exportOptions.include).map(key => ( <label key={key} className="flex items-center gap-3 cursor-pointer p-2 rounded-md hover:bg-slate-700/50 transition-colors"> <input type="checkbox" checked={exportOptions.include[key]} onChange={e => setExportOptions(prev => ({ ...prev, include: { ...prev.include, [key]: e.target.checked } }))} className="h-5 w-5 bg-slate-600 border-slate-500 text-violet-500 focus:ring-violet-500 rounded" /> <span className="text-slate-200">{t(key + 'Title')}</span> </label> ))} 
