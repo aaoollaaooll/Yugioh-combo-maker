@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yu-Gi-Oh! Combo maker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@8.1.3/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
@@ -758,7 +758,7 @@
                 exportTitleRequired: "Por favor, introduce un título para el combo antes de exportar.",
                 saveOnlineTooltip: "Guardar en la Nube (Ctrl+S)", saveLocalTooltip: "Guardar Localmente (Ctrl+S)",
                 loggedInAs: "Conectado como:", connecting: "Conectando para guardado en la nube...",
-                publicCombosTitle: "Combos de la Comunidad", author: "Autor",
+                publicCombosTitle: "Combos de la Comunidad", openSavedTooltip: "Abrir combo guardado", author: "Autor",
             },
             en: {
                  mainTitle: "Yu-Gi-Oh! Combo maker", mainSubtitle: "Create, visualize, and share your card combos.", undo: "Undo", redo: "Redo", exportPng: "Export as PNG", clearAll: "Clear All", addCardsTitle: "Add Cards", searchPlaceholder: "Search by name...", loading: "Searching for cards...", noCardsFound: "No cards found with these criteria or they have already been added.", searchError: "Error searching for cards.", comboPiecesTitle: "Combo Pieces", comboPiecesPlaceholder: "Search and add cards to start your combo.", comboTitlePlaceholder: "Title of the combo", startingHandTitle: "Starting Hand", startingHandPlaceholder: "Drag cards here to define your starting hand.", comboStepsTitle: "Combo Steps", addStep: "Add Step", addNote: "Add Note", comboStepsPlaceholder: "Drag a card or add a new step.", finalBoardTitle: "Final Board", addCard: "Add Card", finalBoardPlaceholder: "Build your final board here.", cardType: "Type", cardRace: "Race", clearConfirmTitle: "Clear Combo Guide?", clearConfirmMessage: "Are you sure you want to delete all cards and steps? This action cannot be undone.", confirm: "Confirm", cancel: "Cancel", cardSelectorSearch: "Search card...", cardSelectorNoMatch: "No matching cards.", pngPreviewTitle: "PNG Preview", download: "Download", generatingPng: "Generating PNG...", exportError: "Error exporting to PNG.", loadError: "Could not load saved combo.", ctxAddToHand: "Add to Starting Hand", ctxAddStep: "Add to Step", ctxAddFinalBoard: "Add to Final Board", ctxViewCard: "View Card", ctxDuplicateCard: "Duplicate Card", ctxRemoveFromPool: "Remove from Pieces", stepAffectedCards: "Affected Cards:", stepDescribeAction: "Describe the action...", finalBoardDisruption: "Disruption", untitledCombo: "Untitled Combo", cardAlreadyAdded: "Card is already in your pieces.", cardAlreadyInPool: "Card already in pool", exportOptions: "Export Options", include: "Include", notesTitle: "Notes & Strategy", notesPlaceholder: "Write your notes, choke points, etc. here...", exportOptionsTitle: "Export Options", confirmAndExport: "Confirm & Export", addToken: "Add Token", tokenSearchError: "Error fetching a random token.", filterBy: "Filter by:", filterArchetype: "Archetype", filterAttribute: "Attribute", filterLevel: "Level/Rank", filterType: "Card Type", clearFilters: "Clear Filters", all: "All", cardSize: "Card Size", show: "Add", hide: "Hide", saveAs: "Save", loadCombo: "Load Combo", share: "Share", saveComboTitle: "Save Combo", comboName: "Combo Name", save: "Save", loadComboTitle: "Load Combo", noCombosSaved: "No saved combos.", delete: "Delete", deleteConfirmMessage: "Are you sure you want to delete the combo '{comboName}'?", linkCopied: "Link copied to clipboard!", createCustomCard: "Create Custom Card", customCardTitle: "Create Custom Card", uploadImage: "Upload Image", cardName: "Card Name", cardDescription: "Description", attack: "Attack", defense: "Defense", create: "Create", preview: "Preview", showPreview: "Show Preview",
@@ -812,7 +812,7 @@
                 exportTitleRequired: "Please enter a title for the combo before exporting.",
                 saveOnlineTooltip: "Save to Cloud (Ctrl+S)", saveLocalTooltip: "Save Locally (Ctrl+S)",
                 loggedInAs: "Logged in as:", connecting: "Connecting for cloud save...",
-                publicCombosTitle: "Community Combos", author: "Author",
+                publicCombosTitle: "Community Combos", openSavedTooltip: "Open saved combo", author: "Author",
             },
         };
         
@@ -820,21 +820,56 @@
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
         // Enlaces de compartir: JSON -> comprimido (pako) -> base64 apto para URL (sin + / =).
-        const encodeComboForUrl = (obj) => {
-            const bytes = pako.deflate(JSON.stringify(obj));
+        // Formato v2: las cartas de YGOPRODeck viajan solo como {número, instanceId, notas, nombre};
+        // al abrir el enlace se piden sus datos a la API. Las cartas personalizadas viajan completas.
+        const SHARE_FORMAT_VERSION = 2;
+        const isApiCardObject = (o) => o && typeof o === 'object' && !Array.isArray(o) && o.instanceId && o.ygoprodeck_id && !o.isCustom;
+        const mapComboTree = (node, fn) => {
+            if (Array.isArray(node)) return node.map(n => mapComboTree(n, fn));
+            if (node && typeof node === 'object') {
+                const replaced = fn(node);
+                if (replaced !== undefined) return replaced;
+                return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, mapComboTree(v, fn)]));
+            }
+            return node;
+        };
+        const compactCombo = (state) => mapComboTree(state, (o) => isApiCardObject(o)
+            ? { $c: o.ygoprodeck_id, i: o.instanceId, n: o.name, ...(o.notes ? { o: o.notes } : {}) }
+            : undefined);
+        const hydrateCombo = async (state, imageProxy) => {
+            const ids = new Set();
+            mapComboTree(state, (o) => { if (o.$c) { ids.add(o.$c); return o; } });
+            const byId = {};
+            if (ids.size) {
+                try {
+                    const res = await fetch(`${YGOPRODECK_API_BASE_URL}?id=${[...ids].join(',')}`);
+                    if (res.ok) ((await res.json()).data || []).forEach(c => { byId[c.id] = c; });
+                } catch (e) { console.error("No se pudieron recuperar las cartas del enlace:", e); }
+            }
+            return mapComboTree(state, (o) => {
+                if (!o.$c) return undefined;
+                const card = createComboCardInstance(byId[o.$c] || { id: o.$c, name: o.n || '?' }, imageProxy);
+                return { ...card, instanceId: o.i, notes: o.o || '' };
+            });
+        };
+        const encodeComboForUrl = (state) => {
+            const bytes = pako.deflate(JSON.stringify({ v: SHARE_FORMAT_VERSION, s: compactCombo(state) }));
             let bin = '';
             for (let i = 0; i < bytes.length; i += 0x8000) {
                 bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
             }
             return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         };
-        const decodeComboFromUrl = (encoded) => {
+        const decodeComboFromUrl = async (encoded, imageProxy) => {
             let b64 = encoded.replace(/-/g, '+').replace(/_/g, '/').replace(/ /g, '+');
             while (b64.length % 4) b64 += '=';
             const bin = atob(b64);
             const bytes = new Uint8Array(bin.length);
             for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-            return JSON.parse(pako.inflate(bytes, { to: 'string' }));
+            const parsed = JSON.parse(pako.inflate(bytes, { to: 'string' }));
+            // Enlaces v1 (noviembre 2026) traían el combo completo, sin envoltorio.
+            if (parsed && parsed.v === SHARE_FORMAT_VERSION) return hydrateCombo(parsed.s, imageProxy);
+            return parsed;
         };
         const CARD_TYPES = ["Effect Monster", "Flip Effect Monster", "Fusion Monster", "Link Monster", "Normal Monster", "Pendulum Effect Monster", "Ritual Effect Monster", "Spell Card", "Synchro Monster", "Token", "Trap Card", "Tuner Monster", "Union Effect Monster", "Xyz Monster"];
         const ATTRIBUTES = ["DARK", "DIVINE", "EARTH", "FIRE", "LIGHT", "WATER", "WIND"];
@@ -2162,15 +2197,16 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const comboData = urlParams.get('combo');
                 if (comboData) {
-                    try {
-                        const loaded = decodeComboFromUrl(comboData);
-                        loadState(loaded, "Loaded from URL");
-                        setNotification({ show: true, message: t('comboLoadedFromUrl') });
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    } catch (e) {
-                        console.error("Failed to load combo from URL:", e);
-                        setNotification({ show: true, message: t('comboLoadFromUrlError') });
-                    }
+                    decodeComboFromUrl(comboData, IMAGE_PROXY)
+                        .then(loaded => {
+                            loadState(loaded, "Loaded from URL");
+                            setNotification({ show: true, message: t('comboLoadedFromUrl') });
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        })
+                        .catch(e => {
+                            console.error("Failed to load combo from URL:", e);
+                            setNotification({ show: true, message: t('comboLoadFromUrlError') });
+                        });
                 }
             }, []);
 
@@ -2873,7 +2909,8 @@
                                         <button onClick={redo} disabled={!canRedo} data-tooltip={`${t('redo')} (Ctrl+Y)`} className="btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)] disabled:opacity-50"><i className="fas fa-redo"></i></button>
                                         <button onClick={handleShareUrl} data-tooltip={t('shareUrl')} className="btn p-3 bg-purple-600 text-white rounded-md hover:bg-purple-700"><i className="fas fa-link"></i></button>
                                         <button onClick={() => setShowSaveModal(true)} data-tooltip={isOnlineSaveEnabled ? t('saveOnlineTooltip') : t('saveLocalTooltip')} className="btn p-3 bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"><i className="fas fa-save"></i> {isOnlineSaveEnabled && <i className="fas fa-cloud text-xs"></i>}</button>
-                                        <button onClick={() => setShowLoadModal(true)} data-tooltip={t('publicCombosTitle')} className="btn p-3 bg-blue-600 rounded-md hover:bg-blue-700"><i className="fas fa-folder-open"></i></button>
+                                        <button onClick={() => setShowLoadModal(true)} data-tooltip={t('openSavedTooltip')} className="btn p-3 bg-blue-600 rounded-md hover:bg-blue-700"><i className="fas fa-folder-open"></i></button>
+                                        <a href="community.html" data-tooltip={t('publicCombosTitle')} className="btn p-3 bg-blue-600 rounded-md hover:bg-blue-700 inline-flex items-center"><i className="fas fa-users"></i></a>
                                         <button onClick={() => setShowExportOptionsModal(true)} disabled={isExportingPng} data-tooltip={t('exportPng')} className="btn p-3 bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2">{isExportingPng ? <Spinner /> : <i className="fas fa-download"></i>} <span className="hidden xl:inline">{t('exportPng')}</span></button>
                                         <button onClick={() => setShowClearConfirmModal(true)} data-tooltip={t('clearAll')} className="btn p-3 bg-red-600 rounded-md hover:bg-red-700"><i className="fas fa-trash"></i></button>
                                     </div>
