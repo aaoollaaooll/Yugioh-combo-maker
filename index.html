@@ -816,7 +816,26 @@
             },
         };
         
-        const YGOPRODECK_API_BASE_URL = 'https://yugoh-proxy.vercel.app/api/cardinfo';
+        // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
+        const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
+
+        // Enlaces de compartir: JSON -> comprimido (pako) -> base64 apto para URL (sin + / =).
+        const encodeComboForUrl = (obj) => {
+            const bytes = pako.deflate(JSON.stringify(obj));
+            let bin = '';
+            for (let i = 0; i < bytes.length; i += 0x8000) {
+                bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+            }
+            return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        };
+        const decodeComboFromUrl = (encoded) => {
+            let b64 = encoded.replace(/-/g, '+').replace(/_/g, '/').replace(/ /g, '+');
+            while (b64.length % 4) b64 += '=';
+            const bin = atob(b64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return JSON.parse(pako.inflate(bytes, { to: 'string' }));
+        };
         const CARD_TYPES = ["Effect Monster", "Flip Effect Monster", "Fusion Monster", "Link Monster", "Normal Monster", "Pendulum Effect Monster", "Ritual Effect Monster", "Spell Card", "Synchro Monster", "Token", "Trap Card", "Tuner Monster", "Union Effect Monster", "Xyz Monster"];
         const ATTRIBUTES = ["DARK", "DIVINE", "EARTH", "FIRE", "LIGHT", "WATER", "WIND"];
         const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -2144,8 +2163,7 @@
                 const comboData = urlParams.get('combo');
                 if (comboData) {
                     try {
-                        const jsonString = pako.inflate(atob(comboData), { to: 'string' });
-                        const loaded = JSON.parse(jsonString);
+                        const loaded = decodeComboFromUrl(comboData);
                         loadState(loaded, "Loaded from URL");
                         setNotification({ show: true, message: t('comboLoadedFromUrl') });
                         window.history.replaceState({}, document.title, window.location.pathname);
@@ -2603,9 +2621,7 @@
             
             const getShareUrl = () => {
                 try {
-                    const jsonString = JSON.stringify(comboState);
-                    const compressed = pako.deflate(jsonString, { to: 'string' });
-                    const encoded = btoa(compressed);
+                    const encoded = encodeComboForUrl(comboState);
                     return `${window.location.origin}${window.location.pathname}?combo=${encoded}`;
                 } catch (e) {
                     console.error("Error creating share link:", e);

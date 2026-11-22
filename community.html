@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Community Combo Sheets</title>
+<title>Combos de la Comunidad</title>
 <style>
   :root { --bg:#0b0d10; --fg:#e8eef2; --muted:#9fb0bf; --card:#11161b; --accent:#4da3ff; --accent2:#6ee7b7; }
   html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial;}
@@ -22,11 +22,12 @@
   .footer{margin:22px 0 8px;color:var(--muted);font-size:12px}
   a{color:var(--accent2)}
   .empty{opacity:.8;border:1px dashed #2a394c;padding:16px;border-radius:12px;text-align:center}
+  .notes{font-size:13px;margin:8px 0 0;white-space:pre-wrap}
 </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Community Combo Sheets</h1>
+    <h1>Combos de la Comunidad</h1>
     <div class="toolbar">
       <a id="submitBtn" class="btn" target="_blank" rel="noopener">+ Enviar combo</a>
       <a href="./" class="btn ghost">Abrir la app</a>
@@ -35,119 +36,128 @@
     </div>
 
     <div id="list" class="grid"></div>
-    <div id="empty" class="empty" style="display:none">No hay combos que coincidan con el filtro.</div>
+    <div id="empty" class="empty">Cargando combos…</div>
 
-    <div class="footer">Tip: Ordenado por 👍 (reacciones) en GitHub Issues.</div>
+    <div class="footer">Los combos vienen de los Issues de GitHub del proyecto. Ordenados por 👍.</div>
   </div>
 
 <script>
 const GH_OWNER = "aaoollaaooll";
-const GH_REPO  = "YGOH-COMBO-MAKER";
-const LABEL    = "combo"; // cambia si usas otro label
+const GH_REPO  = "Yugioh-combo-maker";
 
-const submitUrl = `https://github.com/${GH_OWNER}/${GH_REPO}/issues/new?labels=${encodeURIComponent(LABEL)},community&template=combo-sheet.yml&title=%5BCOMBO%5D%20Arquetipo%20-%20T%C3%ADtulo`;
-document.getElementById('submitBtn').href = submitUrl;
+document.getElementById('submitBtn').href =
+  `https://github.com/${GH_OWNER}/${GH_REPO}/issues/new?template=combo-sheet.yml`;
 
-function norm(s){return (s||"").toLowerCase();}
+function norm(s){ return (s || "").toLowerCase(); }
 
-async function fetchCommunityCombos({ page=1, perPage=50 }={}) {
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/issues?state=open&labels=${encodeURIComponent(LABEL)}&page=${page}&per_page=${perPage}`;
+// Todo lo que viene de GitHub lo escribe cualquier persona: se escapa antes de mostrarlo.
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Un issue hecho con el formulario trae secciones "### Etiqueta" seguidas de su valor.
+function parseFormSections(body) {
+  const out = {};
+  for (const part of body.split(/^###\s+/m).slice(1)) {
+    const nl = part.indexOf("\n");
+    const label = norm((nl === -1 ? part : part.slice(0, nl)).trim());
+    let value = (nl === -1 ? "" : part.slice(nl + 1)).trim();
+    if (value === "_No response_") value = "";
+    out[label] = value;
+  }
+  return out;
+}
+
+function pick(sections, prefix) {
+  const key = Object.keys(sections).find(k => k.startsWith(prefix));
+  return key ? sections[key] : "";
+}
+
+function splitList(s) {
+  return (s || "").split(",").map(x => x.trim()).filter(Boolean);
+}
+
+function issueToCombo(issue) {
+  const body = issue.body || "";
+  const m = body.match(/[?&]combo=([A-Za-z0-9_\-+\/=%]+)/);
+  if (!m) return null; // sin enlace de la app no hay nada que abrir
+  const s = parseFormSections(body);
+  return {
+    number: issue.number,
+    url: issue.html_url,
+    author: issue.user && issue.user.login,
+    likes: (issue.reactions && issue.reactions["+1"]) || 0,
+    title: pick(s, "título") || (issue.title || "").replace(/^\[combo\]\s*/i, "") || "(sin título)",
+    archetypes: splitList(pick(s, "arquetipo")),
+    tags: splitList(pick(s, "etiqueta")),
+    notes: pick(s, "notas"),
+    appUrl: "./?combo=" + encodeURIComponent(decodeURIComponent(m[1])),
+  };
+}
+
+async function fetchCommunityCombos() {
+  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/issues?state=open&per_page=100`;
   const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
   if (!res.ok) throw new Error("GitHub API " + res.status);
   const issues = await res.json();
-  return issues.map(issue => ({
-    id: issue.id,
-    number: issue.number,
-    title: issue.title,
-    author: issue.user && issue.user.login,
-    url: issue.html_url,
-    reactions: issue.reactions || {},
-    createdAt: issue.created_at,
-    combo: extractComboFromBody(issue.body || "")
-  })).filter(x => !!x.combo);
+  return issues.filter(i => !i.pull_request).map(issueToCombo).filter(Boolean);
 }
 
-function extractComboFromBody(body) {
-  // Busca el primer bloque ```json ... ```
-  const m = body.match(/```json\\n([\\s\\S]*?)```/i);
-  if (!m) return null;
-  try {
-    const data = JSON.parse(m[1]);
-    return data && typeof data === 'object' ? data : null;
-  } catch(e) {
-    return null;
-  }
-}
-
-function renderList(items) {
+function renderList(items, emptyMessage) {
   const list = document.getElementById('list');
   const empty = document.getElementById('empty');
   list.innerHTML = "";
-  if (!items.length) { empty.style.display = ""; return; }
+  if (!items.length) { empty.textContent = emptyMessage; empty.style.display = ""; return; }
   empty.style.display = "none";
 
-  // construir set de etiquetas
-  const tagSel = document.getElementById('tag');
-  const allTags = Array.from(new Set(items.flatMap(x => (x.combo.tags || []))));
-  const current = tagSel.value;
-  tagSel.innerHTML = '<option value="">Todas las etiquetas</option>' + allTags.map(t=>`<option ${t===current?'selected':''} value="${t}">${t}</option>`).join("");
-
-  for (const item of items) {
-    const c = item.combo;
-    const tags = (c.tags || []).map(t=>`<span class="pill">${t}</span>`).join(" ");
-    const arch = (c.archetype || []).join(", ");
-
+  for (const c of items) {
     const el = document.createElement('div');
     el.className = "card";
     el.innerHTML = `
-      <div class="muted" style="font-size:12px">#${item.number} — por ${item.author || "?"}</div>
-      <div style="font-weight:700;margin:6px 0 2px">${c.title || item.title || "(sin título)"}</div>
-      <div class="muted" style="font-size:13px">${arch}</div>
-      <div class="row" style="margin:8px 0 10px">${tags}</div>
-      <div class="row">
-        <a class="btn sm" href="${item.url}" target="_blank" rel="noopener">Ver en GitHub</a>
-        <button class="btn sm" data-number="${item.number}">Abrir en la app</button>
-        <div class="muted" style="font-size:12px;margin-left:auto">👍 ${(item.reactions["+1"]||0)}</div>
+      <div class="muted" style="font-size:12px">#${c.number} — por ${esc(c.author || "?")}</div>
+      <div style="font-weight:700;margin:6px 0 2px">${esc(c.title)}</div>
+      <div class="muted" style="font-size:13px">${esc(c.archetypes.join(", "))}</div>
+      <div class="row" style="margin:4px 0 10px">${c.tags.map(t => `<span class="pill">${esc(t)}</span>`).join("")}</div>
+      ${c.notes ? `<div class="notes muted">${esc(c.notes)}</div>` : ""}
+      <div class="row" style="margin-top:10px">
+        <a class="btn sm" href="${esc(c.appUrl)}">Abrir en la app</a>
+        <a class="btn sm ghost" href="${esc(c.url)}" target="_blank" rel="noopener">Ver en GitHub</a>
+        <div class="muted" style="font-size:12px;margin-left:auto">👍 ${c.likes}</div>
       </div>
     `;
-    el.querySelector("button.btn").addEventListener("click", () => openInApp(c));
     list.appendChild(el);
-  }
-}
-
-function openInApp(combo) {
-  try {
-    localStorage.setItem('ygohcm:lastImportedCombo', JSON.stringify(combo));
-    alert('Combo guardado. Abre la app (botón arriba) y usa el importador (ver instrucciones).');
-  } catch (e) {
-    alert('No se pudo guardar el combo en este navegador.');
   }
 }
 
 (async function init() {
   const q = document.getElementById('q');
   const tag = document.getElementById('tag');
-  let data = [];
+  let data;
   try {
-    data = await fetchCommunityCombos({ perPage: 50 });
+    data = await fetchCommunityCombos();
   } catch (e) {
     console.error(e);
+    renderList([], "No se pudo conectar con GitHub. Intenta de nuevo en un rato.");
+    return;
   }
+
+  const allTags = Array.from(new Set(data.flatMap(x => x.tags))).sort();
+  tag.innerHTML = '<option value="">Todas las etiquetas</option>' +
+    allTags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join("");
 
   function applyFilter() {
     const qq = norm(q.value);
     const tg = tag.value;
     const filtered = data
-      .filter(x => x.combo)
-      .filter(x => !qq || norm(x.combo.title).includes(qq) || (x.combo.archetype||[]).some(a => norm(a).includes(qq)))
-      .filter(x => !tg || (x.combo.tags||[]).includes(tg))
-      .sort((a,b) => (b.reactions["+1"]||0) - (a.reactions["+1"]||0));
-    renderList(filtered);
+      .filter(x => !qq || norm(x.title).includes(qq) || x.archetypes.some(a => norm(a).includes(qq)))
+      .filter(x => !tg || x.tags.includes(tg))
+      .sort((a, b) => b.likes - a.likes);
+    const msg = data.length ? "No hay combos que coincidan con el filtro." : "Todavía no hay combos. ¡Comparte el primero con «+ Enviar combo»!";
+    renderList(filtered, msg);
   }
 
   q.addEventListener('input', applyFilter);
   tag.addEventListener('change', applyFilter);
-  renderList(data);
   applyFilter();
 })();
 </script>

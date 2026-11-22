@@ -1,12 +1,12 @@
 name: "Combo Sheet"
-description: "Proponer una hoja de combo para la comunidad"
-title: "[COMBO] <arquetipo/idea> - <título corto>"
+description: "Compartir un combo con la comunidad"
+title: "[COMBO] "
 labels: ["combo", "community"]
 body:
   - type: markdown
     attributes:
       value: |
-        Gracias por compartir un combo. Rellena los campos y pega el JSON al final.
+        Gracias por compartir un combo. En la app, arma tu combo y pulsa el botón de **compartir enlace** (🔗); luego pega ese enlace abajo.
   - type: input
     id: title
     attributes:
@@ -19,30 +19,22 @@ body:
     attributes:
       label: Arquetipo(s)
       placeholder: "Salamangreat, Code Talker"
-  - type: textarea
-    id: json
+  - type: input
+    id: tags
     attributes:
-      label: JSON del combo (usa el esquema recomendado)
-      description: "Pega aquí tu JSON entre comillas triples."
-      value: |
-        ```json
-        {
-          "id": "",
-          "title": "",
-          "archetype": [],
-          "author": {"name": "", "source": "issue"},
-          "lang": "es",
-          "tags": [],
-          "difficulty": 1,
-          "engineVersion": "1.3.12",
-          "createdAt": "",
-          "startingHand": [],
-          "steps": [],
-          "finalBoard": [],
-          "chokePoints": [],
-          "notesHtml": "<p></p>",
-          "version": 1
-        }
-        ```
+      label: Etiquetas
+      description: "Separadas por coma."
+      placeholder: "1 carta, principiante, OTK"
+  - type: textarea
+    id: link
+    attributes:
+      label: Enlace del combo
+      description: "Pega aquí el enlace que copia la app con el botón de compartir."
+      placeholder: "https://aaoollaaooll.github.io/Yugioh-combo-maker/?combo=..."
     validations:
       required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notas (opcional)
+      placeholder: "Qué necesita, contra qué es débil, video de referencia…"
