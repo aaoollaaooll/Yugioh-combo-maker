@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     
     <!-- Firebase SDKs -->
 
@@ -502,6 +503,7 @@
         @media (max-width: 767px) { #app-footer { padding-bottom: 80px; } main { padding-bottom: 72px; } }
         @media (min-width: 768px) { .mobile-tabbar { display: none; } }
         .pill-meta { display: inline-block; padding: 1px 8px; border: 1px solid var(--color-border); border-radius: 999px; font-size: .72rem; color: var(--color-text-muted); }
+        .card-inspector { position: fixed; right: 12px; bottom: 12px; width: 18rem; max-height: 78vh; overflow: auto; z-index: 35; flex-direction: column; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
     </style>
 </head>
 <body
@@ -952,6 +954,10 @@
         Object.entries(EXTRA_TRANSLATIONS_BRANCH).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // Datos del combo
         const FORMAT_LABEL = { md: 'Master Duel', tcg: 'TCG', ocg: 'OCG' };
+        // Atajos, menciones, ficha fija, importar mazo, Discord y QR
+        Object.entries({"es": {"stepsViewCompact": "Vista compacta", "shortcutsTitle": "Atajos de teclado", "scSearch": "Buscar carta", "scNewStep": "Nuevo paso", "scTest": "Probar combo", "scExport": "Exportar", "scUndoRedo": "Deshacer / Rehacer", "scSave": "Guardar", "scHelp": "Ver estos atajos", "mentionedCards": "Cartas mencionadas", "mentionHint": "Escribe [[Nombre de la carta]] para mencionar una carta.", "inspectorTitle": "Ficha de carta", "inspectorEmpty": "Pasa el mouse sobre una carta para ver su ficha aquí.", "inspectorToggle": "Ficha de carta fija (PC)", "importDeck": "Importar mazo (.ydk / ydke://)", "importDeckHelp": "Pega un enlace ydke:// o el contenido de un archivo .ydk, o elige el archivo. Las cartas del Main y del Extra Deck se añaden al pool.", "importDeckButton": "Importar", "importDeckFile": "Elegir archivo .ydk", "importDeckDone": "Se añadieron {n} cartas al pool.", "importDeckNone": "No se encontraron cartas en ese texto.", "importDeckError": "No se pudieron cargar las cartas. Revisa tu conexión e inténtalo otra vez.", "exportContentDiscord": "Discord (vertical)", "qrTitle": "Código QR con el enlace", "qrCaption": "Escanea para abrir el combo"}, "en": {"stepsViewCompact": "Compact view", "shortcutsTitle": "Keyboard shortcuts", "scSearch": "Search card", "scNewStep": "New step", "scTest": "Test combo", "scExport": "Export", "scUndoRedo": "Undo / Redo", "scSave": "Save", "scHelp": "Show these shortcuts", "mentionedCards": "Mentioned cards", "mentionHint": "Type [[Card name]] to mention a card.", "inspectorTitle": "Card details", "inspectorEmpty": "Hover over a card to see its details here.", "inspectorToggle": "Pinned card details (PC)", "importDeck": "Import deck (.ydk / ydke://)", "importDeckHelp": "Paste a ydke:// link or the contents of a .ydk file, or choose the file. Main and Extra Deck cards are added to the pool.", "importDeckButton": "Import", "importDeckFile": "Choose .ydk file", "importDeckDone": "{n} cards were added to the pool.", "importDeckNone": "No cards were found in that text.", "importDeckError": "Could not load the cards. Check your connection and try again.", "exportContentDiscord": "Discord (vertical)", "qrTitle": "QR code with the link", "qrCaption": "Scan to open the combo"}, "pt": {"stepsViewCompact": "Visão compacta", "shortcutsTitle": "Atalhos de teclado", "scSearch": "Buscar carta", "scNewStep": "Novo passo", "scTest": "Testar combo", "scExport": "Exportar", "scUndoRedo": "Desfazer / Refazer", "scSave": "Salvar", "scHelp": "Ver estes atalhos", "mentionedCards": "Cartas mencionadas", "mentionHint": "Escreva [[Nome da carta]] para mencionar uma carta.", "inspectorTitle": "Ficha da carta", "inspectorEmpty": "Passe o mouse sobre uma carta para ver a ficha aqui.", "inspectorToggle": "Ficha de carta fixa (PC)", "importDeck": "Importar deck (.ydk / ydke://)", "importDeckHelp": "Cole um link ydke:// ou o conteúdo de um arquivo .ydk, ou escolha o arquivo. As cartas do Main e do Extra Deck vão para o pool.", "importDeckButton": "Importar", "importDeckFile": "Escolher arquivo .ydk", "importDeckDone": "{n} cartas foram adicionadas ao pool.", "importDeckNone": "Nenhuma carta encontrada nesse texto.", "importDeckError": "Não foi possível carregar as cartas. Verifique a conexão e tente de novo.", "exportContentDiscord": "Discord (vertical)", "qrTitle": "QR code com o link", "qrCaption": "Escaneie para abrir o combo"}, "fr": {"stepsViewCompact": "Vue compacte", "shortcutsTitle": "Raccourcis clavier", "scSearch": "Chercher une carte", "scNewStep": "Nouvelle étape", "scTest": "Tester le combo", "scExport": "Exporter", "scUndoRedo": "Annuler / Rétablir", "scSave": "Enregistrer", "scHelp": "Voir ces raccourcis", "mentionedCards": "Cartes mentionnées", "mentionHint": "Écrivez [[Nom de la carte]] pour mentionner une carte.", "inspectorTitle": "Fiche de carte", "inspectorEmpty": "Survolez une carte pour voir sa fiche ici.", "inspectorToggle": "Fiche de carte fixe (PC)", "importDeck": "Importer un deck (.ydk / ydke://)", "importDeckHelp": "Collez un lien ydke:// ou le contenu d'un fichier .ydk, ou choisissez le fichier. Les cartes du Main et de l'Extra Deck sont ajoutées au pool.", "importDeckButton": "Importer", "importDeckFile": "Choisir un fichier .ydk", "importDeckDone": "{n} cartes ont été ajoutées au pool.", "importDeckNone": "Aucune carte trouvée dans ce texte.", "importDeckError": "Impossible de charger les cartes. Vérifiez votre connexion et réessayez.", "exportContentDiscord": "Discord (vertical)", "qrTitle": "QR code avec le lien", "qrCaption": "Scannez pour ouvrir le combo"}, "it": {"stepsViewCompact": "Vista compatta", "shortcutsTitle": "Scorciatoie da tastiera", "scSearch": "Cerca carta", "scNewStep": "Nuovo passo", "scTest": "Prova combo", "scExport": "Esporta", "scUndoRedo": "Annulla / Ripeti", "scSave": "Salva", "scHelp": "Mostra queste scorciatoie", "mentionedCards": "Carte menzionate", "mentionHint": "Scrivi [[Nome della carta]] per menzionare una carta.", "inspectorTitle": "Scheda della carta", "inspectorEmpty": "Passa il mouse su una carta per vedere qui la sua scheda.", "inspectorToggle": "Scheda carta fissa (PC)", "importDeck": "Importa deck (.ydk / ydke://)", "importDeckHelp": "Incolla un link ydke:// o il contenuto di un file .ydk, oppure scegli il file. Le carte del Main e dell'Extra Deck vengono aggiunte al pool.", "importDeckButton": "Importa", "importDeckFile": "Scegli file .ydk", "importDeckDone": "{n} carte aggiunte al pool.", "importDeckNone": "Nessuna carta trovata in quel testo.", "importDeckError": "Impossibile caricare le carte. Controlla la connessione e riprova.", "exportContentDiscord": "Discord (verticale)", "qrTitle": "Codice QR con il link", "qrCaption": "Scansiona per aprire la combo"}, "de": {"stepsViewCompact": "Kompaktansicht", "shortcutsTitle": "Tastenkürzel", "scSearch": "Karte suchen", "scNewStep": "Neuer Schritt", "scTest": "Combo testen", "scExport": "Exportieren", "scUndoRedo": "Rückgängig / Wiederholen", "scSave": "Speichern", "scHelp": "Diese Kürzel anzeigen", "mentionedCards": "Erwähnte Karten", "mentionHint": "Schreibe [[Kartenname]], um eine Karte zu erwähnen.", "inspectorTitle": "Kartendetails", "inspectorEmpty": "Fahre mit der Maus über eine Karte, um hier ihre Details zu sehen.", "inspectorToggle": "Feste Kartendetails (PC)", "importDeck": "Deck importieren (.ydk / ydke://)", "importDeckHelp": "Füge einen ydke://-Link oder den Inhalt einer .ydk-Datei ein oder wähle die Datei. Karten aus Main- und Extra-Deck kommen in den Pool.", "importDeckButton": "Importieren", "importDeckFile": ".ydk-Datei wählen", "importDeckDone": "{n} Karten wurden zum Pool hinzugefügt.", "importDeckNone": "In diesem Text wurden keine Karten gefunden.", "importDeckError": "Die Karten konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.", "exportContentDiscord": "Discord (vertikal)", "qrTitle": "QR-Code mit dem Link", "qrCaption": "Scannen, um die Combo zu öffnen"}, "ru": {"stepsViewCompact": "Компактный вид", "shortcutsTitle": "Горячие клавиши", "scSearch": "Найти карту", "scNewStep": "Новый шаг", "scTest": "Тест комбо", "scExport": "Экспорт", "scUndoRedo": "Отменить / Повторить", "scSave": "Сохранить", "scHelp": "Показать эти клавиши", "mentionedCards": "Упомянутые карты", "mentionHint": "Напишите [[Название карты]], чтобы упомянуть карту.", "inspectorTitle": "Карточка карты", "inspectorEmpty": "Наведите курсор на карту, чтобы увидеть её описание здесь.", "inspectorToggle": "Закреплённая карточка (ПК)", "importDeck": "Импорт колоды (.ydk / ydke://)", "importDeckHelp": "Вставьте ссылку ydke:// или содержимое файла .ydk, либо выберите файл. Карты основной и дополнительной колоды добавятся в пул.", "importDeckButton": "Импорт", "importDeckFile": "Выбрать файл .ydk", "importDeckDone": "В пул добавлено карт: {n}.", "importDeckNone": "В этом тексте не найдено карт.", "importDeckError": "Не удалось загрузить карты. Проверьте подключение и попробуйте снова.", "exportContentDiscord": "Discord (вертикально)", "qrTitle": "QR-код со ссылкой", "qrCaption": "Отсканируйте, чтобы открыть комбо"}, "ja": {"stepsViewCompact": "コンパクト表示", "shortcutsTitle": "キーボードショートカット", "scSearch": "カードを検索", "scNewStep": "新しいステップ", "scTest": "コンボをテスト", "scExport": "エクスポート", "scUndoRedo": "元に戻す / やり直す", "scSave": "保存", "scHelp": "このショートカットを表示", "mentionedCards": "言及したカード", "mentionHint": "[[カード名]] と書くとカードを言及できます。", "inspectorTitle": "カード詳細", "inspectorEmpty": "カードにマウスを乗せると、ここに詳細が表示されます。", "inspectorToggle": "カード詳細を固定 (PC)", "importDeck": "デッキをインポート (.ydk / ydke://)", "importDeckHelp": "ydke:// リンクか .ydk ファイルの内容を貼り付けるか、ファイルを選んでください。メインとエクストラデッキのカードがプールに追加されます。", "importDeckButton": "インポート", "importDeckFile": ".ydk ファイルを選ぶ", "importDeckDone": "{n} 枚のカードをプールに追加しました。", "importDeckNone": "その文字列にカードが見つかりませんでした。", "importDeckError": "カードを読み込めませんでした。接続を確認して、もう一度お試しください。", "exportContentDiscord": "Discord (縦長)", "qrTitle": "リンクの QR コード", "qrCaption": "スキャンしてコンボを開く"}, "ko": {"stepsViewCompact": "간단히 보기", "shortcutsTitle": "키보드 단축키", "scSearch": "카드 검색", "scNewStep": "새 단계", "scTest": "콤보 테스트", "scExport": "내보내기", "scUndoRedo": "실행 취소 / 다시 실행", "scSave": "저장", "scHelp": "단축키 보기", "mentionedCards": "언급한 카드", "mentionHint": "[[카드 이름]]을 쓰면 카드를 언급할 수 있습니다.", "inspectorTitle": "카드 정보", "inspectorEmpty": "카드에 마우스를 올리면 여기에서 정보를 볼 수 있습니다.", "inspectorToggle": "카드 정보 고정 (PC)", "importDeck": "덱 가져오기 (.ydk / ydke://)", "importDeckHelp": "ydke:// 링크나 .ydk 파일 내용을 붙여 넣거나 파일을 선택하세요. 메인 덱과 엑스트라 덱 카드가 풀에 추가됩니다.", "importDeckButton": "가져오기", "importDeckFile": ".ydk 파일 선택", "importDeckDone": "카드 {n}장을 풀에 추가했습니다.", "importDeckNone": "그 텍스트에서 카드를 찾지 못했습니다.", "importDeckError": "카드를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.", "exportContentDiscord": "Discord (세로)", "qrTitle": "링크 QR 코드", "qrCaption": "스캔해서 콤보 열기"}, "zh": {"stepsViewCompact": "紧凑视图", "shortcutsTitle": "键盘快捷键", "scSearch": "搜索卡片", "scNewStep": "新步骤", "scTest": "测试 Combo", "scExport": "导出", "scUndoRedo": "撤销 / 重做", "scSave": "保存", "scHelp": "显示这些快捷键", "mentionedCards": "提到的卡", "mentionHint": "输入 [[卡名]] 即可提到一张卡。", "inspectorTitle": "卡片信息", "inspectorEmpty": "将鼠标移到卡片上,即可在此查看信息。", "inspectorToggle": "固定卡片信息 (PC)", "importDeck": "导入卡组 (.ydk / ydke://)", "importDeckHelp": "粘贴 ydke:// 链接或 .ydk 文件内容,或选择文件。主卡组和额外卡组的卡会加入卡池。", "importDeckButton": "导入", "importDeckFile": "选择 .ydk 文件", "importDeckDone": "已向卡池添加 {n} 张卡。", "importDeckNone": "该文本中没有找到卡片。", "importDeckError": "无法加载卡片。请检查网络后重试。", "exportContentDiscord": "Discord (竖版)", "qrTitle": "带链接的二维码", "qrCaption": "扫码打开 Combo"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        const MENTION_RE = /\[\[([^\[\]<>]{2,80})\]\]/g;
+        const stripMentions = (s) => String(s || '').replace(MENTION_RE, '$1');
         Object.entries({"es": {"metaTitle": "Datos del combo", "metaFormat": "Formato", "metaAuthor": "Autor", "metaSource": "Fuente (video o guía)", "metaUpdated": "Revisado el", "metaNone": "Sin indicar", "metaBy": "por", "metaToday": "Hoy"}, "en": {"metaTitle": "Combo info", "metaFormat": "Format", "metaAuthor": "Author", "metaSource": "Source (video or guide)", "metaUpdated": "Reviewed on", "metaNone": "Not set", "metaBy": "by", "metaToday": "Today"}, "pt": {"metaTitle": "Dados do combo", "metaFormat": "Formato", "metaAuthor": "Autor", "metaSource": "Fonte (vídeo ou guia)", "metaUpdated": "Revisado em", "metaNone": "Não informado", "metaBy": "por", "metaToday": "Hoje"}, "fr": {"metaTitle": "Infos du combo", "metaFormat": "Format", "metaAuthor": "Auteur", "metaSource": "Source (vidéo ou guide)", "metaUpdated": "Révisé le", "metaNone": "Non indiqué", "metaBy": "par", "metaToday": "Aujourd'hui"}, "it": {"metaTitle": "Dati della combo", "metaFormat": "Formato", "metaAuthor": "Autore", "metaSource": "Fonte (video o guida)", "metaUpdated": "Rivista il", "metaNone": "Non indicato", "metaBy": "di", "metaToday": "Oggi"}, "de": {"metaTitle": "Combo-Daten", "metaFormat": "Format", "metaAuthor": "Autor", "metaSource": "Quelle (Video oder Guide)", "metaUpdated": "Geprüft am", "metaNone": "Nicht angegeben", "metaBy": "von", "metaToday": "Heute"}, "ru": {"metaTitle": "Данные комбо", "metaFormat": "Формат", "metaAuthor": "Автор", "metaSource": "Источник (видео или гайд)", "metaUpdated": "Проверено", "metaNone": "Не указано", "metaBy": "автор:", "metaToday": "Сегодня"}, "ja": {"metaTitle": "コンボ情報", "metaFormat": "フォーマット", "metaAuthor": "作者", "metaSource": "出典 (動画やガイド)", "metaUpdated": "確認日", "metaNone": "未設定", "metaBy": "作者:", "metaToday": "今日"}, "ko": {"metaTitle": "콤보 정보", "metaFormat": "포맷", "metaAuthor": "작성자", "metaSource": "출처 (영상 또는 가이드)", "metaUpdated": "검토일", "metaNone": "미입력", "metaBy": "작성:", "metaToday": "오늘"}, "zh": {"metaTitle": "Combo 信息", "metaFormat": "赛制", "metaAuthor": "作者", "metaSource": "来源(视频或攻略)", "metaUpdated": "审核日期", "metaNone": "未填写", "metaBy": "作者:", "metaToday": "今天"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         Object.entries({"es": {"localSaveActive": "Guardado local activado"}, "en": {"localSaveActive": "Local saving on"}, "pt": {"localSaveActive": "Salvamento local ativado"}, "fr": {"localSaveActive": "Sauvegarde locale activée"}, "it": {"localSaveActive": "Salvataggio locale attivo"}, "de": {"localSaveActive": "Lokales Speichern aktiv"}, "ru": {"localSaveActive": "Локальное сохранение включено"}, "ja": {"localSaveActive": "ローカル保存オン"}, "ko": {"localSaveActive": "로컬 저장 사용 중"}, "zh": {"localSaveActive": "已启用本地保存"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // Notas del combo de ejemplo real
@@ -1610,7 +1616,7 @@
         const WILDCARD_IMG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 59 86'><rect width='59' height='86' rx='3' fill='#4c1d95'/><rect x='4' y='4' width='51' height='78' rx='2' fill='none' stroke='#c4b5fd' stroke-width='1.5' stroke-dasharray='3 2'/><text x='29.5' y='55' font-size='36' text-anchor='middle' fill='#ede9fe' font-family='Arial' font-weight='bold'>?</text></svg>");
         const makeWildcardCard = (name) => ({ instanceId: generateId(), isCustom: true, isWildcard: true, name, type: 'Wildcard', desc: '', atk: '', def: '', image_url: WILDCARD_IMG, image_url_small: WILDCARD_IMG, image_url_cropped: WILDCARD_IMG, notes: '' });
 
-        const ExportLayout = ({ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, isPreview = false, meta = {} }) => {
+        const ExportLayout = ({ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, isPreview = false, meta = {}, shareUrlFn = null }) => {
             const theme = exportOptions.theme || 'dark';
             const cardFilter = exportOptions.cardFilter || 'color';
             const nbsp = (str) => String(str || '').replace(/ /g, '\u00A0');
@@ -1639,6 +1645,14 @@
             const showBoardTopX = quick && exportOptions.include.finalBoard && finalBoardCards.length > 0;
             const boardImg = (c) => imageMap[c.image_url_small] || c.image_url_small;
             const boardView = exportOptions.boardView || 'board';
+            // Código QR con el enlace del combo (solo si el enlace cabe en un QR que se pueda escanear)
+            const shareUrlX = useMemo(() => (shareUrlFn ? shareUrlFn() : ''), [shareUrlFn, comboSteps, startingHand, finalBoardCards, comboTitle, notes, meta]);
+            const qr = useMemo(() => {
+                if (!exportOptions.include || exportOptions.include.qr === false || !shareUrlX || !window.qrcode) return null;
+                try { const q = window.qrcode(0, 'L'); q.addData(shareUrlX); q.make(); const mc = q.getModuleCount(); if (mc > 105) return null; return { src: q.createDataURL(4, 2), size: mc > 61 ? 176 : 128 }; }
+                catch (e) { return null; }
+            }, [shareUrlX, exportOptions.include && exportOptions.include.qr]);
+            const metaLineX = [FORMAT_LABEL[meta.format], meta.author ? `${t('metaBy')} ${meta.author}` : '', meta.updated, meta.source].filter(Boolean).join('  ·  ');
             const renderBoardCards = (size) => (
                 <div className="flex flex-wrap justify-center gap-4">
                     {finalBoardCards.map(item => (
@@ -1749,12 +1763,80 @@
                 flushStepRow();
                 return elements;
             };
+            // Plantilla vertical para Discord (720 px de ancho)
+            if (exportOptions.layout === 'discord') {
+                let dn = 0;
+                return (
+                    <div className={`p-6 text-white export-onewm export-theme-${theme} export-ink-${cardFilter} ${isPreview && cardFilter !== 'color' ? `export-filter-${cardFilter}` : ''}`} data-watermark={'YGOH-ComboMaker'} style={{ ...backgroundStyle, width: 720 }}>
+                        <div className="relative z-10 flex flex-col gap-4">
+                            <div className="flex items-start gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <h1 className="text-3xl font-bold text-violet-300 font-yugioh break-all">{nbsp(comboTitle || t('untitledCombo'))}</h1>
+                                    {metaLineX && <p className="text-slate-300 text-sm mt-1 break-all">{nbsp(metaLineX)}</p>}
+                                </div>
+                                {qr && <div className="flex flex-col items-center shrink-0"><img src={qr.src} alt="" style={{ width: 112, height: 112 }} className="bg-white p-1 rounded" /><span className="text-[10px] text-slate-300 mt-1">{nbsp(t('qrCaption'))}</span></div>}
+                            </div>
+                            {hasHandX && (
+                                <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                                    <h2 className="text-lg font-semibold mb-2 text-violet-400 font-yugioh">{nbsp(t('startingHandTitle'))}</h2>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {startingHand.filter(g => g && g.length).map((group, gi, arr) => (
+                                            <React.Fragment key={gi}>
+                                                {group.map(item => <ExportCard key={`dh-${item.instanceId}`} card={findCard(item.instanceId)} size="tiny" quantity={item.quantity} />)}
+                                                {gi < arr.length - 1 && <span className="font-bold text-violet-400 px-1">{nbsp(t('or'))}</span>}
+                                            </React.Fragment>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {exportOptions.include.comboSteps && comboSteps.length > 0 && (
+                                <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                                    <h2 className="text-lg font-semibold mb-2 text-violet-400 font-yugioh">{nbsp(t('comboStepsTitle'))}</h2>
+                                    {comboSteps.map(s => {
+                                        if (s.type === 'group') return <p key={s.id} className="text-amber-400 font-bold text-xs uppercase mt-3 mb-1 break-all">{nbsp(s.title || '')}</p>;
+                                        if (s.type !== 'step') return null;
+                                        dn++;
+                                        const c = findCard(s.mainCardInstanceId);
+                                        const act = YGO_ACTIONS.find(a => a.name === s.actionType) || {};
+                                        const tg = (s.targetCards || []).map(tc => (findCard(tc.instanceId) || {}).name).filter(Boolean);
+                                        const isVul = s.vulnerability && (s.vulnerability.text || (s.vulnerability.cards || []).length);
+                                        return (
+                                            <div key={s.id} className={`flex items-start gap-2 py-1 border-b border-slate-700/50 ${isVul ? 'bg-red-900/20' : ''}`}>
+                                                <span className="w-8 text-right font-bold text-slate-400 shrink-0">{dn}.</span>
+                                                {c && <ExportCard card={c} size="micro" />}
+                                                <div className="min-w-0 text-sm">
+                                                    <p className="break-all">{nbsp(`${act.emoji || ''} ${s.actionType === 'Other' ? (s.customActionText || trTerm('Other')) : trTerm(s.actionType)}: ${c ? c.name : '?'}${tg.length ? ' → ' + tg.join(', ') : ''}${isVul ? ' ⚠️' : ''}`)}</p>
+                                                    {s.actionDescription && <p className="text-slate-400 text-xs break-all">{nbsp(stripMentions(s.actionDescription))}</p>}
+                                                    {s.branch && s.branch.steps && s.branch.steps.length > 0 && (
+                                                        <div className="mt-1 border-l-4 border-red-500 pl-2">
+                                                            <p className="text-red-300 text-xs font-bold break-all">↳ {nbsp(s.branch.title || t('branchLabel'))}</p>
+                                                            {s.branch.steps.map((bs, bi) => { const bc = findCard(bs.mainCardInstanceId); return <p key={bs.id} className="text-slate-200 text-xs break-all">{nbsp(`${dn}.${bi + 1} ${trTerm(bs.actionType)}: ${bc ? bc.name : '?'}${bs.actionDescription ? ' — ' + bs.actionDescription : ''}`)}</p>; })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            {exportOptions.include.finalBoard && finalBoardCards.length > 0 && (
+                                <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                                    <h2 className="text-lg font-semibold mb-2 text-violet-400 font-yugioh">{nbsp(t('finalBoardTitle'))}</h2>
+                                    {renderFinalBoardContent(true)}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
 
             return ( 
                 <div className={`p-8 text-white export-onewm export-theme-${theme} export-ink-${cardFilter} ${isPreview && cardFilter !== 'color' ? `export-filter-${cardFilter}` : ''}`} data-watermark={'YGOH-ComboMaker'} style={backgroundStyle}>
                     <div className="relative z-10">
-                        <h1 className="text-5xl font-bold text-center text-violet-300 mb-8 font-yugioh">{nbsp(comboTitle || t('untitledCombo'))}</h1>
-                        {(meta.format || meta.author || meta.updated || meta.source) && <p className="text-center text-slate-300 -mt-6 mb-6 text-sm">{nbsp([FORMAT_LABEL[meta.format], meta.author ? `${t('metaBy')} ${meta.author}` : '', meta.updated, meta.source].filter(Boolean).join('  ·  '))}</p>} 
+                        {qr && <div className="absolute top-0 right-0 flex flex-col items-center"><img src={qr.src} alt="" style={{ width: qr.size, height: qr.size }} className="bg-white p-1 rounded" /><span className="text-[11px] text-slate-300 mt-1">{nbsp(t('qrCaption'))}</span></div>}
+                        <h1 className="text-5xl font-bold text-center text-violet-300 mb-8 font-yugioh" style={qr ? { paddingLeft: qr.size + 16, paddingRight: qr.size + 16 } : undefined}>{nbsp(comboTitle || t('untitledCombo'))}</h1>
+                        {metaLineX && <p className="text-center text-slate-300 -mt-6 mb-6 text-sm" style={qr ? { paddingLeft: qr.size + 16, paddingRight: qr.size + 16 } : undefined}>{nbsp(metaLineX)}</p>} 
                         <div className="flex flex-col gap-6"> 
                             {(hasHandX || showNotesX || showBoardTopX) && (
                                 <div className="flex flex-row gap-6 items-stretch">
@@ -1776,7 +1858,7 @@
                                     {showNotesX && (
                                         <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex-grow min-w-0">
                                             <h2 className="text-2xl font-semibold mb-4 text-violet-400 font-yugioh">{nbsp(t('notesTitle'))}</h2>
-                                            <div className="text-sm whitespace-pre-wrap break-words" style={{ direction: 'ltr', textAlign: 'left' }} dangerouslySetInnerHTML={{ __html: nbspHtml(notes) }} />
+                                            <div className="text-sm whitespace-pre-wrap break-words" style={{ direction: 'ltr', textAlign: 'left' }} dangerouslySetInnerHTML={{ __html: nbspHtml(notes).replace(MENTION_RE, '<b>$1</b>') }} />
                                         </div>
                                     )}
                                     {showBoardTopX && (
@@ -1941,7 +2023,7 @@
             useLayoutEffect(() => {
                 const update = () => {
                     if (!outerRef.current || !innerRef.current) return;
-                    const scale = outerRef.current.clientWidth / 1280;
+                    const scale = outerRef.current.clientWidth / (exportOptions.layout === 'discord' ? 720 : 1280);
                     setBox({ scale, height: Math.ceil(innerRef.current.offsetHeight * scale) });
                 };
                 update();
@@ -1952,7 +2034,7 @@
             }, []);
             return (
                 <div ref={outerRef} className="w-full overflow-hidden rounded-md border border-slate-700" style={{ height: box.height }}>
-                    <div ref={innerRef} style={{ width: 1280, transform: `scale(${box.scale})`, transformOrigin: 'top left' }}>
+                    <div ref={innerRef} style={{ width: exportOptions.layout === 'discord' ? 720 : 1280, transform: `scale(${box.scale})`, transformOrigin: 'top left' }}>
                         <ExportLayout {...layoutProps} exportOptions={exportOptions} imageMap={{}} isPreview={true} />
                     </div>
                 </div>
@@ -1986,7 +2068,7 @@
                                         <span className="text-slate-200">{t(key + 'Title')}</span>
                                     </label>
                                 ))}
-                                {optionRow(t('exportContent'), 'layout', [['full', t('exportContentFull')], ['quick', t('exportContentQuick')]])}
+                                {optionRow(t('exportContent'), 'layout', [['full', t('exportContentFull')], ['quick', t('exportContentQuick')], ['discord', t('exportContentDiscord')]])}
                                 {optionRow(t('exportBoardView'), 'boardView', [['board', t('boardViewBoard')], ['cards', t('boardViewCards')], ['both', t('boardViewBoth')]])}
                                 {optionRow(t('exportStyle'), 'theme', [['dark', t('styleDark')], ['light', t('styleLight')], ['white', t('styleWhite')]])}
                                 {optionRow(t('exportCardColor'), 'cardFilter', [['color', t('filterColor')], ['gray', t('filterGray')], ['ink', t('filterInk')]])}
@@ -2344,6 +2426,60 @@
         };
 
         // Selector de fichas (Token): antes se añadía una al azar
+        // Leer un mazo: enlace ydke:// (Main!Extra!Side en base64) o texto de un .ydk (#main, #extra, !side)
+        const parseDeckIds = (text) => {
+            const s = String(text || '').trim();
+            const ids = [];
+            const m = s.match(/ydke:\/\/([A-Za-z0-9+\/=]*)!([A-Za-z0-9+\/=]*)!/);
+            if (m) {
+                [m[1], m[2]].forEach(b64 => {
+                    if (!b64) return;
+                    let bin = '';
+                    try { bin = atob(b64); } catch (e) { return; }
+                    for (let i = 0; i + 3 < bin.length; i += 4) ids.push(((bin.charCodeAt(i)) | (bin.charCodeAt(i + 1) << 8) | (bin.charCodeAt(i + 2) << 16) | (bin.charCodeAt(i + 3) << 24)) >>> 0);
+                });
+                return ids;
+            }
+            for (const line of s.split(/\r?\n/)) {
+                const l = line.trim();
+                if (/^!side/i.test(l)) break;
+                if (/^\d{3,10}$/.test(l)) ids.push(parseInt(l, 10));
+            }
+            return ids;
+        };
+        const ImportDeckModal = ({ show, onClose, onImport, t }) => {
+            const [text, setText] = useState('');
+            const [busy, setBusy] = useState(false);
+            const [msg, setMsg] = useState('');
+            if (!show) return null;
+            const run = async (value) => {
+                const ids = parseDeckIds(value);
+                if (!ids.length) { setMsg(t('importDeckNone')); return; }
+                setBusy(true); setMsg('');
+                try { const n = await onImport(ids); setMsg(t('importDeckDone', { n })); setText(''); }
+                catch (e) { console.error(e); setMsg(t('importDeckError')); }
+                setBusy(false);
+            };
+            const onFile = (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => run(String(r.result || '')); r.readAsText(f); e.target.value = ''; };
+            return (
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+                    <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-5 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-bold text-violet-300 flex-1">{t('importDeck')}</h3>
+                            <button onClick={onClose} aria-label={t('closeLabel')} className="w-10 h-10 rounded-full bg-black/30 text-gray-300 hover:text-white text-2xl">×</button>
+                        </div>
+                        <p className="text-sm text-slate-300 mb-3">{t('importDeckHelp')}</p>
+                        <textarea value={text} onChange={e => setText(e.target.value)} rows="5" placeholder="ydke://..." className="w-full p-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white" />
+                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                            <button onClick={() => run(text)} disabled={busy || !text.trim()} className="px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50">{busy ? '…' : t('importDeckButton')}</button>
+                            <label className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600 cursor-pointer"><i className="fas fa-file-import mr-2"></i>{t('importDeckFile')}<input type="file" accept=".ydk,.txt,text/plain" onChange={onFile} className="hidden" /></label>
+                        </div>
+                        {msg && <p className="text-sm mt-3 text-amber-300">{msg}</p>}
+                    </div>
+                </div>
+            );
+        };
+
         const TokenPickerModal = ({ show, tokens, onPick, onClose, t }) => {
             const [q, setQ] = useState('');
             if (!show) return null;
@@ -3056,6 +3192,11 @@
             const [openStepMenuId, setOpenStepMenuId] = useState(null);
             const [showTokenPicker, setShowTokenPicker] = useState(false);
             const [showMoreMenu, setShowMoreMenu] = useState(false);
+            const [showShortcuts, setShowShortcuts] = useState(false);
+            const [showImportDeck, setShowImportDeck] = useState(false);
+            const [inspectorOn, setInspectorOn] = useState(() => { try { return localStorage.getItem('ygo_inspector') === '1'; } catch (e) { return false; } });
+            const [inspectCard, setInspectCard] = useState(null);
+            const toggleInspector = () => setInspectorOn(v => { const nv = !v; try { localStorage.setItem('ygo_inspector', nv ? '1' : '0'); } catch (e) {} return nv; });
             useEffect(() => {
                 if (!showMoreMenu) return;
                 const onDown = (e) => { if (!(e.target.closest && e.target.closest('[data-more-menu]'))) setShowMoreMenu(false); };
@@ -3067,7 +3208,7 @@
             const scrollToSection = (sel) => { const el = document.querySelector(sel); if (!el) return; el.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => { if (Math.abs(el.getBoundingClientRect().top) > 60) el.scrollIntoView({ block: 'start' }); }, 700); };
             const [showWelcome, setShowWelcome] = useState(false);
             const [bgAnimated, setBgAnimated] = useState(window.__ygoBgAnimated !== false);
-            const [stepsView, setStepsView] = useState(() => { try { return localStorage.getItem('ygo_steps_view') === 'grid' ? 'grid' : 'list'; } catch (e) { return 'list'; } });
+            const [stepsView, setStepsView] = useState(() => { try { const v = localStorage.getItem('ygo_steps_view'); return (v === 'grid' || v === 'compact') ? v : 'list'; } catch (e) { return 'list'; } });
             useEffect(() => { try { localStorage.setItem('ygo_steps_view', stepsView); } catch (e) {} }, [stepsView]);
             const [isStartingHandOpen, setIsStartingHandOpen] = useState(true);
             const [isFinalBoardOpen, setIsFinalBoardOpen] = useState(true);
@@ -3099,7 +3240,7 @@
             const [exportOptions, setExportOptions] = useState(() => {
                 let savedStyle = {};
                 try { savedStyle = JSON.parse(localStorage.getItem('ygo_export_style') || '{}') || {}; } catch (e) {}
-                return { include: { startingHand: true, comboSteps: true, finalBoard: true, notes: true, comboStats: true }, scale: 2, stepsPerRow: 4, theme: savedStyle.theme || 'dark', cardFilter: savedStyle.cardFilter || 'color', layout: savedStyle.layout === 'quick' ? 'quick' : 'full', boardView: ['board', 'cards', 'both'].includes(savedStyle.boardView) ? savedStyle.boardView : 'board', paper: savedStyle.paper || 'auto', paperW: savedStyle.paperW ?? 21.6, paperH: savedStyle.paperH ?? 33, paperUnit: savedStyle.paperUnit || 'cm' };
+                return { include: { startingHand: true, comboSteps: true, finalBoard: true, notes: true, comboStats: true, qr: true }, scale: 2, stepsPerRow: 4, theme: savedStyle.theme || 'dark', cardFilter: savedStyle.cardFilter || 'color', layout: ['quick', 'discord'].includes(savedStyle.layout) ? savedStyle.layout : 'full', boardView: ['board', 'cards', 'both'].includes(savedStyle.boardView) ? savedStyle.boardView : 'board', paper: savedStyle.paper || 'auto', paperW: savedStyle.paperW ?? 21.6, paperH: savedStyle.paperH ?? 33, paperUnit: savedStyle.paperUnit || 'cm' };
             });
             // Se recuerda el estilo de exportación (fondo y color de cartas) para la próxima vez.
             useEffect(() => { try { localStorage.setItem('ygo_export_style', JSON.stringify({ theme: exportOptions.theme, cardFilter: exportOptions.cardFilter, layout: exportOptions.layout, boardView: exportOptions.boardView, paper: exportOptions.paper, paperW: exportOptions.paperW, paperH: exportOptions.paperH, paperUnit: exportOptions.paperUnit })); } catch (e) {} }, [exportOptions.theme, exportOptions.cardFilter, exportOptions.layout, exportOptions.boardView, exportOptions.paper, exportOptions.paperW, exportOptions.paperH, exportOptions.paperUnit]);
@@ -3232,6 +3373,15 @@
 
             useEffect(() => {
                 const handleKeyDown = (e) => {
+                    const tgt = e.target;
+                    const typing = tgt && (/^(INPUT|TEXTAREA|SELECT)$/.test(tgt.tagName) || tgt.isContentEditable);
+                    if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && !isPlayOpen) {
+                        if (e.key === '/') { e.preventDefault(); setIsSearchPanelOpen(true); setTimeout(() => { const i = document.querySelector('#search-panel input'); if (i) i.focus(); }, 120); return; }
+                        if (e.key === 'n' || e.key === 'N') { const b = document.querySelector('.steps-add-slot button'); if (b) { e.preventDefault(); b.scrollIntoView({ block: 'center' }); b.click(); } return; }
+                        if (e.key === 'p' || e.key === 'P') { e.preventDefault(); setIsPlayOpen(true); return; }
+                        if (e.key === 'e' || e.key === 'E') { e.preventDefault(); setShowExportOptionsModal(true); return; }
+                        if (e.key === '?') { e.preventDefault(); setShowShortcuts(v => !v); return; }
+                    }
                     if (e.ctrlKey || e.metaKey) {
                         if (e.key === 'z') { e.preventDefault(); undo(); }
                         if (e.key === 'y') { e.preventDefault(); redo(); }
@@ -3250,7 +3400,7 @@
                 };
                 window.addEventListener('keydown', handleKeyDown);
                 return () => window.removeEventListener('keydown', handleKeyDown);
-            }, [undo, redo, pngPreviewUrl, selectedCardForZoom, showClearConfirmModal, showExportOptionsModal, showSaveModal, showLoadModal, showCustomCardModal, contextMenu.card]);
+            }, [undo, redo, pngPreviewUrl, selectedCardForZoom, showClearConfirmModal, showExportOptionsModal, showSaveModal, showLoadModal, showCustomCardModal, contextMenu.card, isPlayOpen]);
 
 
             useEffect(() => {
@@ -3387,7 +3537,7 @@
             
             const hoverTimerRef = useRef(null);
             const canHoverPreview = () => !window.matchMedia || window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-            const handleCardMouseEnter = (card) => { clearTimeout(hoverTimerRef.current); if (window.__YGO_DRAGGING__ === true || window.innerWidth <= 1024 || !canHoverPreview()) return; hoverTimerRef.current = setTimeout(() => setHoveredCard({ card }), 450); };
+            const handleCardMouseEnter = (card) => { clearTimeout(hoverTimerRef.current); if (inspectorOn) { if (card && card.name) setInspectCard(card); return; } if (window.__YGO_DRAGGING__ === true || window.innerWidth <= 1024 || !canHoverPreview()) return; hoverTimerRef.current = setTimeout(() => setHoveredCard({ card }), 450); };
             const handleCardMouseLeave = () => { clearTimeout(hoverTimerRef.current); if (window.__YGO_DRAGGING__ === true) return; setHoveredCard({ card: null }); };
             useEffect(() => {
                 const hidePreview = () => { clearTimeout(hoverTimerRef.current); setHoveredCard(h => (h && h.card) ? { card: null } : h); };
@@ -3620,7 +3770,7 @@
                     setExportMessage(t('generatingPng'));
                     const exportContainer = document.getElementById('export-container');
                     const exportRoot = createRoot(exportContainer);
-                    exportRoot.render(<ExportLayout {...{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, meta: comboMeta }} />);
+                    exportRoot.render(<ExportLayout {...{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, meta: comboMeta, shareUrlFn: getShareUrl }} />);
                     
                     // --- New Robust Export Logic ---
                     // 1. Wait for React to render the component.
@@ -3644,7 +3794,9 @@
                     else if (stepCountForScale > 8) adaptiveScale = Math.min(adaptiveScale, 2);
                     
                     if ((exportOptions.theme || 'dark') === 'dark') setSmartExportBackground(exportContainer.querySelector('.export-onewm'));
+                    exportContainer.style.width = exportOptions.layout === 'discord' ? '720px' : '';
                     const canvas = await html2canvas(exportContainer, { scale: adaptiveScale, useCORS: true, backgroundColor: null });
+                    exportContainer.style.width = '';
 
                     setExportProgress(100);
                     if (mode === 'print') printCanvasInPages(canvas, comboTitle, resolvePaper(exportOptions));
@@ -3886,7 +4038,7 @@
                     if (targets.length) line += ` → ${targets.join(', ')}`;
                     if (s.location) line += ` [${ZONE_ABBREVIATIONS[s.location] || trTerm(s.location)}]`;
                     lines.push(line);
-                    const desc = htmlToText(s.actionDescription);
+                    const desc = stripMentions(htmlToText(s.actionDescription));
                     if (desc) lines.push(`   ${desc}`);
                     const v = s.vulnerability;
                     if (v && (v.text || (v.cards || []).length)) {
@@ -3906,7 +4058,7 @@
                     lines.push('');
                     lines.push(`${t('finalBoardTitle')}: ` + finalBoardCards.map(b => `${(b.card && b.card.name) || '?'} (${ZONE_ABBREVIATIONS[b.zone] || b.zone})${b.isDisruption ? ' ⛔' : ''}`).join(', '));
                 }
-                const notesText = htmlToText(notes);
+                const notesText = stripMentions(htmlToText(notes));
                 if (notesText) { lines.push(''); lines.push(notesText); }
                 lines.push('');
                 lines.push(getShareUrl());
@@ -4025,6 +4177,25 @@
                 const params = new URLSearchParams({ template: 'combo-sheet.yml', format: FORMAT_LABEL[comboMeta.format] || '', title: `[COMBO] ${comboTitle || ''}`.trim(), 'combo-title': comboTitle || '', archetype: arch, link: getShareUrl() });
                 const url = `https://github.com/aaoollaaooll/Yugioh-combo-maker/issues/new?${params.toString()}`;
                 if (win) { win.opener = null; win.location.href = url; } else window.open(url, '_blank', 'noopener');
+            };
+            // Importar mazo: añade al pool las cartas que aún no estén (en bloques de 50 por consulta)
+            const importDeckIds = async (ids) => {
+                const have = new Set(cardPool.filter(c => !c.isCustom).map(c => c.ygoprodeck_id));
+                const unique = [...new Set(ids)].filter(id => !have.has(id));
+                const found = [];
+                for (let i = 0; i < unique.length; i += 50) {
+                    const chunk = unique.slice(i, i + 50);
+                    const r = await fetch(`${YGOPRODECK_API_BASE_URL}?id=${chunk.join(',')}`);
+                    if (r.ok) { const j = await r.json(); (j.data || []).forEach(c => found.push(c)); }
+                    else {
+                        for (const id of chunk) { try { const r2 = await fetch(`${YGOPRODECK_API_BASE_URL}?id=${id}`); if (r2.ok) { const j2 = await r2.json(); (j2.data || []).forEach(c => found.push(c)); } } catch (e) {} }
+                    }
+                }
+                const seen = new Set(have);
+                const newCards = [];
+                found.forEach(c => { if (!seen.has(c.id)) { seen.add(c.id); newCards.push(createComboCardInstance(c, IMAGE_PROXY)); } });
+                if (newCards.length) setComboState({ ...comboState, cardPool: [...cardPool, ...newCards] }, 'Imported deck');
+                return newCards.length;
             };
             const handleCopyText = async () => {
                 const text = buildComboText();
@@ -4203,7 +4374,7 @@
                         <ZonePickerModal show={zonePickerStepId !== null} onClose={() => setZonePickerStepId(null)} onSelect={(zone) => updateStep(zonePickerStepId, { location: zone })} t={t} />
 
                         <PngPreviewModal imageUrl={pngPreviewUrl} onDownload={downloadPng} onClose={() => setPngPreviewUrl(null)} t={t} shareUrl={getShareUrl()} comboTitle={comboTitle} />
-                        <ExportOptionsModal show={showExportOptionsModal} onClose={() => setShowExportOptionsModal(false)} onConfirm={() => handleConfirmExport('png')} onPrint={() => handleConfirmExport('print')} onCopyText={handleCopyText} exportOptions={exportOptions} setExportOptions={setExportOptions} layoutProps={{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, meta: comboMeta }} t={t} />
+                        <ExportOptionsModal show={showExportOptionsModal} onClose={() => setShowExportOptionsModal(false)} onConfirm={() => handleConfirmExport('png')} onPrint={() => handleConfirmExport('print')} onCopyText={handleCopyText} exportOptions={exportOptions} setExportOptions={setExportOptions} layoutProps={{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, meta: comboMeta, shareUrlFn: getShareUrl }} t={t} />
                         <SaveComboModal show={showSaveModal} onClose={() => setShowSaveModal(false)} onSave={handleSaveCombo} onDownload={handleDownloadComboFile} t={t} isOnlineSaveEnabled={isOnlineSaveEnabled} />
                         <LoadComboModal show={showLoadModal} onClose={() => setShowLoadModal(false)} onSelect={handleLoadCombo} onDelete={handleDeleteCombo} onOpenFile={handleOpenComboFile} t={t} db={db} user={user} appId={appId} isOnlineSaveEnabled={isOnlineSaveEnabled}/>
                         <nav className="mobile-tabbar" aria-label={t('quickNav')}>
@@ -4213,6 +4384,32 @@
                             <button type="button" onClick={() => scrollToSection('.final-board')}><i className="fas fa-chess-board"></i><span>{t('navBoard')}</span></button>
                             <button type="button" onClick={() => setIsPlayOpen(true)} className="text-amber-400"><i className="fas fa-play"></i><span>{t('navTest')}</span></button>
                         </nav>
+                        <ImportDeckModal show={showImportDeck} onClose={() => setShowImportDeck(false)} onImport={importDeckIds} t={t} />
+                        {showShortcuts && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowShortcuts(false)}>
+                                <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-5 w-full max-w-sm text-sm text-slate-200" onClick={e => e.stopPropagation()}>
+                                    <div className="flex items-center mb-3"><h3 className="text-lg font-bold text-violet-300 flex-1">{t('shortcutsTitle')}</h3><button onClick={() => setShowShortcuts(false)} aria-label={t('closeLabel')} className="w-9 h-9 rounded-full bg-black/30 text-xl">×</button></div>
+                                    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+                                        {[['/', t('scSearch')], ['N', t('scNewStep')], ['P', t('scTest')], ['E', t('scExport')], ['Ctrl+Z / Ctrl+Y', t('scUndoRedo')], ['Ctrl+S', t('scSave')], ['?', t('scHelp')]].map(([k, d]) => (
+                                            <React.Fragment key={k}><dt><kbd className="px-2 py-0.5 rounded bg-slate-700 border border-slate-600 font-mono text-xs">{k}</kbd></dt><dd>{d}</dd></React.Fragment>
+                                        ))}
+                                    </dl>
+                                </div>
+                            </div>
+                        )}
+                        {inspectorOn && (
+                            <aside className="card-inspector hidden lg:flex" aria-label={t('inspectorTitle')}>
+                                <div className="flex items-center justify-between mb-2"><span className="font-semibold text-sm text-[var(--color-secondary)]">{t('inspectorTitle')}</span><button onClick={toggleInspector} aria-label={t('closeLabel')} className="w-8 h-8 rounded-full hover:bg-[var(--color-surface-light)] text-xl">×</button></div>
+                                {inspectCard ? (
+                                    <React.Fragment>
+                                        <img src={inspectCard.image_url || inspectCard.image_url_small} alt={inspectCard.name} className="w-40 mx-auto rounded" crossOrigin="anonymous" />
+                                        <h4 className="font-bold mt-2">{inspectCard.name}</h4>
+                                        <p className="text-xs text-[var(--color-text-muted)]">{[trTerm(inspectCard.type), inspectCard.attribute ? trTerm(inspectCard.attribute) : '', inspectCard.level ? '★' + inspectCard.level : '', (inspectCard.atk !== undefined && inspectCard.atk !== null && inspectCard.atk !== '') ? `${inspectCard.atk} / ${inspectCard.def ?? '-'}` : ''].filter(Boolean).join(' · ')}</p>
+                                        <p className="text-xs mt-2 whitespace-pre-wrap">{inspectCard.desc}</p>
+                                    </React.Fragment>
+                                ) : <p className="text-xs text-[var(--color-text-muted)]">{t('inspectorEmpty')}</p>}
+                            </aside>
+                        )}
                         <TokenPickerModal show={showTokenPicker} tokens={allTokens} onPick={(tk) => { addCardToPool(tk); setShowTokenPicker(false); }} onClose={() => setShowTokenPicker(false)} t={t} />
                         <CustomCardModal show={showCustomCardModal} onClose={() => { setShowCustomCardModal(false); setEditingCustomCard(null); }} onSave={handleSaveCustomCard} t={t} existingCard={editingCustomCard} />
 
@@ -4300,7 +4497,7 @@
                             {totalPages > 1 && (<div className="flex justify-center items-center gap-2 mt-2 text-sm"><button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1} className="btn px-3 py-1 bg-slate-600 rounded hover:bg-slate-500 disabled:opacity-50">‹</button><span>{t('page')} {currentPage} / {totalPages}</span><button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages} className="btn px-3 py-1 bg-slate-600 rounded hover:bg-slate-500 disabled:opacity-50">›</button></div>)}
                         </aside>
 
-                        <main className={`transition-all duration-300 p-4 lg:p-6 ${isSearchPanelOpen ? 'lg:ml-96' : 'ml-0'}`}>
+                        <main className={`transition-all duration-300 p-4 lg:p-6 ${isSearchPanelOpen ? 'lg:ml-96' : 'ml-0'} ${inspectorOn ? 'lg:!pr-[19.5rem]' : ''}`}>
                             <div className="flex flex-col h-full">
                                 <header className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
                                     <input type="text" value={comboTitle} onChange={(e) => setComboState({...comboState, comboTitle: sanitizeHTML(e.target.value)}, "Changed title")} className="w-full min-w-0 flex-grow basis-64 p-2 text-3xl font-bold bg-transparent text-[var(--color-secondary)] placeholder-[var(--color-text-muted)] focus:bg-[var(--color-surface)]/50 rounded-lg outline-none font-yugioh" placeholder={t('comboTitlePlaceholder')} />
@@ -4319,10 +4516,13 @@
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); handlePublishCommunity(); }}><i className="fas fa-cloud-upload-alt w-5 text-center text-teal-400"></i>{t('publishCommunity')}</button>
                                                     <a role="menuitem" className="step-menu-item" href="community.html"><i className="fas fa-users w-5 text-center text-blue-400"></i>{t('publicCombosTitle')}</a>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); handleCopyText(); }}><i className="fas fa-copy w-5 text-center"></i>{t('copyText')}</button>
+                                                    <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setShowImportDeck(true); }}><i className="fas fa-file-import w-5 text-center"></i>{t('importDeck')}</button>
                                                     <div className="border-t border-[var(--color-border)] my-1"></div>
                                                     <button role="menuitem" className="step-menu-item" onClick={toggleTheme}><i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'} w-5 text-center`}></i>{t('themeTooltip')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={toggleBgAnimation} aria-pressed={bgAnimated}><i className={`fas fa-star w-5 text-center ${bgAnimated ? 'text-amber-300' : 'opacity-50'}`}></i>{t('bgAnimation')}</button>
                                                     <label className="step-menu-item"><i className="fas fa-globe w-5 text-center"></i><select value={language} onChange={(e) => chooseLanguage(e.target.value)} aria-label={t('languageTooltip')} className="flex-1 min-w-0 bg-[var(--color-surface-light)] text-[var(--color-text)] rounded p-1 text-sm">{LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select></label>
+                                                    <button role="menuitem" className="step-menu-item hidden lg:flex" onClick={toggleInspector} aria-pressed={inspectorOn}><i className={`fas fa-id-card w-5 text-center ${inspectorOn ? 'text-amber-300' : ''}`}></i>{t('inspectorToggle')}{inspectorOn ? ' ✓' : ''}</button>
+                                                    <button role="menuitem" className="step-menu-item hidden lg:flex" onClick={() => { setShowMoreMenu(false); setShowShortcuts(true); }}><i className="fas fa-keyboard w-5 text-center"></i>{t('shortcutsTitle')} (?)</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' }); }}><i className="fas fa-question-circle w-5 text-center"></i>{t('welcomeTutorial')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); loadExampleCombo(); }}><i className="fas fa-magic w-5 text-center"></i>{t('welcomeExample')}</button>
                                                     <div className="border-t border-[var(--color-border)] my-1"></div>
@@ -4437,11 +4637,40 @@
                                     <section id="combo-steps-section" className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 combo-steps">
                                         <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
                                             <h3 className="text-xl font-semibold text-[var(--color-secondary)]">{t('comboStepsTitle')}</h3>
-                                            <div className="flex items-center"><div className="inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2" role="group"><button onClick={() => setStepsView('list')} aria-pressed={stepsView === 'list'} aria-label={t('stepsViewList')} data-tooltip={t('stepsViewList')} className={`px-3 py-1 text-sm ${stepsView === 'list' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-list-ol"></i></button><button onClick={() => setStepsView('grid')} aria-pressed={stepsView === 'grid'} aria-label={t('stepsViewGrid')} data-tooltip={t('stepsViewGrid')} className={`px-3 py-1 text-sm ${stepsView === 'grid' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-th-large"></i></button></div>
+                                            <div className="flex items-center"><div className="inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2" role="group"><button onClick={() => setStepsView('list')} aria-pressed={stepsView === 'list'} aria-label={t('stepsViewList')} data-tooltip={t('stepsViewList')} className={`px-3 py-1 text-sm ${stepsView === 'list' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-list-ol"></i></button><button onClick={() => setStepsView('grid')} aria-pressed={stepsView === 'grid'} aria-label={t('stepsViewGrid')} data-tooltip={t('stepsViewGrid')} className={`px-3 py-1 text-sm ${stepsView === 'grid' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-th-large"></i></button><button onClick={() => setStepsView('compact')} aria-pressed={stepsView === 'compact'} aria-label={t('stepsViewCompact')} data-tooltip={t('stepsViewCompact')} className={`px-3 py-1 text-sm ${stepsView === 'compact' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-align-left"></i></button></div>
                                                 <button onClick={() => setComboState({...comboState, comboSteps: [...comboSteps, { type: 'group', id: generateId(), title: 'New Group' }]}, 'Added group')} className="btn px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 mr-2">{t('addGroup')}</button>
                                             </div>
                                         </div>
-                                        <div className={`grid gap-4 grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] ${stepsView === 'list' ? 'steps-list' : ''}`} data-drop-area="comboSteps" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, 'comboSteps')}>
+                                        {stepsView === 'compact' && (
+                                            <ol className="text-sm divide-y divide-[var(--color-border)]/40 mb-3">
+                                                {(() => { let cn = 0; return comboSteps.map(s => {
+                                                    if (s.type === 'group') return <li key={s.id} className="pt-3 pb-1 text-xs font-bold uppercase tracking-wide text-amber-500">{s.title}</li>;
+                                                    if (s.type === 'note') return s.text ? <li key={s.id} className="py-1 pl-10 text-xs italic text-[var(--color-text-muted)]">📝 {s.text}</li> : null;
+                                                    if (s.type !== 'step') return null;
+                                                    cn++;
+                                                    const c = findCard(s.mainCardInstanceId);
+                                                    const act = YGO_ACTIONS.find(a => a.name === s.actionType) || {};
+                                                    const targets = (s.targetCards || []).map(tc => (findCard(tc.instanceId) || {}).name).filter(Boolean);
+                                                    const vul = s.vulnerability && (s.vulnerability.text || (s.vulnerability.cards || []).length);
+                                                    return (
+                                                        <li key={s.id}>
+                                                            <button type="button" onClick={() => { setStepsView('list'); setTimeout(() => { const el = document.querySelector(`[data-step-id="${s.id}"]`); if (el) el.scrollIntoView({ block: 'center' }); }, 80); }} className="w-full text-left py-1.5 flex items-start gap-2 hover:bg-[var(--color-surface)]/50 rounded">
+                                                                <span className="w-8 shrink-0 text-right font-bold text-[var(--color-text-muted)]">{cn}.</span>
+                                                                {c && <img src={c.image_url_small} alt="" className="w-6 h-9 object-cover rounded-sm shrink-0" />}
+                                                                <span className="min-w-0">
+                                                                    <span className="text-[var(--color-accent)]">{act.emoji} {s.actionType === 'Other' ? (s.customActionText || trTerm('Other')) : trTerm(s.actionType)}</span> <b>{c ? c.name : '?'}</b>
+                                                                    {targets.length ? <span className="text-[var(--color-text-muted)]"> → {targets.join(', ')}</span> : null}
+                                                                    {s.location ? <span className="text-[var(--color-text-muted)]"> [{ZONE_ABBREVIATIONS[s.location] || trTerm(s.location)}]</span> : null}
+                                                                    {vul ? ' ⚠️' : ''}{s.branch && s.branch.steps && s.branch.steps.length ? ' ⑂' : ''}
+                                                                    {s.actionDescription ? <span className="block text-xs text-[var(--color-text-muted)] break-words">{stripMentions(htmlToText(s.actionDescription))}</span> : null}
+                                                                </span>
+                                                            </button>
+                                                        </li>
+                                                    );
+                                                }); })()}
+                                            </ol>
+                                        )}
+                                        <div className={`grid gap-4 grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] ${stepsView === 'list' ? 'steps-list' : ''} ${stepsView === 'compact' ? 'hidden' : ''}`} data-drop-area="comboSteps" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, 'comboSteps')}>
                                             {comboSteps.map((step, index) => { 
                                                 if (step.type === 'group') {
                                                     return (
@@ -4493,6 +4722,7 @@
                                                 <div 
                                                     key={step.id}
                                                     data-step-box="1"
+                                                    data-step-id={step.id}
                                                     onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'step') handleReorder('step', d.data, step); setDragOverIndex(null); }}
                                                     onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOverIndex(index); }}
                                                     onDragLeave={e => { e.stopPropagation(); }}
@@ -4594,6 +4824,19 @@
                                         <section className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 notes-section">
                                             <h3 className="text-xl font-semibold text-[var(--color-secondary)] mb-3">{t('notesTitle')}</h3>
                                             <RichTextEditor value={notes} onChange={newNotes => setComboState({...comboState, notes: newNotes}, "Updated notes")} />
+                                            <p className="text-xs text-[var(--color-text-muted)] mt-2">{t('mentionHint')}</p>
+                                            {(() => {
+                                                const names = [...new Set([...htmlToText(notes).matchAll(MENTION_RE)].map(m => m[1].trim()))];
+                                                if (!names.length) return null;
+                                                return (
+                                                    <div className="flex flex-wrap gap-2 mt-2 items-center">
+                                                        <span className="text-xs text-[var(--color-text-muted)]">{t('mentionedCards')}:</span>
+                                                        {names.map(nm => { const c = cardPool.find(x => (x.name || '').toLowerCase() === nm.toLowerCase()); return (
+                                                            <button key={nm} type="button" onClick={() => c && setSelectedCardForZoom(c)} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${c ? 'bg-violet-700/70 hover:bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'}`}>{c && <img src={c.image_url_small} alt="" className="w-4 h-6 object-cover rounded-sm" />}{nm}</button>
+                                                        ); })}
+                                                    </div>
+                                                );
+                                            })()}
                                         </section>
                                     </div>
                                 </div>
