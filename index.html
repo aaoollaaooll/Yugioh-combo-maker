@@ -501,6 +501,7 @@
         .mobile-tabbar button.text-amber-400 i { color: #fbbf24; }
         @media (max-width: 767px) { #app-footer { padding-bottom: 80px; } main { padding-bottom: 72px; } }
         @media (min-width: 768px) { .mobile-tabbar { display: none; } }
+        .pill-meta { display: inline-block; padding: 1px 8px; border: 1px solid var(--color-border); border-radius: 999px; font-size: .72rem; color: var(--color-text-muted); }
     </style>
 </head>
 <body
@@ -949,6 +950,9 @@
         // Ramas ante interrupciones
         const EXTRA_TRANSLATIONS_BRANCH = {"es": {"branchAdd": "Añadir rama (si te interrumpen)", "branchDefaultTitle": "Si me interrumpen aquí", "branchIf": "Si usan", "branchTitleLabel": "Nombre de la rama", "branchFromStep": "desde el paso {n}", "branchRemove": "Quitar rama", "branchAddStep": "+ Paso de la rama", "branchView": "Ver rama", "branchBack": "Volver a la línea principal", "branchLabel": "Rama"}, "en": {"branchAdd": "Add branch (if interrupted)", "branchDefaultTitle": "If I get interrupted here", "branchIf": "If they use", "branchTitleLabel": "Branch name", "branchFromStep": "from step {n}", "branchRemove": "Remove branch", "branchAddStep": "+ Branch step", "branchView": "View branch", "branchBack": "Back to the main line", "branchLabel": "Branch"}, "pt": {"branchAdd": "Adicionar ramo (se interromperem)", "branchDefaultTitle": "Se me interromperem aqui", "branchIf": "Se usarem", "branchTitleLabel": "Nome do ramo", "branchFromStep": "a partir do passo {n}", "branchRemove": "Remover ramo", "branchAddStep": "+ Passo do ramo", "branchView": "Ver ramo", "branchBack": "Voltar à linha principal", "branchLabel": "Ramo"}, "fr": {"branchAdd": "Ajouter une variante (si interrompu)", "branchDefaultTitle": "Si je suis interrompu ici", "branchIf": "S'ils utilisent", "branchTitleLabel": "Nom de la variante", "branchFromStep": "depuis l'étape {n}", "branchRemove": "Supprimer la variante", "branchAddStep": "+ Étape de la variante", "branchView": "Voir la variante", "branchBack": "Revenir à la ligne principale", "branchLabel": "Variante"}, "it": {"branchAdd": "Aggiungi ramo (se interrotto)", "branchDefaultTitle": "Se vengo interrotto qui", "branchIf": "Se usano", "branchTitleLabel": "Nome del ramo", "branchFromStep": "dal passo {n}", "branchRemove": "Rimuovi ramo", "branchAddStep": "+ Passo del ramo", "branchView": "Vedi ramo", "branchBack": "Torna alla linea principale", "branchLabel": "Ramo"}, "de": {"branchAdd": "Abzweigung hinzufügen (bei Unterbrechung)", "branchDefaultTitle": "Falls ich hier unterbrochen werde", "branchIf": "Falls sie nutzen", "branchTitleLabel": "Name der Abzweigung", "branchFromStep": "ab Schritt {n}", "branchRemove": "Abzweigung entfernen", "branchAddStep": "+ Schritt der Abzweigung", "branchView": "Abzweigung ansehen", "branchBack": "Zurück zur Hauptlinie", "branchLabel": "Abzweigung"}, "ru": {"branchAdd": "Добавить ветку (если прервут)", "branchDefaultTitle": "Если меня прервут здесь", "branchIf": "Если используют", "branchTitleLabel": "Название ветки", "branchFromStep": "с шага {n}", "branchRemove": "Удалить ветку", "branchAddStep": "+ Шаг ветки", "branchView": "Смотреть ветку", "branchBack": "Вернуться к основной линии", "branchLabel": "Ветка"}, "ja": {"branchAdd": "分岐を追加 (妨害された場合)", "branchDefaultTitle": "ここで妨害されたら", "branchIf": "相手が使ったら:", "branchTitleLabel": "分岐の名前", "branchFromStep": "ステップ {n} から", "branchRemove": "分岐を削除", "branchAddStep": "+ 分岐のステップ", "branchView": "分岐を見る", "branchBack": "メインのルートに戻る", "branchLabel": "分岐"}, "ko": {"branchAdd": "분기 추가 (방해받을 경우)", "branchDefaultTitle": "여기서 방해받으면", "branchIf": "상대가 사용하면", "branchTitleLabel": "분기 이름", "branchFromStep": "{n}단계부터", "branchRemove": "분기 삭제", "branchAddStep": "+ 분기 단계", "branchView": "분기 보기", "branchBack": "메인 루트로 돌아가기", "branchLabel": "분기"}, "zh": {"branchAdd": "添加分支(被干扰时)", "branchDefaultTitle": "如果在这里被干扰", "branchIf": "如果对方使用", "branchTitleLabel": "分支名称", "branchFromStep": "从第 {n} 步开始", "branchRemove": "删除分支", "branchAddStep": "+ 分支步骤", "branchView": "查看分支", "branchBack": "返回主线", "branchLabel": "分支"}};
         Object.entries(EXTRA_TRANSLATIONS_BRANCH).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        // Datos del combo
+        const FORMAT_LABEL = { md: 'Master Duel', tcg: 'TCG', ocg: 'OCG' };
+        Object.entries({"es": {"metaTitle": "Datos del combo", "metaFormat": "Formato", "metaAuthor": "Autor", "metaSource": "Fuente (video o guía)", "metaUpdated": "Revisado el", "metaNone": "Sin indicar", "metaBy": "por", "metaToday": "Hoy"}, "en": {"metaTitle": "Combo info", "metaFormat": "Format", "metaAuthor": "Author", "metaSource": "Source (video or guide)", "metaUpdated": "Reviewed on", "metaNone": "Not set", "metaBy": "by", "metaToday": "Today"}, "pt": {"metaTitle": "Dados do combo", "metaFormat": "Formato", "metaAuthor": "Autor", "metaSource": "Fonte (vídeo ou guia)", "metaUpdated": "Revisado em", "metaNone": "Não informado", "metaBy": "por", "metaToday": "Hoje"}, "fr": {"metaTitle": "Infos du combo", "metaFormat": "Format", "metaAuthor": "Auteur", "metaSource": "Source (vidéo ou guide)", "metaUpdated": "Révisé le", "metaNone": "Non indiqué", "metaBy": "par", "metaToday": "Aujourd'hui"}, "it": {"metaTitle": "Dati della combo", "metaFormat": "Formato", "metaAuthor": "Autore", "metaSource": "Fonte (video o guida)", "metaUpdated": "Rivista il", "metaNone": "Non indicato", "metaBy": "di", "metaToday": "Oggi"}, "de": {"metaTitle": "Combo-Daten", "metaFormat": "Format", "metaAuthor": "Autor", "metaSource": "Quelle (Video oder Guide)", "metaUpdated": "Geprüft am", "metaNone": "Nicht angegeben", "metaBy": "von", "metaToday": "Heute"}, "ru": {"metaTitle": "Данные комбо", "metaFormat": "Формат", "metaAuthor": "Автор", "metaSource": "Источник (видео или гайд)", "metaUpdated": "Проверено", "metaNone": "Не указано", "metaBy": "автор:", "metaToday": "Сегодня"}, "ja": {"metaTitle": "コンボ情報", "metaFormat": "フォーマット", "metaAuthor": "作者", "metaSource": "出典 (動画やガイド)", "metaUpdated": "確認日", "metaNone": "未設定", "metaBy": "作者:", "metaToday": "今日"}, "ko": {"metaTitle": "콤보 정보", "metaFormat": "포맷", "metaAuthor": "작성자", "metaSource": "출처 (영상 또는 가이드)", "metaUpdated": "검토일", "metaNone": "미입력", "metaBy": "작성:", "metaToday": "오늘"}, "zh": {"metaTitle": "Combo 信息", "metaFormat": "赛制", "metaAuthor": "作者", "metaSource": "来源(视频或攻略)", "metaUpdated": "审核日期", "metaNone": "未填写", "metaBy": "作者:", "metaToday": "今天"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         Object.entries({"es": {"localSaveActive": "Guardado local activado"}, "en": {"localSaveActive": "Local saving on"}, "pt": {"localSaveActive": "Salvamento local ativado"}, "fr": {"localSaveActive": "Sauvegarde locale activée"}, "it": {"localSaveActive": "Salvataggio locale attivo"}, "de": {"localSaveActive": "Lokales Speichern aktiv"}, "ru": {"localSaveActive": "Локальное сохранение включено"}, "ja": {"localSaveActive": "ローカル保存オン"}, "ko": {"localSaveActive": "로컬 저장 사용 중"}, "zh": {"localSaveActive": "已启用本地保存"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // Notas del combo de ejemplo real
         Object.entries({"es": {"exampleNotes": "Combo real de ejemplo (Rikka con Predaplant, 1 carta). Pruébalo en el tablero (▶) o en modo práctica."}, "en": {"exampleNotes": "Real example combo (Rikka with Predaplant, 1 card). Try it on the board (▶) or in practice mode."}, "pt": {"exampleNotes": "Combo real de exemplo (Rikka com Predaplant, 1 carta). Teste no tabuleiro (▶) ou no modo prática."}, "fr": {"exampleNotes": "Vrai combo d'exemple (Rikka avec Predaplant, 1 carte). Essayez-le sur le plateau (▶) ou en mode entraînement."}, "it": {"exampleNotes": "Vera combo di esempio (Rikka con Predaplant, 1 carta). Provala sul tabellone (▶) o in modalità allenamento."}, "de": {"exampleNotes": "Echte Beispiel-Combo (Rikka mit Predaplant, 1 Karte). Probiere sie auf dem Spielfeld (▶) oder im Übungsmodus aus."}, "ru": {"exampleNotes": "Реальное комбо-пример (Rikka с Predaplant, 1 карта). Попробуйте его на поле (▶) или в режиме тренировки."}, "ja": {"exampleNotes": "実際のサンプルコンボ (六花 + 捕食植物、1枚初動)。盤面 (▶) や練習モードで試してみてください。"}, "ko": {"exampleNotes": "실제 예시 콤보 (리카 + 포식식물, 1장 전개). 보드(▶)나 연습 모드에서 사용해 보세요."}, "zh": {"exampleNotes": "真实的示例 Combo(六花 + 捕食植物,1 卡起手)。可在棋盘(▶)或练习模式中试试。"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
@@ -1606,7 +1610,7 @@
         const WILDCARD_IMG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 59 86'><rect width='59' height='86' rx='3' fill='#4c1d95'/><rect x='4' y='4' width='51' height='78' rx='2' fill='none' stroke='#c4b5fd' stroke-width='1.5' stroke-dasharray='3 2'/><text x='29.5' y='55' font-size='36' text-anchor='middle' fill='#ede9fe' font-family='Arial' font-weight='bold'>?</text></svg>");
         const makeWildcardCard = (name) => ({ instanceId: generateId(), isCustom: true, isWildcard: true, name, type: 'Wildcard', desc: '', atk: '', def: '', image_url: WILDCARD_IMG, image_url_small: WILDCARD_IMG, image_url_cropped: WILDCARD_IMG, notes: '' });
 
-        const ExportLayout = ({ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, isPreview = false }) => {
+        const ExportLayout = ({ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, isPreview = false, meta = {} }) => {
             const theme = exportOptions.theme || 'dark';
             const cardFilter = exportOptions.cardFilter || 'color';
             const nbsp = (str) => String(str || '').replace(/ /g, '\u00A0');
@@ -1749,7 +1753,8 @@
             return ( 
                 <div className={`p-8 text-white export-onewm export-theme-${theme} export-ink-${cardFilter} ${isPreview && cardFilter !== 'color' ? `export-filter-${cardFilter}` : ''}`} data-watermark={'YGOH-ComboMaker'} style={backgroundStyle}>
                     <div className="relative z-10">
-                        <h1 className="text-5xl font-bold text-center text-violet-300 mb-8 font-yugioh">{nbsp(comboTitle || t('untitledCombo'))}</h1> 
+                        <h1 className="text-5xl font-bold text-center text-violet-300 mb-8 font-yugioh">{nbsp(comboTitle || t('untitledCombo'))}</h1>
+                        {(meta.format || meta.author || meta.updated || meta.source) && <p className="text-center text-slate-300 -mt-6 mb-6 text-sm">{nbsp([FORMAT_LABEL[meta.format], meta.author ? `${t('metaBy')} ${meta.author}` : '', meta.updated, meta.source].filter(Boolean).join('  ·  '))}</p>} 
                         <div className="flex flex-col gap-6"> 
                             {(hasHandX || showNotesX || showBoardTopX) && (
                                 <div className="flex flex-row gap-6 items-stretch">
@@ -3113,6 +3118,8 @@
                 setComboStateRaw(newState, description);
             };
             const { cardPool, startingHand, comboSteps, finalBoardCards, comboTitle, notes } = comboState;
+            const comboMeta = comboState.meta || {};
+            const [metaOpen, setMetaOpen] = useState(false);
             const searchAbortController = useRef(null);
             const langMenuRef = useRef(null);
             const cardPoolSectionRef = useRef(null);
@@ -3488,6 +3495,7 @@
             };
 
             const updateStep = (stepId, updatedData) => { const newSteps = comboSteps.map(step => step.id === stepId ? { ...step, ...updatedData } : step); setComboState({ ...comboState, comboSteps: newSteps }, `Updated step`); };
+            const updateMeta = (key, value) => setComboState({ ...comboState, meta: { ...(comboState.meta || {}), [key]: value } }, 'Updated combo info');
             // Ramas: un paso puede tener una línea alternativa («si me interrumpen aquí…») con sus propios pasos
             const setBranch = (stepId, branch) => updateStep(stepId, { branch });
             const branchTitleFor = (step) => {
@@ -3612,7 +3620,7 @@
                     setExportMessage(t('generatingPng'));
                     const exportContainer = document.getElementById('export-container');
                     const exportRoot = createRoot(exportContainer);
-                    exportRoot.render(<ExportLayout {...{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap }} />);
+                    exportRoot.render(<ExportLayout {...{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, meta: comboMeta }} />);
                     
                     // --- New Robust Export Logic ---
                     // 1. Wait for React to render the component.
@@ -3861,6 +3869,9 @@
             const buildComboText = () => {
                 const nameOf = (id) => { const c = findCard(id); return c ? c.name : '?'; };
                 const lines = [comboTitle || t('untitledCombo')];
+                const metaLine = [FORMAT_LABEL[comboMeta.format], comboMeta.author ? `${t('metaBy')} ${comboMeta.author}` : '', comboMeta.updated].filter(Boolean).join(' · ');
+                if (metaLine) lines.push(metaLine);
+                if (comboMeta.source) lines.push(comboMeta.source);
                 const hands = startingHand.filter(g => g && g.length);
                 if (hands.length) lines.push(`${t('startingHandTitle')}: ` + hands.map(g => g.map(it => (it.quantity > 1 ? `${it.quantity}x ` : '') + nameOf(it.instanceId)).join(' + ')).join(`  |  ${t('or')}  |  `));
                 lines.push('');
@@ -3985,6 +3996,7 @@
                         { id: generateId(), card: { $c: 68941332, i: 'ex_sheet' }, zone: 'Spell/Trap 1', isDisruption: true },
                         { id: generateId(), card: { $c: 132308, i: 'ex_princ' }, zone: 'Graveyard', isDisruption: true }
                     ],
+                    meta: { format: 'md', author: 'Yusodus (Master Duel Meta)', source: 'https://www.masterduelmeta.com/combo/6ae3c0776dfa324bb1a64110', updated: '2026-11-11' },
                     comboTitle: 'Predarikka: 1c Primitive/Instant (Bouncer)',
                     notes: `${t('exampleNotes')}<br><br>End board (from the original guide): Rikka Queen Strenna → Hyperyton or Teardrop8 · Cactus Bouncer → Special Summon floodgate · Rikka Princess (GY) → monster negate · Rikka Konkon → tribute for cost · Rikka Sheet → mind control · Rikka Sacred Queen Strenna → reset Sheet · Kanzashi → destruction protection · Primrose (hand) → quick Xyz for either Teardrop · +1 draw. If you start with Instant Fusion, you also end with Super Polymerization.<br><br>Combo «Predarikka: 1c Primitive/Instant (Bouncer)» by Yusodus on Master Duel Meta (masterduelmeta.com), adapted as the example of this app.`,
                 };
@@ -4010,7 +4022,7 @@
                         if (r.ok) { const j = await r.json(); const cnt = {}; (j.data || []).forEach(c => { if (c.archetype) cnt[c.archetype] = (cnt[c.archetype] || 0) + 1; }); arch = (Object.entries(cnt).sort((a, b) => b[1] - a[1])[0] || [''])[0]; }
                     }
                 } catch (e) {}
-                const params = new URLSearchParams({ template: 'combo-sheet.yml', title: `[COMBO] ${comboTitle || ''}`.trim(), 'combo-title': comboTitle || '', archetype: arch, link: getShareUrl() });
+                const params = new URLSearchParams({ template: 'combo-sheet.yml', format: FORMAT_LABEL[comboMeta.format] || '', title: `[COMBO] ${comboTitle || ''}`.trim(), 'combo-title': comboTitle || '', archetype: arch, link: getShareUrl() });
                 const url = `https://github.com/aaoollaaooll/Yugioh-combo-maker/issues/new?${params.toString()}`;
                 if (win) { win.opener = null; win.location.href = url; } else window.open(url, '_blank', 'noopener');
             };
@@ -4191,7 +4203,7 @@
                         <ZonePickerModal show={zonePickerStepId !== null} onClose={() => setZonePickerStepId(null)} onSelect={(zone) => updateStep(zonePickerStepId, { location: zone })} t={t} />
 
                         <PngPreviewModal imageUrl={pngPreviewUrl} onDownload={downloadPng} onClose={() => setPngPreviewUrl(null)} t={t} shareUrl={getShareUrl()} comboTitle={comboTitle} />
-                        <ExportOptionsModal show={showExportOptionsModal} onClose={() => setShowExportOptionsModal(false)} onConfirm={() => handleConfirmExport('png')} onPrint={() => handleConfirmExport('print')} onCopyText={handleCopyText} exportOptions={exportOptions} setExportOptions={setExportOptions} layoutProps={{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t }} t={t} />
+                        <ExportOptionsModal show={showExportOptionsModal} onClose={() => setShowExportOptionsModal(false)} onConfirm={() => handleConfirmExport('png')} onPrint={() => handleConfirmExport('print')} onCopyText={handleCopyText} exportOptions={exportOptions} setExportOptions={setExportOptions} layoutProps={{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, meta: comboMeta }} t={t} />
                         <SaveComboModal show={showSaveModal} onClose={() => setShowSaveModal(false)} onSave={handleSaveCombo} onDownload={handleDownloadComboFile} t={t} isOnlineSaveEnabled={isOnlineSaveEnabled} />
                         <LoadComboModal show={showLoadModal} onClose={() => setShowLoadModal(false)} onSelect={handleLoadCombo} onDelete={handleDeleteCombo} onOpenFile={handleOpenComboFile} t={t} db={db} user={user} appId={appId} isOnlineSaveEnabled={isOnlineSaveEnabled}/>
                         <nav className="mobile-tabbar" aria-label={t('quickNav')}>
@@ -4323,6 +4335,34 @@
                                 <div className="w-full text-center text-xs text-slate-400 mb-4 h-4">
                                     {isOnlineSaveEnabled ? (user ? `${t('loggedInAs')} ${user.uid}` : t('connecting')) : t('localSaveActive')}
                                 </div>
+                                <details className="mb-4 rounded-lg border border-[var(--color-border)]/50 bg-[var(--color-surface)]/30 combo-meta" open={metaOpen} onToggle={e => setMetaOpen(e.currentTarget.open)}>
+                                    <summary className="cursor-pointer px-3 py-2 text-sm flex flex-wrap items-center gap-2">
+                                        <span className="font-semibold text-[var(--color-secondary)]"><i className="fas fa-info-circle mr-1"></i>{t('metaTitle')}</span>
+                                        {comboMeta.format && <span className="pill-meta">{FORMAT_LABEL[comboMeta.format]}</span>}
+                                        {comboMeta.author && <span className="pill-meta">{t('metaBy')} {comboMeta.author}</span>}
+                                        {comboMeta.updated && <span className="pill-meta">{comboMeta.updated}</span>}
+                                        {!comboMeta.format && !comboMeta.author && !comboMeta.updated && <span className="text-[var(--color-text-muted)]">{t('metaNone')}</span>}
+                                    </summary>
+                                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 p-3 pt-1">
+                                        <label className="text-xs text-[var(--color-text-muted)]">{t('metaFormat')}
+                                            <select value={comboMeta.format || ''} onChange={e => updateMeta('format', e.target.value)} className="mt-1 w-full p-2 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded text-sm text-[var(--color-text)]">
+                                                <option value="">{t('metaNone')}</option><option value="md">Master Duel</option><option value="tcg">TCG</option><option value="ocg">OCG</option>
+                                            </select>
+                                        </label>
+                                        <label className="text-xs text-[var(--color-text-muted)]">{t('metaAuthor')}
+                                            <input value={comboMeta.author || ''} maxLength={60} onChange={e => updateMeta('author', sanitizeHTML(e.target.value))} className="mt-1 w-full p-2 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded text-sm text-[var(--color-text)]" />
+                                        </label>
+                                        <label className="text-xs text-[var(--color-text-muted)]">{t('metaSource')}
+                                            <input type="url" value={comboMeta.source || ''} maxLength={300} placeholder="https://..." onChange={e => updateMeta('source', e.target.value.trim())} className="mt-1 w-full p-2 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded text-sm text-[var(--color-text)]" />
+                                        </label>
+                                        <label className="text-xs text-[var(--color-text-muted)]">{t('metaUpdated')}
+                                            <span className="flex gap-1 mt-1">
+                                                <input type="date" value={comboMeta.updated || ''} onChange={e => updateMeta('updated', e.target.value)} className="flex-1 min-w-0 p-2 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded text-sm text-[var(--color-text)]" />
+                                                <button type="button" onClick={() => updateMeta('updated', new Date().toISOString().slice(0, 10))} className="px-2 rounded bg-[var(--color-surface-light)] text-xs text-[var(--color-text)]">{t('metaToday')}</button>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </details>
                                 {showWelcome && (
                                     <div className="mb-4 p-4 rounded-lg border border-violet-500/40 bg-violet-900/20 flex flex-wrap items-center gap-3 justify-between">
                                         <div className="min-w-0">
