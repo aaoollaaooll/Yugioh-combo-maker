@@ -505,6 +505,16 @@
         .pill-meta { display: inline-block; padding: 1px 8px; border: 1px solid var(--color-border); border-radius: 999px; font-size: .72rem; color: var(--color-text-muted); }
         .card-inspector { position: fixed; right: 12px; bottom: 12px; width: 18rem; max-height: 78vh; overflow: auto; z-index: 35; flex-direction: column; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
         .gif-capturing .play-hl, .gif-capturing .play-main, .gif-capturing .play-pile-hl { animation: none !important; }
+        /* Fondo de estrellas ligero: dos capas de puntos que se desplazan con CSS (sin JavaScript por cuadro) */
+        html { background-color: #020617; }
+        html[data-theme="light"] { background-color: #f1f5f9; }
+        body::before, body::after { content: ''; position: fixed; top: -400px; left: 0; right: 0; bottom: 0; z-index: -10; pointer-events: none; background-repeat: repeat; will-change: transform; }
+        body::before { background-image: radial-gradient(1.6px 1.6px at 20px 30px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1.1px 1.1px at 120px 80px, rgba(255,255,255,.7), transparent 70%), radial-gradient(1.3px 1.3px at 200px 170px, rgba(255,255,255,.8), transparent 70%), radial-gradient(1px 1px at 70px 220px, rgba(255,255,255,.6), transparent 70%), radial-gradient(1.2px 1.2px at 240px 250px, rgba(255,255,255,.7), transparent 70%); background-size: 260px 260px; animation: ygo-stars-a 40s linear infinite; }
+        body::after { background-image: radial-gradient(2px 2px at 50px 120px, rgba(196,181,253,.85), transparent 70%), radial-gradient(1.6px 1.6px at 300px 40px, rgba(255,255,255,.9), transparent 70%), radial-gradient(2px 2px at 190px 300px, rgba(147,197,253,.75), transparent 70%); background-size: 380px 380px; animation: ygo-stars-b 70s linear infinite; opacity: .85; }
+        @keyframes ygo-stars-a { from { transform: translateY(0); } to { transform: translateY(260px); } }
+        @keyframes ygo-stars-b { from { transform: translateY(0); } to { transform: translateY(380px); } }
+        html[data-theme="light"] body::before, html[data-theme="light"] body::after { filter: invert(1); opacity: .35; }
+        html.bg-static body::before, html.bg-static body::after { animation-play-state: paused; }
     </style>
 </head>
 <body
@@ -692,6 +702,7 @@
 
         // Fondo animado o quieto (se recuerda; si el sistema pide menos movimiento, empieza quieto)
         window.__ygoBgAnimated = (() => { try { const v = localStorage.getItem('ygo_bg_anim'); if (v !== null) return v === '1'; } catch (e) {} return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); })();
+        if (window.__ygoBgAnimated === false) document.documentElement.classList.add('bg-static');
         const StarfieldBackground = () => {
             useEffect(() => {
                 const canvas = document.createElement('canvas');
@@ -1147,6 +1158,8 @@
             const inputRef = useRef(null);
             const [filter, setFilter] = useState('');
             const containerRef = useRef(null);
+            const menuRef = useRef(null);
+            const [fixedPos, setFixedPos] = useState(null);
             const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
             const [positionClasses, setPositionClasses] = useState('');
             const [apiResults, setApiResults] = useState([]);
@@ -1174,7 +1187,7 @@
 
             useEffect(() => {
                 const handleClickOutside = (event) => {
-                    if (containerRef.current && !containerRef.current.contains(event.target)) {
+                    if (containerRef.current && !containerRef.current.contains(event.target) && !(menuRef.current && menuRef.current.contains(event.target))) {
                         setIsOpen(false);
                     }
                 };
@@ -1190,6 +1203,27 @@
                 }
             }, [isOpen, filter]);
             
+            useLayoutEffect(() => {
+                if (!isOpen) { setFixedPos(null); return; }
+                const place = (e) => {
+                    if (e && e.target && menuRef.current && menuRef.current.contains && e.target.nodeType === 1 && menuRef.current.contains(e.target)) return;
+                    if (!containerRef.current) return;
+                    const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
+                    const r = containerRef.current.getBoundingClientRect();
+                    const mw = (menuRef.current ? menuRef.current.offsetWidth : 288) * z;
+                    const mh = (menuRef.current ? menuRef.current.offsetHeight : 320) * z;
+                    let left = r.left;
+                    if (left + mw > window.innerWidth - 8) left = Math.max(8, window.innerWidth - mw - 8);
+                    let top = r.bottom + 6;
+                    if (top + mh > window.innerHeight - 8 && r.top - mh - 6 > 8) top = r.top - mh - 6;
+                    setFixedPos({ top: top / z, left: left / z });
+                };
+                place();
+                const raf = requestAnimationFrame(() => place());
+                window.addEventListener('scroll', place, true);
+                window.addEventListener('resize', place);
+                return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place); };
+            }, [isOpen]);
             useLayoutEffect(() => {
                 if (isOpen && containerRef.current) {
                     const buttonRect = containerRef.current.getBoundingClientRect();
@@ -1278,8 +1312,8 @@
             const DesktopMenu = () => {
                 const isTwoColumn = !allMode && filteredPool.length > 7;
                 const menuWidthClass = isTwoColumn ? 'w-[30rem]' : 'w-72';
-                return (
-                     <div className={`absolute ${positionClasses} ${menuWidthClass} bg-slate-800 rounded-md shadow-lg border border-slate-700 z-50 flex flex-col max-h-80`}>
+                return createPortal(
+                     <div ref={menuRef} data-card-selector-menu="1" style={fixedPos ? { top: fixedPos.top, left: fixedPos.left } : { top: 0, left: 0, visibility: 'hidden' }} className={`fixed ${menuWidthClass} bg-slate-800 rounded-md shadow-lg border border-slate-700 z-[75] flex flex-col max-h-80`}>
                         <input
                             type="text"
                             key="card-selector-desktop-input"
@@ -1321,7 +1355,7 @@
                             )) : (cardSourceRef.current ? null : <div className="p-2 text-gray-400">{t('cardSelectorNoMatch')}</div>)}
                         </div>{renderApiSection(false)}</div>
                     </div>
-                );
+                , document.body);
             };
 
             const MobileOverlay = () => (
@@ -3617,7 +3651,7 @@
             };
             useEffect(() => {
                 if (!openStepMenuId) return;
-                const onDown = (e) => { if (!(e.target.closest && e.target.closest('[data-step-menu]'))) setOpenStepMenuId(null); };
+                const onDown = (e) => { if (!(e.target.closest && e.target.closest('[data-step-menu], [data-card-selector-menu]'))) setOpenStepMenuId(null); };
                 const onKey = (e) => { if (e.key === 'Escape') setOpenStepMenuId(null); };
                 document.addEventListener('pointerdown', onDown);
                 document.addEventListener('keydown', onKey);
@@ -4095,7 +4129,7 @@
                 setBgAnimated(v);
                 window.__ygoBgAnimated = v;
                 try { localStorage.setItem('ygo_bg_anim', v ? '1' : '0'); } catch (e) {}
-                window.dispatchEvent(new Event('ygo-bg-change'));
+                document.documentElement.classList.toggle('bg-static', !v);
             };
             // Abre el formulario de GitHub de la Comunidad ya rellenado (título, arquetipo sugerido y enlace)
             const handlePublishCommunity = async () => {
@@ -4279,7 +4313,7 @@
             if (isLoading) {
                 return (
                     <React.Fragment>
-                        <StarfieldBackground />
+
                         <div id="splash-screen">
                            <h1 className="font-yugi-title text-4xl md:text-6xl text-amber-300">Yu-Gi-Oh! Combo Maker</h1>
                         </div>
@@ -4289,7 +4323,6 @@
 
             return (
                 <React.Fragment>
-                    <StarfieldBackground />
                     {isPlayOpen && <PlayComboBoard comboState={comboState} onClose={closePlay} t={t} />}
                     <div className={`relative min-h-screen`} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
                         <Notification message={notification.message} show={notification.show} t={t} />
