@@ -583,7 +583,7 @@
         .collapse-box.is-open > * { transform: none; }
         /* Ya abierta, el contenido puede sobresalir (menús, ventanitas) */
         @keyframes ygo-unclip { to { overflow: visible; } }
-        .collapse-box.is-open > * { animation: ygo-unclip 0s .34s forwards; }
+        .collapse-box.is-open > .collapse-inner { animation: ygo-unclip 0s .34s forwards; }
         /* Animaciones ligeras (solo opacidad y transform) */
         @keyframes ygo-pop-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
         .combo-step-card, .branch-box { animation: ygo-pop-in .26s cubic-bezier(.2,.8,.2,1) both; }

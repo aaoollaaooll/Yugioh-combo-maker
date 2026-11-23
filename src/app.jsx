@@ -612,7 +612,7 @@
             }, [isOpen, preferredDirection]);
 
 
-            const filteredPool = cardPool.filter(card => card.name.toLowerCase().includes(filter.toLowerCase()));
+            const filteredPool = cardPool.filter(card => !card.isWildcard && card.name.toLowerCase().includes(filter.toLowerCase()));
             const buttonClasses = { 'side-add': "side-add-btn", 'menu-item': "step-menu-item", 'button': "w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed", 'small-button': "p-2 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed flex items-center justify-center", 'card-placeholder': "w-24 h-[8.5rem] flex items-center justify-center border-2 border-dashed border-slate-600 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors" };
             const buttonContent = { 'side-add': <i className="fas fa-plus"></i>, 'menu-item': <><i className="fas fa-plus w-5 text-center"></i>{buttonText}</>, 'button': buttonText || t('addStep'), 'small-button': <i className="fas fa-plus"></i>, 'card-placeholder': <i className="fas fa-plus"></i> };
             
@@ -1689,7 +1689,7 @@
                         <i className={`fas fa-chevron-down transition-transform duration-300 ${isCarouselOpen ? '' : '-rotate-90'}`}></i>
                     </h4>
                     <div className={`collapse-box ${isCarouselOpen ? 'is-open' : ''}`}>
-                        <div className="relative pt-2">
+                        <div className="relative pt-2 collapse-clip">
                             <button onClick={() => scroll(-1)} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-slate-700/50 hover:bg-slate-600 rounded-full p-1 text-white">
                                 <i className="fas fa-chevron-left"></i>
                             </button>
@@ -2616,7 +2616,7 @@
             const [showFilters, setShowFilters] = useState(false);
             const [highlightedCardIds, setHighlightedCardIds] = useState([]);
             const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
-            const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(window.innerWidth > 1024);
+            const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
             const [isCardPoolOpen, setIsCardPoolOpen] = useState(true);
             const [isStatsOpen, setIsStatsOpen] = useState(false);
             const [openStepMenuId, setOpenStepMenuId] = useState(null);
@@ -2655,6 +2655,8 @@
             useEffect(() => { try { localStorage.setItem('ygo_steps_view2', stepsView); } catch (e) {} }, [stepsView]);
             const [isStartingHandOpen, setIsStartingHandOpen] = useState(true);
             const [isFinalBoardOpen, setIsFinalBoardOpen] = useState(true);
+            const [isStepsOpen, setIsStepsOpen] = useState(true);
+            const [isNotesOpen, setIsNotesOpen] = useState(true);
             const [showSaveModal, setShowSaveModal] = useState(false);
             const [showLoadModal, setShowLoadModal] = useState(false);
             const [tutorialState, setTutorialState] = useState({ active: false, steps: [], key: 'main' });
@@ -4083,13 +4085,14 @@
                                     </div>
                                 )}
                                 <div className="flex-grow space-y-6">
-                                    <section id="starting-hand-section" className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30 starting-hand">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                        <section id="starting-hand-section" className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30 starting-hand">
                                         <h3 onClick={() => setIsStartingHandOpen(!isStartingHandOpen)} className="text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors">
                                             <span className="flex items-center">{t('startingHandTitle')} <span data-tooltip={t('helpStartingHand')}><i className="fas fa-question-circle ml-2"></i></span></span>
                                             <i className={`fas fa-chevron-down transition-transform duration-300 ${isStartingHandOpen ? '' : '-rotate-90'}`}></i>
                                         </h3>
                                         <div className={`collapse-box ${isStartingHandOpen ? 'is-open' : ''}`}>
-                                            <div className="p-4 pt-0">
+                                            <div className="p-4 pt-0 collapse-inner">
                                                 <div className="flex flex-row flex-wrap items-start gap-3 pb-3">
                                                     {startingHand.map((group, groupIndex) => (
                                                         <React.Fragment key={groupIndex}>
@@ -4109,13 +4112,34 @@
                                             </div>
                                         </div>
                                     </section>
+                                        <section id="notes-section" className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 notes-section">
+                                            <h3 onClick={() => setIsNotesOpen(!isNotesOpen)} className="text-xl font-semibold text-[var(--color-secondary)] mb-3 flex justify-between items-center cursor-pointer select-none"><span>{t('notesTitle')}</span><i className={`fas fa-chevron-down transition-transform duration-300 ${isNotesOpen ? '' : '-rotate-90'}`}></i></h3>
+                                            <div className={`collapse-box ${isNotesOpen ? 'is-open' : ''}`}><div className="collapse-inner">
+                                            <RichTextEditor value={notes} onChange={newNotes => setComboState({...comboState, notes: newNotes}, "Updated notes")} />
+                                            <p className="text-xs text-[var(--color-text-muted)] mt-2">{t('mentionHint')}</p>
+                                            {(() => {
+                                                const names = [...new Set([...htmlToText(notes).matchAll(MENTION_RE)].map(m => m[1].trim()))];
+                                                if (!names.length) return null;
+                                                return (
+                                                    <div className="flex flex-wrap gap-2 mt-2 items-center">
+                                                        <span className="text-xs text-[var(--color-text-muted)]">{t('mentionedCards')}:</span>
+                                                        {names.map(nm => { const c = cardPool.find(x => (x.name || '').toLowerCase() === nm.toLowerCase()); return (
+                                                            <button key={nm} type="button" onClick={() => c && setSelectedCardForZoom(c)} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${c ? 'bg-violet-700/70 hover:bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'}`}>{c && <img src={c.image_url_small} alt="" className="w-4 h-6 object-cover rounded-sm" />}{nm}</button>
+                                                        ); })}
+                                                    </div>
+                                                );
+                                            })()}
+                                            </div></div>
+                                        </section>
+                                    </div>
                                     <section id="combo-steps-section" className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 combo-steps">
                                         <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
-                                            <h3 className="text-xl font-semibold text-[var(--color-secondary)]">{t('comboStepsTitle')}</h3>
+                                            <h3 onClick={() => setIsStepsOpen(!isStepsOpen)} className="text-xl font-semibold text-[var(--color-secondary)] flex items-center gap-3 cursor-pointer select-none"><i className={`fas fa-chevron-down text-base transition-transform duration-300 ${isStepsOpen ? '' : '-rotate-90'}`}></i>{t('comboStepsTitle')}</h3>
                                             <div className="flex items-center"><div className="inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2" role="group"><button onClick={() => setStepsView('grid')} aria-pressed={stepsView === 'grid'} aria-label={t('stepsViewGrid')} data-tooltip={t('stepsViewGrid')} className={`px-3 py-1 text-sm ${stepsView === 'grid' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-th-large"></i></button><button onClick={() => setStepsView('list')} aria-pressed={stepsView === 'list'} aria-label={t('stepsViewList')} data-tooltip={t('stepsViewList')} className={`px-3 py-1 text-sm ${stepsView === 'list' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-list-ol"></i></button><button onClick={() => setStepsView('compact')} aria-pressed={stepsView === 'compact'} aria-label={t('stepsViewCompact')} data-tooltip={t('stepsViewCompact')} className={`px-3 py-1 text-sm ${stepsView === 'compact' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-align-left"></i></button></div><div className="inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2" role="group">{[['s', 'fa-magnifying-glass-minus', 'sizeSmall'], ['m', 'fa-magnifying-glass', 'sizeNormal'], ['l', 'fa-magnifying-glass-plus', 'sizeLarge']].map(([k, ic, lb]) => <button key={k} onClick={() => setStepSize(k)} aria-pressed={stepSize === k} aria-label={t(lb)} data-tooltip={t(lb)} className={`px-2.5 py-1 text-sm ${stepSize === k ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className={`fas ${ic}`}></i></button>)}</div>
                                                 <button onClick={() => setComboState({...comboState, comboSteps: [...comboSteps, { type: 'group', id: generateId(), title: 'New Group' }]}, 'Added group')} className="btn px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 mr-2">{t('addGroup')}</button>
                                             </div>
                                         </div>
+                                        <div className={`collapse-box ${isStepsOpen ? 'is-open' : ''}`}><div className="collapse-inner">
                                         {stepsView === 'compact' && (
                                             <ol className="text-sm divide-y divide-[var(--color-border)]/40 mb-3">
                                                 {(() => { let cn = 0; return comboSteps.map(s => {
@@ -4292,9 +4316,9 @@
                                             )})}
                                             <div className="steps-add-slot flex items-center justify-center w-full min-h-[10rem]" onDragOver={(e) => {e.preventDefault(); setDragOverIndex(comboSteps.length);}}><CardSelector cardPool={cardPool} onCardSelected={handleAddStepOrNote} allowNote={true} displayAs="card-placeholder" t={t} preferredDirection="side" /></div>
                                         </div>
+                                        </div></div>
                                     </section>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <section className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 final-board">
+                                    <section className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 final-board">
                                             <h3 onClick={() => setIsFinalBoardOpen(!isFinalBoardOpen)} className="text-xl font-semibold text-[var(--color-secondary)] mb-3 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors">
                                                 <span>
                                                     {t('finalBoardTitle')}
@@ -4304,8 +4328,8 @@
                                                 </span>
                                                 <i className={`fas fa-chevron-down transition-transform duration-300 ${isFinalBoardOpen ? '' : '-rotate-90'}`}></i>
                                             </h3>
-                                             <div className={`collapse-box ${isFinalBoardOpen ? 'is-open' : ''}`}>
-                                                {finalBoardCards.length > 0 && <FinalBoardMini items={finalBoardCards} className="mb-4" onCardClick={c => setSelectedCardForZoom(c)} />}
+                                             <div className={`collapse-box ${isFinalBoardOpen ? 'is-open' : ''}`}><div className="collapse-inner"><div className="grid gap-4 lg:grid-cols-2 items-start"><div>
+                                                
                                                 <div data-drop-area="finalBoard" onDragOver={(e) => {e.preventDefault(); e.currentTarget.classList.add('drag-over')}} onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')} onDrop={(e) => handleDrop(e, 'finalBoard')} className={`drop-zone p-4 bg-black/20 rounded-lg min-h-[9.5rem] flex flex-wrap gap-3 border-2 border-dashed border-[var(--color-border)] ${finalBoardCards.length === 0 ? 'justify-center items-center' : 'justify-start items-start'}`}>
                                                     {finalBoardCards.map(item => (
                                                         <div key={item.id} className="flex flex-col items-center gap-1 w-28" draggable={true} onDragStart={e => handleDragStart(e, 'board-card', item)} onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'board-card') handleReorder('board', d.data, item); }}>
@@ -4320,34 +4344,18 @@
                                                     <CardSelector cardPool={cardPool.filter(p => !finalBoardCards.find(fb => fb.card.instanceId === p.instanceId))} onCardSelected={addCardToFinalBoard} displayAs="card-placeholder" t={t} preferredDirection="up" />
                                                 </div>
                                             </div>
+                                            <div className="final-board-mini-col">{finalBoardCards.length > 0 ? <FinalBoardMini items={finalBoardCards} onCardClick={c => setSelectedCardForZoom(c)} /> : <div className="h-full min-h-[9.5rem] rounded-lg border-2 border-dashed border-[var(--color-border)] flex items-center justify-center text-center text-sm text-[var(--color-text-muted)] p-4"><span><i className="fas fa-chess-board text-2xl block mb-2"></i>{t('finalBoardMiniEmpty')}</span></div>}</div>
+                                            </div></div></div>
                                         </section>
-                                        <section className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 notes-section">
-                                            <h3 className="text-xl font-semibold text-[var(--color-secondary)] mb-3">{t('notesTitle')}</h3>
-                                            <RichTextEditor value={notes} onChange={newNotes => setComboState({...comboState, notes: newNotes}, "Updated notes")} />
-                                            <p className="text-xs text-[var(--color-text-muted)] mt-2">{t('mentionHint')}</p>
-                                            {(() => {
-                                                const names = [...new Set([...htmlToText(notes).matchAll(MENTION_RE)].map(m => m[1].trim()))];
-                                                if (!names.length) return null;
-                                                return (
-                                                    <div className="flex flex-wrap gap-2 mt-2 items-center">
-                                                        <span className="text-xs text-[var(--color-text-muted)]">{t('mentionedCards')}:</span>
-                                                        {names.map(nm => { const c = cardPool.find(x => (x.name || '').toLowerCase() === nm.toLowerCase()); return (
-                                                            <button key={nm} type="button" onClick={() => c && setSelectedCardForZoom(c)} className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${c ? 'bg-violet-700/70 hover:bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'}`}>{c && <img src={c.image_url_small} alt="" className="w-4 h-6 object-cover rounded-sm" />}{nm}</button>
-                                                        ); })}
-                                                    </div>
-                                                );
-                                            })()}
-                                        </section>
-                                        <section className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30">
+                                    <section className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30">
                                             <h3 onClick={() => setIsStatsOpen(!isStatsOpen)} className="text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors">
                                                 <span>{t('comboStatsTitle')}</span>
                                                 <i className={`fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`}></i>
                                             </h3>
                                             <div className={`collapse-box ${isStatsOpen ? 'is-open' : ''}`}>
-                                                <ComboStats stats={comboStats} t={t} />
+                                                <div className="collapse-inner"><ComboStats stats={comboStats} t={t} /></div>
                                             </div>
                                         </section>
-                                    </div>
                                 </div>
                             </div>
                         </main>

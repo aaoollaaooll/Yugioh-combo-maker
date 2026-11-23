@@ -1846,7 +1846,7 @@ const CardSelector = ({
       setPositionClasses(classes);
     }
   }, [isOpen, preferredDirection]);
-  const filteredPool = cardPool.filter(card => card.name.toLowerCase().includes(filter.toLowerCase()));
+  const filteredPool = cardPool.filter(card => !card.isWildcard && card.name.toLowerCase().includes(filter.toLowerCase()));
   const buttonClasses = {
     'side-add': "side-add-btn",
     'menu-item': "step-menu-item",
@@ -3690,7 +3690,7 @@ const PopularCardsCarousel = ({
   })), React.createElement("div", {
     className: `collapse-box ${isCarouselOpen ? 'is-open' : ''}`
   }, React.createElement("div", {
-    className: "relative pt-2"
+    className: "relative pt-2 collapse-clip"
   }, React.createElement("button", {
     onClick: () => scroll(-1),
     className: "absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-slate-700/50 hover:bg-slate-600 rounded-full p-1 text-white"
@@ -5290,7 +5290,7 @@ const App = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [highlightedCardIds, setHighlightedCardIds] = useState([]);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
-  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(window.innerWidth > 1024);
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
   const [isCardPoolOpen, setIsCardPoolOpen] = useState(true);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [openStepMenuId, setOpenStepMenuId] = useState(null);
@@ -5389,6 +5389,8 @@ const App = () => {
   }, [stepsView]);
   const [isStartingHandOpen, setIsStartingHandOpen] = useState(true);
   const [isFinalBoardOpen, setIsFinalBoardOpen] = useState(true);
+  const [isStepsOpen, setIsStepsOpen] = useState(true);
+  const [isNotesOpen, setIsNotesOpen] = useState(true);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [tutorialState, setTutorialState] = useState({
@@ -8299,6 +8301,8 @@ const App = () => {
     className: "btn px-5 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
   }, t('guideStart'))))), React.createElement("div", {
     className: "flex-grow space-y-6"
+  }, React.createElement("div", {
+    className: "grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"
   }, React.createElement("section", {
     id: "starting-hand-section",
     className: "bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30 starting-hand"
@@ -8316,7 +8320,7 @@ const App = () => {
   })), React.createElement("div", {
     className: `collapse-box ${isStartingHandOpen ? 'is-open' : ''}`
   }, React.createElement("div", {
-    className: "p-4 pt-0"
+    className: "p-4 pt-0 collapse-inner"
   }, React.createElement("div", {
     className: "flex flex-row flex-wrap items-start gap-3 pb-3"
   }, startingHand.map((group, groupIndex) => React.createElement(React.Fragment, {
@@ -8404,13 +8408,56 @@ const App = () => {
     }, 'Add alternate hand'),
     className: "btn self-center px-3 py-1 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-primary-hover)]"
   }, t('addAlternateHand')))))), React.createElement("section", {
+    id: "notes-section",
+    className: "bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 notes-section"
+  }, React.createElement("h3", {
+    onClick: () => setIsNotesOpen(!isNotesOpen),
+    className: "text-xl font-semibold text-[var(--color-secondary)] mb-3 flex justify-between items-center cursor-pointer select-none"
+  }, React.createElement("span", null, t('notesTitle')), React.createElement("i", {
+    className: `fas fa-chevron-down transition-transform duration-300 ${isNotesOpen ? '' : '-rotate-90'}`
+  })), React.createElement("div", {
+    className: `collapse-box ${isNotesOpen ? 'is-open' : ''}`
+  }, React.createElement("div", {
+    className: "collapse-inner"
+  }, React.createElement(RichTextEditor, {
+    value: notes,
+    onChange: newNotes => setComboState({
+      ...comboState,
+      notes: newNotes
+    }, "Updated notes")
+  }), React.createElement("p", {
+    className: "text-xs text-[var(--color-text-muted)] mt-2"
+  }, t('mentionHint')), (() => {
+    const names = [...new Set([...htmlToText(notes).matchAll(MENTION_RE)].map(m => m[1].trim()))];
+    if (!names.length) return null;
+    return React.createElement("div", {
+      className: "flex flex-wrap gap-2 mt-2 items-center"
+    }, React.createElement("span", {
+      className: "text-xs text-[var(--color-text-muted)]"
+    }, t('mentionedCards'), ":"), names.map(nm => {
+      const c = cardPool.find(x => (x.name || '').toLowerCase() === nm.toLowerCase());
+      return React.createElement("button", {
+        key: nm,
+        type: "button",
+        onClick: () => c && setSelectedCardForZoom(c),
+        className: `flex items-center gap-1 px-2 py-1 rounded-full text-xs ${c ? 'bg-violet-700/70 hover:bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'}`
+      }, c && React.createElement("img", {
+        src: c.image_url_small,
+        alt: "",
+        className: "w-4 h-6 object-cover rounded-sm"
+      }), nm);
+    }));
+  })())))), React.createElement("section", {
     id: "combo-steps-section",
     className: "bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 combo-steps"
   }, React.createElement("div", {
     className: "flex flex-wrap justify-between items-center gap-2 mb-4"
   }, React.createElement("h3", {
-    className: "text-xl font-semibold text-[var(--color-secondary)]"
-  }, t('comboStepsTitle')), React.createElement("div", {
+    onClick: () => setIsStepsOpen(!isStepsOpen),
+    className: "text-xl font-semibold text-[var(--color-secondary)] flex items-center gap-3 cursor-pointer select-none"
+  }, React.createElement("i", {
+    className: `fas fa-chevron-down text-base transition-transform duration-300 ${isStepsOpen ? '' : '-rotate-90'}`
+  }), t('comboStepsTitle')), React.createElement("div", {
     className: "flex items-center"
   }, React.createElement("div", {
     className: "inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2",
@@ -8461,7 +8508,11 @@ const App = () => {
       }]
     }, 'Added group'),
     className: "btn px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 mr-2"
-  }, t('addGroup')))), stepsView === 'compact' && React.createElement("ol", {
+  }, t('addGroup')))), React.createElement("div", {
+    className: `collapse-box ${isStepsOpen ? 'is-open' : ''}`
+  }, React.createElement("div", {
+    className: "collapse-inner"
+  }, stepsView === 'compact' && React.createElement("ol", {
     className: "text-sm divide-y divide-[var(--color-border)]/40 mb-3"
   }, (() => {
     let cn = 0;
@@ -9024,9 +9075,7 @@ const App = () => {
     displayAs: "card-placeholder",
     t: t,
     preferredDirection: "side"
-  })))), React.createElement("div", {
-    className: "grid grid-cols-1 md:grid-cols-2 gap-6"
-  }, React.createElement("section", {
+  })))))), React.createElement("section", {
     className: "bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 final-board"
   }, React.createElement("h3", {
     onClick: () => setIsFinalBoardOpen(!isFinalBoardOpen),
@@ -9037,11 +9086,11 @@ const App = () => {
     className: `fas fa-chevron-down transition-transform duration-300 ${isFinalBoardOpen ? '' : '-rotate-90'}`
   })), React.createElement("div", {
     className: `collapse-box ${isFinalBoardOpen ? 'is-open' : ''}`
-  }, finalBoardCards.length > 0 && React.createElement(FinalBoardMini, {
-    items: finalBoardCards,
-    className: "mb-4",
-    onCardClick: c => setSelectedCardForZoom(c)
-  }), React.createElement("div", {
+  }, React.createElement("div", {
+    className: "collapse-inner"
+  }, React.createElement("div", {
+    className: "grid gap-4 lg:grid-cols-2 items-start"
+  }, React.createElement("div", null, React.createElement("div", {
     "data-drop-area": "finalBoard",
     onDragOver: e => {
       e.preventDefault();
@@ -9094,39 +9143,16 @@ const App = () => {
     displayAs: "card-placeholder",
     t: t,
     preferredDirection: "up"
-  })))), React.createElement("section", {
-    className: "bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 notes-section"
-  }, React.createElement("h3", {
-    className: "text-xl font-semibold text-[var(--color-secondary)] mb-3"
-  }, t('notesTitle')), React.createElement(RichTextEditor, {
-    value: notes,
-    onChange: newNotes => setComboState({
-      ...comboState,
-      notes: newNotes
-    }, "Updated notes")
-  }), React.createElement("p", {
-    className: "text-xs text-[var(--color-text-muted)] mt-2"
-  }, t('mentionHint')), (() => {
-    const names = [...new Set([...htmlToText(notes).matchAll(MENTION_RE)].map(m => m[1].trim()))];
-    if (!names.length) return null;
-    return React.createElement("div", {
-      className: "flex flex-wrap gap-2 mt-2 items-center"
-    }, React.createElement("span", {
-      className: "text-xs text-[var(--color-text-muted)]"
-    }, t('mentionedCards'), ":"), names.map(nm => {
-      const c = cardPool.find(x => (x.name || '').toLowerCase() === nm.toLowerCase());
-      return React.createElement("button", {
-        key: nm,
-        type: "button",
-        onClick: () => c && setSelectedCardForZoom(c),
-        className: `flex items-center gap-1 px-2 py-1 rounded-full text-xs ${c ? 'bg-violet-700/70 hover:bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'}`
-      }, c && React.createElement("img", {
-        src: c.image_url_small,
-        alt: "",
-        className: "w-4 h-6 object-cover rounded-sm"
-      }), nm);
-    }));
-  })()), React.createElement("section", {
+  }))), React.createElement("div", {
+    className: "final-board-mini-col"
+  }, finalBoardCards.length > 0 ? React.createElement(FinalBoardMini, {
+    items: finalBoardCards,
+    onCardClick: c => setSelectedCardForZoom(c)
+  }) : React.createElement("div", {
+    className: "h-full min-h-[9.5rem] rounded-lg border-2 border-dashed border-[var(--color-border)] flex items-center justify-center text-center text-sm text-[var(--color-text-muted)] p-4"
+  }, React.createElement("span", null, React.createElement("i", {
+    className: "fas fa-chess-board text-2xl block mb-2"
+  }), t('finalBoardMiniEmpty')))))))), React.createElement("section", {
     className: "bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30"
   }, React.createElement("h3", {
     onClick: () => setIsStatsOpen(!isStatsOpen),
@@ -9135,6 +9161,8 @@ const App = () => {
     className: `fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`
   })), React.createElement("div", {
     className: `collapse-box ${isStatsOpen ? 'is-open' : ''}`
+  }, React.createElement("div", {
+    className: "collapse-inner"
   }, React.createElement(ComboStats, {
     stats: comboStats,
     t: t
