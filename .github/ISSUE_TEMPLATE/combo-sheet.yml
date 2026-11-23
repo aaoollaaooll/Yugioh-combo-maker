@@ -6,9 +6,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Gracias por compartir un combo. En la app, arma tu combo y pulsa el botón de **compartir enlace** (🔗); luego pega ese enlace abajo.
+        Gracias por compartir un combo. Lo más fácil: en la app, arma tu combo y pulsa el botón de la nube ☁ («Publicar en Comunidad»); este formulario se abre ya rellenado. También puedes pegar abajo el enlace que copia el botón 🔗.
   - type: input
-    id: title
+    id: combo-title
     attributes:
       label: Título del combo
       placeholder: "Salamangreat Gazelle 1-Card Starter"
@@ -19,6 +19,14 @@ body:
     attributes:
       label: Arquetipo(s)
       placeholder: "Salamangreat, Code Talker"
+  - type: dropdown
+    id: format
+    attributes:
+      label: Formato
+      options:
+        - Master Duel
+        - TCG
+        - OCG
   - type: input
     id: tags
     attributes:
@@ -29,7 +37,7 @@ body:
     id: link
     attributes:
       label: Enlace del combo
-      description: "Pega aquí el enlace que copia la app con el botón de compartir."
+      description: "El enlace que copia la app con el botón de compartir."
       placeholder: "https://aaoollaaooll.github.io/Yugioh-combo-maker/?combo=..."
     validations:
       required: true

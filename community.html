@@ -3,162 +3,282 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Combos de la Comunidad</title>
+<title>Comunidad · Yu-Gi-Oh! Combo Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 <style>
-  :root { --bg:#0b0d10; --fg:#e8eef2; --muted:#9fb0bf; --card:#11161b; --accent:#4da3ff; --accent2:#6ee7b7; }
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial;}
-  .wrap{max-width:1100px;margin:0 auto;padding:16px;}
-  h1{font-size:1.6rem;margin:0 0 10px}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 16px}
-  .btn{background:var(--accent);color:#001730;border:0;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
-  .btn.sm{padding:6px 10px;font-weight:600;border-radius:8px}
-  .btn.ghost{background:#1a2430;color:var(--fg)}
-  .input,.select{background:#0f141a;border:1px solid #1e2a36;color:var(--fg);border-radius:10px;padding:9px 12px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-  .card{background:var(--card);border:1px solid #1a2330;border-radius:14px;padding:14px}
-  .muted{color:var(--muted)}
-  .pill{display:inline-block;padding:4px 8px;border:1px solid #253449;border-radius:999px;font-size:12px;margin-right:6px;margin-top:6px}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .footer{margin:22px 0 8px;color:var(--muted);font-size:12px}
-  a{color:var(--accent2)}
-  .empty{opacity:.8;border:1px dashed #2a394c;padding:16px;border-radius:12px;text-align:center}
-  .notes{font-size:13px;margin:8px 0 0;white-space:pre-wrap}
+  :root { --bg:#0b0f17; --panel:#111827; --panel2:#0f172a; --line:#1f2a3a; --fg:#e5e7eb; --muted:#94a3b8; --accent:#8b5cf6; --accent2:#a78bfa; --bad:#ef4444; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+  a { color: var(--accent2); }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  header.top { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom: 14px; }
+  header.top h1 { font-size: 1.5rem; margin: 0; font-weight: 800; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .btn { background: var(--accent); color:#fff; border:0; border-radius:10px; padding:9px 14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-size:.95rem; font-family: inherit; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.ghost { background:#1e293b; color:var(--fg); }
+  .btn.sm { padding:6px 10px; font-size:.85rem; border-radius:8px; }
+  .btn.on { background: var(--accent); color:#fff; }
+  .input { background:#0b1220; border:1px solid var(--line); color:var(--fg); border-radius:10px; padding:9px 12px; font: inherit; width: 100%; }
+  .tabs { display:flex; border:1px solid var(--line); border-radius:12px; overflow:hidden; margin: 6px 0 16px; }
+  .tabs button { flex:1; background:var(--panel2); color:var(--muted); border:0; padding:10px 6px; font-weight:700; cursor:pointer; font-size: .92rem; font-family: inherit; }
+  .tabs button.on { background: var(--accent); color:#fff; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:16px; }
+  .panel h2 { margin:0; font-size:1.1rem; }
+  .muted { color: var(--muted); }
+  .small { font-size: .82rem; }
+  .arch-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap:8px; margin-top:10px; }
+  .arch { display:flex; align-items:center; gap:10px; background:#1e293b; border:1px solid var(--line); border-radius:10px; padding:6px 10px 6px 6px; cursor:pointer; color:var(--fg); text-align:left; font: inherit; min-height: 48px; }
+  .arch:hover, .arch.on { border-color: var(--accent); background:#262f45; }
+  .arch img, .arch .ph { width:36px; height:36px; border-radius:6px; object-fit:cover; flex:0 0 36px; background:#0b1220; }
+  .arch .name { font-weight:700; font-size:.84rem; text-transform: uppercase; letter-spacing:.02em; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .arch .n { font-size:.75rem; background:#0b1220; border-radius:6px; padding:1px 6px; color: var(--muted); }
+  .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .combo { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr); background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-bottom:12px; }
+  .combo > div { padding:10px 12px; min-width:0; }
+  .combo .col-h { font-size:.72rem; font-weight:800; letter-spacing:.06em; color: var(--muted); margin-bottom:6px; text-transform: uppercase; }
+  .combo .hand, .combo .board { border-right:1px solid var(--line); }
+  .combo .hand .col-h { color:#38bdf8; } .combo .board .col-h { color:#4ade80; } .combo .info .col-h { color:#fbbf24; }
+  .thumbs { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+  .thumbs img { width:44px; aspect-ratio: 59/86; object-fit:cover; border-radius:3px; background:#0b1220; }
+  .thumbs img.dis { outline: 2px solid var(--bad); outline-offset: 1px; }
+  .thumbs .or { font-weight:800; color: var(--muted); font-size:.75rem; padding: 0 2px; }
+  .info h3 { margin: 0 0 4px; font-size: 1rem; }
+  .pill { display:inline-block; padding:2px 8px; border:1px solid #334155; border-radius:999px; font-size:.72rem; margin: 2px 4px 2px 0; color: var(--muted); }
+  .pill.arch-pill { color: var(--accent2); border-color: #4c1d95; }
+  .actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .empty { border:1px dashed #334155; border-radius:12px; padding:18px; text-align:center; color: var(--muted); }
+  .notice { background:#1e1b4b; border:1px solid #4c1d95; border-radius:12px; padding:12px 14px; margin-bottom:14px; }
+  .notice.err { background:#450a0a; border-color:#7f1d1d; }
+  .hidden { display:none !important; }
+  @media (max-width: 760px) {
+    .combo { grid-template-columns: 1fr; }
+    .combo .hand, .combo .board { border-right:0; border-bottom:1px solid var(--line); }
+    .arch-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Combos de la Comunidad</h1>
-    <div class="toolbar">
-      <a id="submitBtn" class="btn" target="_blank" rel="noopener">+ Enviar combo</a>
-      <a href="./" class="btn ghost">Abrir la app</a>
-      <input id="q" class="input" placeholder="Buscar por título o arquetipo…">
-      <select id="tag" class="select"><option value="">Todas las etiquetas</option></select>
+<div class="wrap">
+  <header class="top">
+    <h1 id="tTitle">Comunidad de combos</h1>
+    <div class="row">
+      <a href="./" class="btn ghost sm" id="tBack">← Volver a la app</a>
+      <a id="publishLink" class="btn sm" target="_blank" rel="noopener">+ Publicar combo</a>
     </div>
+  </header>
 
-    <div id="list" class="grid"></div>
-    <div id="empty" class="empty">Cargando combos…</div>
+  <div class="notice small" id="howTo"></div>
+  <div id="errorBox" class="notice err hidden"></div>
 
-    <div class="footer">Los combos vienen de los Issues de GitHub del proyecto. Ordenados por 👍.</div>
-  </div>
+  <div class="tabs" id="fmtTabs"></div>
+
+  <section class="panel">
+    <div class="toolbar">
+      <h2 id="tArchTitle">Arquetipos</h2>
+      <input id="archSearch" class="input" style="max-width:280px">
+    </div>
+    <div id="archGrid" class="arch-grid"></div>
+  </section>
+
+  <section>
+    <div class="toolbar">
+      <h2 id="listTitle" style="margin:0;font-size:1.15rem"></h2>
+      <div class="row">
+        <input id="q" class="input" style="max-width:220px">
+        <button class="btn sm ghost" data-sort="recent" id="sRecent"></button>
+        <button class="btn sm ghost" data-sort="top" id="sTop"></button>
+      </div>
+    </div>
+    <div id="list"></div>
+    <div id="empty" class="empty hidden"></div>
+  </section>
+
+  <p class="small muted" id="tFooter" style="margin-top:24px"></p>
+</div>
 
 <script>
 const GH_OWNER = "aaoollaaooll";
-const GH_REPO  = "Yugioh-combo-maker";
+const GH_REPO = "Yugioh-combo-maker";
+const ISSUE_FORM = `https://github.com/${GH_OWNER}/${GH_REPO}/issues/new?template=combo-sheet.yml`;
+const API = 'https://db.ygoprodeck.com/api/v7/';
+const IMG = (id) => `https://images.weserv.nl/?url=images.ygoprodeck.com/images/cards_small/${id}.jpg`;
+const FORMATS = [['all', null], ['md', 'Master Duel'], ['tcg', 'TCG'], ['ocg', 'OCG']];
 
-document.getElementById('submitBtn').href =
-  `https://github.com/${GH_OWNER}/${GH_REPO}/issues/new?template=combo-sheet.yml`;
+const T = {
+  es: { title:'Comunidad de combos', back:'← Volver a la app', publish:'+ Publicar combo', howTo:'Para publicar: arma tu combo en la app y pulsa el botón de la nube ☁ («Publicar en Comunidad»). Se abre un formulario de GitHub ya rellenado; solo confirmas (necesitas una cuenta de GitHub). Para votar, dale 👍 al combo en GitHub.', all:'Todos', archetypes:'Arquetipos', searchArch:'Buscar arquetipo…', search:'Buscar combo…', recent:'Recientes', top:'Más votados', combos:'Combos', combosOf:'Combos de', hand:'Mano inicial', board:'Campo final', info:'Info', by:'por', open:'Abrir en la app', vote:'Votar en GitHub', comments:'comentarios', noArch:'Sin arquetipo', empty:'Todavía no hay combos aquí. ¡Publica el primero desde la app!', loading:'Cargando combos…', error:'No se pudieron cargar los combos (GitHub limita las consultas: espera unos minutos y recarga).', footer:'Los combos vienen de los Issues de GitHub del proyecto y no están verificados.', steps:(n)=>`${n} pasos` },
+  en: { title:'Combo community', back:'← Back to the app', publish:'+ Publish combo', howTo:'To publish: build your combo in the app and press the cloud button ☁ ("Publish to Community"). A pre-filled GitHub form opens; just confirm it (you need a GitHub account). To vote, give the combo a 👍 on GitHub.', all:'All', archetypes:'Archetypes', searchArch:'Search archetype…', search:'Search combo…', recent:'Recent', top:'Top voted', combos:'Combos', combosOf:'Combos for', hand:'Starting hand', board:'End board', info:'Info', by:'by', open:'Open in the app', vote:'Vote on GitHub', comments:'comments', noArch:'No archetype', empty:'No combos here yet. Publish the first one from the app!', loading:'Loading combos…', error:'Could not load the combos (GitHub limits requests: wait a few minutes and reload).', footer:'Combos come from the project\'s GitHub Issues and are not verified.', steps:(n)=>`${n} steps` },
+};
+const LANG = (() => { try { const s = localStorage.getItem('ygo_lang'); if (s) return s === 'es' ? 'es' : 'en'; } catch (e) {} return (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en'; })();
+const t = T[LANG];
+document.documentElement.lang = LANG;
 
-function norm(s){ return (s || "").toLowerCase(); }
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const show = (el, on = true) => el.classList.toggle('hidden', !on);
+const norm = (s) => (s || '').toLowerCase();
 
-// Todo lo que viene de GitHub lo escribe cualquier persona: se escapa antes de mostrarlo.
-function esc(s){
-  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-// Un issue hecho con el formulario trae secciones "### Etiqueta" seguidas de su valor.
+// ---------- Leer el formulario del Issue ----------
 function parseFormSections(body) {
   const out = {};
-  for (const part of body.split(/^###\s+/m).slice(1)) {
-    const nl = part.indexOf("\n");
+  String(body || '').split(/^###\s+/m).slice(1).forEach(part => {
+    const nl = part.indexOf('\n');
     const label = norm((nl === -1 ? part : part.slice(0, nl)).trim());
-    let value = (nl === -1 ? "" : part.slice(nl + 1)).trim();
-    if (value === "_No response_") value = "";
-    out[label] = value;
-  }
+    const value = (nl === -1 ? '' : part.slice(nl + 1)).trim();
+    out[label] = /^_no response_$/i.test(value) ? '' : value;
+  });
   return out;
 }
+const pick = (sections, prefix) => { const k = Object.keys(sections).find(k => k.startsWith(prefix)); return k ? sections[k] : ''; };
+const splitList = (s) => (s || '').split(',').map(x => x.trim()).filter(Boolean);
 
-function pick(sections, prefix) {
-  const key = Object.keys(sections).find(k => k.startsWith(prefix));
-  return key ? sections[key] : "";
+// ---------- Leer el enlace del combo (formato v2: pako + base64url) ----------
+function decodeShare(encoded) {
+  const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const obj = JSON.parse(pako.inflate(bytes, { to: 'string' }));
+  return obj && obj.v === 2 ? obj.s : null;
+}
+function summarize(s) {
+  if (!s) return null;
+  const idOf = (c) => c && (c.$c || c.ygoprodeck_id) || null;
+  const pool = {};
+  (s.cardPool || []).forEach(c => { if (!c) return; const id = idOf(c); if (c.i) pool[c.i] = id; if (c.instanceId) pool[c.instanceId] = id; });
+  const hand = [];
+  (s.startingHand || []).filter(g => g && g.length).slice(0, 3).forEach((g, gi) => { if (gi > 0) hand.push(0); g.forEach(it => { const id = pool[it.instanceId]; if (id) hand.push(id); }); });
+  const fb = (s.finalBoardCards || []).filter(b => idOf(b.card));
+  return { hand: hand.slice(0, 12), board: fb.map(b => idOf(b.card)).slice(0, 20), disrupt: fb.map(b => !!b.isDisruption), steps: (s.comboSteps || []).filter(x => x && x.type === 'step').length };
+}
+function thumbsHtml(ids, disrupt) {
+  if (!ids || !ids.length) return '<span class="muted small">—</span>';
+  return ids.map((id, i) => id === 0 ? '<span class="or">O</span>' : `<img loading="lazy" src="${IMG(id)}" alt="" class="${disrupt && disrupt[i] ? 'dis' : ''}">`).join('');
 }
 
-function splitList(s) {
-  return (s || "").split(",").map(x => x.trim()).filter(Boolean);
-}
-
+function fmtKey(s) { const v = norm(s); if (v.includes('master')) return 'md'; if (v.includes('tcg')) return 'tcg'; if (v.includes('ocg')) return 'ocg'; return ''; }
 function issueToCombo(issue) {
-  const body = issue.body || "";
+  const body = issue.body || '';
   const m = body.match(/[?&]combo=([A-Za-z0-9_\-+\/=%]+)/);
-  if (!m) return null; // sin enlace de la app no hay nada que abrir
+  if (!m) return null;
+  const encoded = decodeURIComponent(m[1]);
   const s = parseFormSections(body);
+  let sum = null;
+  try { sum = summarize(decodeShare(encoded)); } catch (e) {}
+  const title = pick(s, 'título') || pick(s, 'titulo') || pick(s, 'title') || (issue.title || '').replace(/^\[combo\]\s*/i, '') || 'Combo';
+  const archs = splitList(pick(s, 'arquetipo') || pick(s, 'archetype'));
   return {
-    number: issue.number,
-    url: issue.html_url,
-    author: issue.user && issue.user.login,
-    likes: (issue.reactions && issue.reactions["+1"]) || 0,
-    title: pick(s, "título") || (issue.title || "").replace(/^\[combo\]\s*/i, "") || "(sin título)",
-    archetypes: splitList(pick(s, "arquetipo")),
-    tags: splitList(pick(s, "etiqueta")),
-    notes: pick(s, "notas"),
-    appUrl: "./?combo=" + encodeURIComponent(decodeURIComponent(m[1])),
+    title, archs, arch: archs[0] || '', fmt: fmtKey(pick(s, 'formato') || pick(s, 'format')), tags: splitList(pick(s, 'etiquetas') || pick(s, 'tags')),
+    notes: pick(s, 'notas') || pick(s, 'notes'), encoded, sum,
+    author: issue.user && issue.user.login, created: issue.created_at, votes: (issue.reactions && issue.reactions['+1']) || 0,
+    comments: issue.comments || 0, url: issue.html_url,
   };
 }
 
-async function fetchCommunityCombos() {
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/issues?state=open&per_page=100`;
-  const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
-  if (!res.ok) throw new Error("GitHub API " + res.status);
-  const issues = await res.json();
-  return issues.filter(i => !i.pull_request).map(issueToCombo).filter(Boolean);
-}
-
-function renderList(items, emptyMessage) {
-  const list = document.getElementById('list');
-  const empty = document.getElementById('empty');
-  list.innerHTML = "";
-  if (!items.length) { empty.textContent = emptyMessage; empty.style.display = ""; return; }
-  empty.style.display = "none";
-
-  for (const c of items) {
-    const el = document.createElement('div');
-    el.className = "card";
-    el.innerHTML = `
-      <div class="muted" style="font-size:12px">#${c.number} — por ${esc(c.author || "?")}</div>
-      <div style="font-weight:700;margin:6px 0 2px">${esc(c.title)}</div>
-      <div class="muted" style="font-size:13px">${esc(c.archetypes.join(", "))}</div>
-      <div class="row" style="margin:4px 0 10px">${c.tags.map(t => `<span class="pill">${esc(t)}</span>`).join("")}</div>
-      ${c.notes ? `<div class="notes muted">${esc(c.notes)}</div>` : ""}
-      <div class="row" style="margin-top:10px">
-        <a class="btn sm" href="${esc(c.appUrl)}">Abrir en la app</a>
-        <a class="btn sm ghost" href="${esc(c.url)}" target="_blank" rel="noopener">Ver en GitHub</a>
-        <div class="muted" style="font-size:12px;margin-left:auto">👍 ${c.likes}</div>
-      </div>
-    `;
-    list.appendChild(el);
+async function fetchCombos() {
+  const cacheKey = 'ygo_comm_cache_v2';
+  try { const c = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); if (c && Date.now() - c.at < 5 * 60 * 1000) return c.data; } catch (e) {}
+  const all = [];
+  for (let page = 1; page <= 5; page++) {
+    const res = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/issues?state=open&per_page=100&page=${page}`, { headers: { 'Accept': 'application/vnd.github+json' } });
+    if (!res.ok) throw new Error('GitHub ' + res.status);
+    const list = await res.json();
+    all.push(...list.filter(i => !i.pull_request));
+    if (list.length < 100) break;
   }
+  const data = all.map(issueToCombo).filter(Boolean);
+  try { sessionStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), data })); } catch (e) {}
+  return data;
 }
+
+// Imagen de cada arquetipo (una carta del arquetipo; se guarda en el navegador)
+const archImgCache = (() => { try { return JSON.parse(localStorage.getItem('ygo_arch_img') || '{}'); } catch (e) { return {}; } })();
+async function archImage(name) {
+  if (name in archImgCache) return archImgCache[name];
+  let id = null;
+  try { const r = await fetch(`${API}cardinfo.php?archetype=${encodeURIComponent(name)}&num=1&offset=0`); if (r.ok) { const j = await r.json(); id = j.data && j.data[0] && j.data[0].id || null; } } catch (e) {}
+  archImgCache[name] = id;
+  try { localStorage.setItem('ygo_arch_img', JSON.stringify(archImgCache)); } catch (e) {}
+  return id;
+}
+
+// ---------- Estado e interfaz ----------
+const state = { data: [], fmt: 'all', arch: null, sort: 'recent' };
+function texts() {
+  document.title = `${t.title} · Yu-Gi-Oh! Combo Maker`;
+  $('tTitle').textContent = t.title; $('tBack').textContent = t.back; $('publishLink').textContent = t.publish; $('publishLink').href = ISSUE_FORM;
+  $('howTo').textContent = t.howTo; $('tArchTitle').textContent = t.archetypes; $('archSearch').placeholder = t.searchArch; $('q').placeholder = t.search;
+  $('sRecent').textContent = t.recent; $('sTop').textContent = t.top; $('tFooter').textContent = t.footer;
+}
+function renderTabs() {
+  $('fmtTabs').innerHTML = FORMATS.map(([k, n]) => `<button data-fmt="${k}" class="${state.fmt === k ? 'on' : ''}">${esc(n || t.all)}</button>`).join('');
+  $('fmtTabs').querySelectorAll('button').forEach(b => b.onclick = () => { state.fmt = b.dataset.fmt; state.arch = null; renderAll(); });
+}
+const inFormat = (c) => state.fmt === 'all' || c.fmt === state.fmt;
+function renderArchGrid() {
+  const q = norm($('archSearch').value.trim());
+  const counts = {};
+  state.data.filter(inFormat).forEach(c => { const a = c.arch || t.noArch; counts[a] = (counts[a] || 0) + 1; });
+  const total = Object.values(counts).reduce((s, n) => s + n, 0);
+  const entries = Object.entries(counts).filter(([n]) => !q || norm(n).includes(q)).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const grid = $('archGrid');
+  grid.innerHTML = `<button class="arch ${state.arch ? '' : 'on'}" data-arch=""><span class="ph"></span><span class="name">${esc(t.all)}</span><span class="n">${total}</span></button>` +
+    entries.map(([n, c]) => `<button class="arch ${state.arch === n ? 'on' : ''}" data-arch="${esc(n)}"><span class="ph" data-img="${n === t.noArch ? '' : esc(n)}"></span><span class="name" title="${esc(n)}">${esc(n)}</span><span class="n">${c}</span></button>`).join('');
+  grid.querySelectorAll('.arch').forEach(b => b.onclick = () => { state.arch = b.dataset.arch || null; renderArchGrid(); renderList(); });
+  grid.querySelectorAll('[data-img]').forEach(async (ph) => {
+    if (!ph.dataset.img) return;
+    const id = await archImage(ph.dataset.img);
+    if (id && ph.isConnected) { const img = document.createElement('img'); img.src = IMG(id); img.alt = ''; img.loading = 'lazy'; ph.replaceWith(img); }
+  });
+}
+function renderList() {
+  $('sRecent').classList.toggle('on', state.sort === 'recent'); $('sTop').classList.toggle('on', state.sort === 'top');
+  $('listTitle').textContent = state.arch ? `${t.combosOf} ${state.arch}` : t.combos;
+  const q = norm($('q').value.trim());
+  let items = state.data.filter(inFormat)
+    .filter(c => !state.arch || (c.arch || t.noArch) === state.arch)
+    .filter(c => !q || norm(c.title).includes(q) || c.archs.some(a => norm(a).includes(q)) || c.tags.some(x => norm(x).includes(q)));
+  items = items.sort((a, b) => state.sort === 'top' ? (b.votes - a.votes || String(b.created).localeCompare(String(a.created))) : String(b.created).localeCompare(String(a.created)));
+  const list = $('list');
+  list.innerHTML = '';
+  items.forEach(c => {
+    const el = document.createElement('article');
+    el.className = 'combo';
+    const date = (() => { try { return new Date(c.created).toLocaleDateString(LANG, { year: 'numeric', month: 'short', day: 'numeric' }); } catch (e) { return ''; } })();
+    const fmtName = (FORMATS.find(f => f[0] === c.fmt) || [])[1];
+    el.innerHTML = `
+      <div class="hand"><div class="col-h">${t.hand}</div><div class="thumbs">${thumbsHtml(c.sum && c.sum.hand)}</div></div>
+      <div class="board"><div class="col-h">${t.board}</div><div class="thumbs">${thumbsHtml(c.sum && c.sum.board, c.sum && c.sum.disrupt)}</div></div>
+      <div class="info"><div class="col-h">${t.info}</div>
+        <h3>${esc(c.title)}</h3>
+        <div>${c.archs.map(a => `<span class="pill arch-pill">${esc(a)}</span>`).join('')}${fmtName ? `<span class="pill">${esc(fmtName)}</span>` : ''}${c.tags.map(x => `<span class="pill">${esc(x)}</span>`).join('')}</div>
+        <div class="small muted">${t.by} ${esc(c.author || '?')} · ${esc(date)}${c.sum ? ' · ' + esc(t.steps(c.sum.steps)) : ''}</div>
+        ${c.notes ? `<div class="small" style="margin-top:4px;white-space:pre-wrap">${esc(c.notes.slice(0, 300))}</div>` : ''}
+        <div class="actions">
+          <a class="btn sm" href="./?combo=${encodeURIComponent(c.encoded)}">${t.open}</a>
+          <a class="btn sm ghost" href="${esc(c.url)}" target="_blank" rel="noopener" title="${esc(t.vote)}">👍 ${c.votes}</a>
+          <a class="btn sm ghost" href="${esc(c.url)}" target="_blank" rel="noopener">💬 ${c.comments}</a>
+        </div>
+      </div>`;
+    list.appendChild(el);
+  });
+  $('empty').textContent = t.empty;
+  show($('empty'), !items.length);
+}
+function renderAll() { renderTabs(); renderArchGrid(); renderList(); }
+
+document.querySelectorAll('[data-sort]').forEach(b => b.onclick = () => { state.sort = b.dataset.sort; renderList(); });
+$('archSearch').oninput = renderArchGrid;
+$('q').oninput = renderList;
 
 (async function init() {
-  const q = document.getElementById('q');
-  const tag = document.getElementById('tag');
-  let data;
-  try {
-    data = await fetchCommunityCombos();
-  } catch (e) {
-    console.error(e);
-    renderList([], "No se pudo conectar con GitHub. Intenta de nuevo en un rato.");
-    return;
-  }
-
-  const allTags = Array.from(new Set(data.flatMap(x => x.tags))).sort();
-  tag.innerHTML = '<option value="">Todas las etiquetas</option>' +
-    allTags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join("");
-
-  function applyFilter() {
-    const qq = norm(q.value);
-    const tg = tag.value;
-    const filtered = data
-      .filter(x => !qq || norm(x.title).includes(qq) || x.archetypes.some(a => norm(a).includes(qq)))
-      .filter(x => !tg || x.tags.includes(tg))
-      .sort((a, b) => b.likes - a.likes);
-    const msg = data.length ? "No hay combos que coincidan con el filtro." : "Todavía no hay combos. ¡Comparte el primero con «+ Enviar combo»!";
-    renderList(filtered, msg);
-  }
-
-  q.addEventListener('input', applyFilter);
-  tag.addEventListener('change', applyFilter);
-  applyFilter();
+  texts();
+  renderTabs();
+  $('empty').textContent = t.loading; show($('empty'), true);
+  try { state.data = await fetchCombos(); }
+  catch (e) { console.error(e); $('errorBox').textContent = t.error; show($('errorBox'), true); state.data = []; }
+  renderAll();
 })();
 </script>
 </body>
