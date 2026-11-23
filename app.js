@@ -2839,32 +2839,36 @@ const ExportOptionsModal = ({
 }) => {
   if (!show) return null;
   const optionRow = (label, key, choices) => React.createElement("div", {
-    className: "border-t border-slate-600 pt-4"
+    className: "border-t border-slate-600 pt-3"
   }, React.createElement("label", {
-    className: "block text-sm font-medium text-slate-300 mb-2"
+    className: "block text-xs font-medium text-slate-300 mb-1.5"
   }, label), React.createElement("div", {
-    className: "flex gap-2"
+    className: "flex gap-1.5"
   }, choices.map(([value, text]) => React.createElement("button", {
     key: value,
     onClick: () => setExportOptions(p => ({
       ...p,
       [key]: value
     })),
-    className: `flex-1 py-2 px-1 text-sm rounded-md ${(exportOptions[key] ?? (key === 'theme' ? 'dark' : key === 'cardFilter' ? 'color' : undefined)) === value ? 'bg-violet-600' : 'bg-slate-600 hover:bg-slate-500'}`
+    className: `flex-1 py-1.5 px-1 text-xs rounded-md ${(exportOptions[key] ?? (key === 'theme' ? 'dark' : key === 'cardFilter' ? 'color' : undefined)) === value ? 'bg-violet-600' : 'bg-slate-600 hover:bg-slate-500'}`
   }, text))));
   return React.createElement("div", {
     className: "fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm flex items-center justify-center z-50 p-4"
   }, React.createElement("div", {
-    className: "bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-6 w-full max-w-6xl max-h-[92vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row gap-6 relative"
+    className: "bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full max-w-6xl max-h-[92vh] flex flex-col relative overflow-hidden"
   }, React.createElement("div", {
-    className: "md:w-80 flex-shrink-0 md:overflow-y-auto"
+    className: "flex-1 min-h-0 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row gap-6 p-5 pb-3"
+  }, React.createElement("div", {
+    className: "md:w-80 flex-shrink-0 md:overflow-y-auto md:pr-1"
   }, React.createElement("h3", {
-    className: "text-xl font-bold mb-6 text-violet-300 text-center"
+    className: "text-lg font-bold mb-3 text-violet-300 text-center"
   }, t('exportOptionsTitle')), React.createElement("div", {
-    className: "space-y-4 mb-6"
+    className: "space-y-3"
+  }, React.createElement("div", {
+    className: "grid grid-cols-2 gap-x-2 gap-y-0.5"
   }, Object.keys(exportOptions.include).map(key => React.createElement("label", {
     key: key,
-    className: "flex items-center gap-3 cursor-pointer p-2 rounded-md hover:bg-slate-700/50 transition-colors"
+    className: "flex items-center gap-2 cursor-pointer px-1.5 py-1 rounded-md hover:bg-slate-700/50 transition-colors"
   }, React.createElement("input", {
     type: "checkbox",
     checked: exportOptions.include[key],
@@ -2875,13 +2879,13 @@ const ExportOptionsModal = ({
         [key]: e.target.checked
       }
     })),
-    className: "h-5 w-5 bg-slate-600 border-slate-500 text-violet-500 focus:ring-violet-500 rounded"
+    className: "h-4 w-4 flex-shrink-0 bg-slate-600 border-slate-500 text-violet-500 focus:ring-violet-500 rounded"
   }), React.createElement("span", {
-    className: "text-slate-200"
-  }, t(key + 'Title')))), optionRow(t('exportContent'), 'layout', [['full', t('exportContentFull')], ['quick', t('exportContentQuick')], ['discord', t('exportContentDiscord')]]), optionRow(t('exportBoardView'), 'boardView', [['board', t('boardViewBoard')], ['cards', t('boardViewCards')], ['both', t('boardViewBoth')]]), optionRow(t('exportStyle'), 'theme', [['dark', t('styleDark')], ['light', t('styleLight')], ['white', t('styleWhite')]]), optionRow(t('exportCardColor'), 'cardFilter', [['color', t('filterColor')], ['gray', t('filterGray')], ['ink', t('filterInk')]]), optionRow(t('exportLayout'), 'stepsPerRow', [3, 4, 5, 6].map(n => [n, `${n}xN`])), optionRow(t('exportQuality'), 'scale', [[1, t('qualityLow')], [2, t('qualityMedium')], [3, t('qualityHigh')]]), React.createElement("div", {
-    className: "border-t border-slate-600 pt-4"
+    className: "text-slate-200 text-xs leading-tight"
+  }, t(key + 'Title'))))), optionRow(t('exportContent'), 'layout', [['full', t('exportContentFull')], ['quick', t('exportContentQuick')], ['discord', t('exportContentDiscord')]]), optionRow(t('exportBoardView'), 'boardView', [['board', t('boardViewBoard')], ['cards', t('boardViewCards')], ['both', t('boardViewBoth')]]), optionRow(t('exportStyle'), 'theme', [['dark', t('styleDark')], ['light', t('styleLight')], ['white', t('styleWhite')]]), optionRow(t('exportCardColor'), 'cardFilter', [['color', t('filterColor')], ['gray', t('filterGray')], ['ink', t('filterInk')]]), optionRow(t('exportLayout'), 'stepsPerRow', [3, 4, 5, 6].map(n => [n, `${n}xN`])), optionRow(t('exportQuality'), 'scale', [[1, t('qualityLow')], [2, t('qualityMedium')], [3, t('qualityHigh')]]), React.createElement("div", {
+    className: "border-t border-slate-600 pt-3"
   }, React.createElement("label", {
-    className: "block text-sm font-medium text-slate-300 mb-2",
+    className: "block text-xs font-medium text-slate-300 mb-1.5",
     htmlFor: "paper-size"
   }, t('paperSize')), React.createElement("select", {
     id: "paper-size",
@@ -2890,7 +2894,7 @@ const ExportOptionsModal = ({
       ...p,
       paper: e.target.value
     })),
-    className: "w-full p-2 bg-slate-700 border border-slate-600 rounded-md text-sm text-white"
+    className: "w-full p-1.5 bg-slate-700 border border-slate-600 rounded-md text-sm text-white"
   }, React.createElement("option", {
     value: "auto"
   }, t('paperAuto'), " (", t('paper_' + autoPaperKey()), ")"), ['letter', 'a4', 'oficio', 'legal', 'custom'].map(k => React.createElement("option", {
@@ -2933,8 +2937,15 @@ const ExportOptionsModal = ({
     value: "in"
   }, "in"))), React.createElement("p", {
     className: "text-xs text-slate-400 mt-1"
-  }, t('paperHint')))), React.createElement("div", {
-    className: "flex flex-wrap justify-end gap-3"
+  }, t('paperHint'))))), React.createElement("div", {
+    className: "flex-1 min-w-0 md:overflow-y-auto"
+  }, React.createElement("p", {
+    className: "text-sm text-slate-400 mb-2"
+  }, t('livePreview')), React.createElement(ExportPreview, {
+    layoutProps: layoutProps,
+    exportOptions: exportOptions
+  }))), React.createElement("div", {
+    className: "flex-shrink-0 flex flex-wrap justify-end gap-2 sm:gap-3 px-5 py-3 border-t border-slate-700 bg-slate-900"
   }, React.createElement("button", {
     onClick: onClose,
     className: "px-4 py-2 bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-700"
@@ -2951,14 +2962,7 @@ const ExportOptionsModal = ({
   }), t('printPdf')), React.createElement("button", {
     onClick: onConfirm,
     className: "px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
-  }, t('confirmAndExport')))), React.createElement("div", {
-    className: "flex-1 min-w-0 md:overflow-y-auto"
-  }, React.createElement("p", {
-    className: "text-sm text-slate-400 mb-2"
-  }, t('livePreview')), React.createElement(ExportPreview, {
-    layoutProps: layoutProps,
-    exportOptions: exportOptions
-  }))));
+  }, t('confirmAndExport')))));
 };
 const SaveComboModal = ({
   show,
