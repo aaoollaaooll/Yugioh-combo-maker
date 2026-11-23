@@ -285,10 +285,13 @@
         [data-exporting="1"] .export-onewm,
         [data-exporting="1"] .export-onewm * {
           white-space: normal !important;
-          letter-spacing: 0.5px !important; /* Force space between letters */
+          letter-spacing: 0.5px !important; /* sin esto html2canvas encima las letras con Inter */
           text-rendering: geometricPrecision;
         }
 
+        /* Al exportar, los íconos van como imagen (iconsToImages): se esconde el glifo y la imagen ocupa su lugar */
+        i.icon-as-img::before { content: none !important; }
+        i.icon-as-img { display: inline-flex !important; align-items: center; justify-content: center; letter-spacing: 0 !important; }
         [data-exporting="1"] .font-yugioh, 
         [data-exporting="1"] .font-yugi-title {
             font-family: 'Inter', Arial, sans-serif !important;

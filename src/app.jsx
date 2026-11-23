@@ -268,6 +268,34 @@
                 </Tag>
             );
         };
+        // html2canvas dibuja chuecos los íconos de Font Awesome (se salen de su círculo).
+        // Antes de exportar convierto cada ícono en una imagen ya centrada; así sale igual que en pantalla.
+        const iconsToImages = (root) => {
+            const R = 4;
+            root.querySelectorAll('i.fas, i.far, i.fab, i.fa-solid, i.fa-regular').forEach(el => {
+                if (el.dataset.iconImg) return;
+                const cs = getComputedStyle(el), bs = getComputedStyle(el, '::before');
+                const ch = (bs.content || '').replace(/^["']|["']$/g, '');
+                if (!ch || ch === 'none' || cs.display === 'none') return;
+                const size = parseFloat(cs.fontSize) || 12;
+                const font = `${bs.fontWeight || cs.fontWeight} ${size * R}px ${bs.fontFamily || cs.fontFamily}`;
+                const cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+                ctx.font = font;
+                const m = ctx.measureText(ch);
+                const inkW = Math.max(1, m.actualBoundingBoxLeft + m.actualBoundingBoxRight), inkH = Math.max(1, m.actualBoundingBoxAscent + m.actualBoundingBoxDescent);
+                const W = Math.ceil(Math.max(inkW, size * R)), H = Math.ceil(Math.max(inkH, size * R));
+                cv.width = W; cv.height = H;
+                ctx.font = font; ctx.fillStyle = bs.color || cs.color; ctx.textBaseline = 'alphabetic';
+                ctx.fillText(ch, (W - inkW) / 2 + m.actualBoundingBoxLeft, (H - inkH) / 2 + m.actualBoundingBoxAscent);
+                const img = document.createElement('img');
+                img.src = cv.toDataURL('image/png');
+                img.alt = '';
+                img.style.cssText = `display:block;width:${W / R}px;height:${H / R}px;max-width:none;`;
+                el.dataset.iconImg = '1';
+                el.classList.add('icon-as-img');
+                el.appendChild(img);
+            });
+        };
         const YGO_ACTIONS = [ { name: "Normal Summon", emoji: "⬆️" }, { name: "Special Summon", emoji: "⭐" }, { name: "Set", emoji: "⬇️" }, { name: "Activate Spell/Trap", emoji: "🌀" }, { name: "Activate Effect", emoji: "⚡" }, { name: "Attack", emoji: "⚔️" }, { name: "Send to GY", emoji: "🪦" }, { name: "Discard", emoji: "👋" }, { name: "Banish", emoji: "🌌" }, { name: "Add to Hand", emoji: "✋" }, { name: "Search", emoji: "🔍" }, { name: "Fusion Summon", emoji: "⚛️" }, { name: "Synchro Summon", emoji: "🟢" }, { name: "Xyz Summon", emoji: "💫" }, { name: "Pendulum Summon", emoji: "⚖️" }, { name: "Link Summon", emoji: "🔻" }, { name: "Other", emoji: "..." } ];
         
         const Spinner = () => <div className="spinner"></div>;
@@ -860,8 +888,9 @@
         const ExportLayout = ({ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, isPreview = false, meta = {}, shareUrlFn = null }) => {
             const theme = exportOptions.theme || 'dark';
             const cardFilter = exportOptions.cardFilter || 'color';
-            const nbsp = (str) => String(str || '').replace(/ /g, '\u00A0');
-            const nbspHtml = (str) => String(str || '').replace(/ /g, '&nbsp;');
+            const nbsp = (str) => String(str || '').replace(/ /g, '\u00A0'); // títulos cortos: que no se partan
+            const plain = (str) => String(str || ''); // textos largos: espacios normales para que corte entre palabras
+            const nbspHtml = (str) => String(str || ''); // las notas también con espacios normales (si no, parte palabras)
 
             const backgroundStyle = theme === 'dark'
                 ? { backgroundColor: '#020617', backgroundImage: `radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(167, 139, 250, 0.15) 0%, transparent 40%)`, position: 'relative', overflow: 'hidden' }
@@ -962,7 +991,7 @@
                             itemJsx = (
                                 <div key={step.id} className={`bg-slate-900/50 p-3 rounded-lg border ${isVulnerable ? 'border-red-500' : 'border-slate-700'} flex flex-col items-center gap-2 text-center h-full`}>
                                     <span className="font-bold text-lg text-slate-300">{nbsp(t('step'))} {stepNumber}</span>
-                                    <h3 className="font-semibold text-base text-yellow-300 h-12 flex items-center justify-center">{action.emoji} {nbsp(step.actionType === 'Other' ? (step.customActionText || trTerm('Other')) : trTerm(step.actionType))}</h3>
+                                    <h3 className="font-semibold text-base text-yellow-300 h-12 flex items-center justify-center gap-1.5"><span>{action.emoji}</span><span>{nbsp(step.actionType === 'Other' ? (step.customActionText || trTerm('Other')) : trTerm(step.actionType))}</span></h3>
                                     <div className="relative">
                                         <ExportCard card={mainCard} size="medium" location={step.location ? (ZONE_ABBREVIATIONS[step.location] || trTerm(step.location)) : null} />
                                         {step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (
@@ -975,8 +1004,8 @@
                                             </div>
                                         )}
                                     </div>
-                                    <p className="text-slate-300 text-xs mt-2 uppercase flex-grow break-all min-h-[2.5rem]">{nbsp(step.actionDescription)}</p>
-                                    {step.vulnerability?.text && <p className="text-red-400 text-xs font-bold mt-1">{nbsp(step.vulnerability.text)}</p>}
+                                    <p className="text-slate-300 text-xs mt-2 uppercase flex-grow break-words min-h-[2.5rem]">{plain(step.actionDescription)}</p>
+                                    {step.vulnerability?.text && <p className="text-red-400 text-xs font-bold mt-1">{plain(step.vulnerability.text)}</p>}
                                     {step.targetCards.length > 0 && (
                                         <div className="flex flex-wrap justify-center items-center gap-1 w-full mt-2 relative z-10">
                                             {step.targetCards.map((target, ti) => <ExportCard key={`target-${target.instanceId}-${ti}`} card={findCard(target.instanceId)} size="tiny" quantity={target.quantity}><MoveBadge k={targetMove(step, target)} className="mv-export" /></ExportCard>)}
@@ -984,8 +1013,8 @@
                                     )}
                                     {step.branch && step.branch.steps && step.branch.steps.length > 0 && (
                                         <div className="w-full mt-2 text-left rounded border-l-4 border-red-500 bg-red-900/20 p-2">
-                                            <p className="text-red-300 text-xs font-bold break-all">↳ {nbsp(step.branch.title || t('branchLabel'))}</p>
-                                            {step.branch.steps.map((bs, bi) => { const bc = findCard(bs.mainCardInstanceId); const bact = bs.actionType === 'Other' ? (bs.customActionText || trTerm('Other')) : trTerm(bs.actionType); return <p key={bs.id} className="text-slate-200 text-xs mt-1 break-all">{nbsp(`${stepNumber}.${bi + 1} ${bact}: ${bc ? bc.name : '?'}${bs.actionDescription ? ' — ' + bs.actionDescription : ''}`)}</p>; })}
+                                            <p className="text-red-300 text-xs font-bold break-words">↳ {nbsp(step.branch.title || t('branchLabel'))}</p>
+                                            {step.branch.steps.map((bs, bi) => { const bc = findCard(bs.mainCardInstanceId); const bact = bs.actionType === 'Other' ? (bs.customActionText || trTerm('Other')) : trTerm(bs.actionType); return <p key={bs.id} className="text-slate-200 text-xs mt-1 break-words">{nbsp(`${stepNumber}.${bi + 1} ${bact}: ${bc ? bc.name : '?'}${bs.actionDescription ? ' — ' + bs.actionDescription : ''}`)}</p>; })}
                                         </div>
                                     )}
                                 </div>
@@ -1012,8 +1041,8 @@
                         <div className="relative z-10 flex flex-col gap-4">
                             <div className="flex items-start gap-4">
                                 <div className="flex-1 min-w-0">
-                                    <h1 className="text-3xl font-bold text-violet-300 font-yugioh break-all">{nbsp(comboTitle || t('untitledCombo'))}</h1>
-                                    {metaLineX && <p className="text-slate-300 text-sm mt-1 break-all">{nbsp(metaLineX)}</p>}
+                                    <h1 className="text-3xl font-bold text-violet-300 font-yugioh break-words">{nbsp(comboTitle || t('untitledCombo'))}</h1>
+                                    {metaLineX && <p className="text-slate-300 text-sm mt-1 break-words">{plain(metaLineX)}</p>}
                                 </div>
                                 {qr && <div className="flex flex-col items-center shrink-0"><img src={qr.src} alt="" style={{ width: 112, height: 112 }} className="bg-white p-1 rounded" /><span className="text-[10px] text-slate-300 mt-1">{nbsp(t('qrCaption'))}</span></div>}
                             </div>
@@ -1034,7 +1063,7 @@
                                 <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
                                     <h2 className="text-lg font-semibold mb-2 text-violet-400 font-yugioh">{nbsp(t('comboStepsTitle'))}</h2>
                                     {comboSteps.map(s => {
-                                        if (s.type === 'group') return <p key={s.id} className="text-amber-400 font-bold text-xs uppercase mt-3 mb-1 break-all">{nbsp(s.title || '')}</p>;
+                                        if (s.type === 'group') return <p key={s.id} className="text-amber-400 font-bold text-xs uppercase mt-3 mb-1 break-words">{nbsp(s.title || '')}</p>;
                                         if (s.type !== 'step') return null;
                                         dn++;
                                         const c = findCard(s.mainCardInstanceId);
@@ -1046,12 +1075,12 @@
                                                 <span className="w-8 text-right font-bold text-slate-400 shrink-0">{dn}.</span>
                                                 {c && <ExportCard card={c} size="micro" />}
                                                 <div className="min-w-0 text-sm">
-                                                    <p className="break-all">{nbsp(`${act.emoji || ''} ${s.actionType === 'Other' ? (s.customActionText || trTerm('Other')) : trTerm(s.actionType)}: ${c ? c.name : '?'}${tg.length ? ' → ' + tg.join(', ') : ''}${isVul ? ' ⚠️' : ''}`)}</p>
-                                                    {s.actionDescription && <p className="text-slate-400 text-xs break-all">{nbsp(stripMentions(s.actionDescription))}</p>}
+                                                    <p className="break-words">{nbsp(`${act.emoji || ''} ${s.actionType === 'Other' ? (s.customActionText || trTerm('Other')) : trTerm(s.actionType)}: ${c ? c.name : '?'}${tg.length ? ' → ' + tg.join(', ') : ''}${isVul ? ' ⚠️' : ''}`)}</p>
+                                                    {s.actionDescription && <p className="text-slate-400 text-xs break-words">{plain(stripMentions(s.actionDescription))}</p>}
                                                     {s.branch && s.branch.steps && s.branch.steps.length > 0 && (
                                                         <div className="mt-1 border-l-4 border-red-500 pl-2">
-                                                            <p className="text-red-300 text-xs font-bold break-all">↳ {nbsp(s.branch.title || t('branchLabel'))}</p>
-                                                            {s.branch.steps.map((bs, bi) => { const bc = findCard(bs.mainCardInstanceId); return <p key={bs.id} className="text-slate-200 text-xs break-all">{nbsp(`${dn}.${bi + 1} ${trTerm(bs.actionType)}: ${bc ? bc.name : '?'}${bs.actionDescription ? ' — ' + bs.actionDescription : ''}`)}</p>; })}
+                                                            <p className="text-red-300 text-xs font-bold break-words">↳ {nbsp(s.branch.title || t('branchLabel'))}</p>
+                                                            {s.branch.steps.map((bs, bi) => { const bc = findCard(bs.mainCardInstanceId); return <p key={bs.id} className="text-slate-200 text-xs break-words">{nbsp(`${dn}.${bi + 1} ${trTerm(bs.actionType)}: ${bc ? bc.name : '?'}${bs.actionDescription ? ' — ' + bs.actionDescription : ''}`)}</p>; })}
                                                         </div>
                                                     )}
                                                 </div>
@@ -1076,13 +1105,13 @@
                 <div className={`p-8 text-white export-onewm export-theme-${theme} export-ink-${cardFilter} ${isPreview && cardFilter !== 'color' ? `export-filter-${cardFilter}` : ''}`} data-watermark={'YGOH-ComboMaker'} style={backgroundStyle}>
                     <div className="relative z-10">
                         {qr && <div className="absolute top-0 right-0 flex flex-col items-center"><img src={qr.src} alt="" style={{ width: qr.size, height: qr.size }} className="bg-white p-1 rounded" /><span className="text-[11px] text-slate-300 mt-1">{nbsp(t('qrCaption'))}</span></div>}
-                        <h1 className="text-5xl font-bold text-center text-violet-300 mb-8 font-yugioh" style={qr ? { paddingLeft: qr.size + 16, paddingRight: qr.size + 16 } : undefined}>{nbsp(comboTitle || t('untitledCombo'))}</h1>
-                        {metaLineX && <p className="text-center text-slate-300 -mt-6 mb-6 text-sm" style={qr ? { paddingLeft: qr.size + 16, paddingRight: qr.size + 16 } : undefined}>{nbsp(metaLineX)}</p>} 
+                        <h1 className={`text-5xl font-bold text-center text-violet-300 font-yugioh ${metaLineX ? 'mb-4' : 'mb-8'}`} style={{ lineHeight: 1.25, ...(qr ? { paddingLeft: qr.size + 16, paddingRight: qr.size + 16 } : {}) }}>{nbsp(comboTitle || t('untitledCombo'))}</h1>
+                        {metaLineX && <p className="text-center text-slate-300 mb-8 text-sm" style={qr ? { paddingLeft: qr.size + 16, paddingRight: qr.size + 16 } : undefined}>{plain(metaLineX)}</p>} 
                         <div className="flex flex-col gap-6"> 
                             {(hasHandX || showNotesX || showBoardTopX) && (
                                 <div className="flex flex-row gap-6 items-stretch">
                                     {hasHandX && (
-                                        <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex flex-col" style={{ width: showNotesX ? '33.33%' : (showBoardTopX ? '50%' : '100%') }}>
+                                        <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex flex-col flex-shrink-0" style={{ width: showNotesX ? '33.33%' : (showBoardTopX ? '50%' : '100%') }}>
                                             <h2 className="text-2xl font-semibold mb-4 text-violet-400 font-yugioh">{nbsp(t('startingHandTitle'))}</h2>
                                             <div className="flex-grow flex flex-row flex-wrap items-center justify-center gap-3">
                                                 {startingHand.map((group, groupIndex) => (
@@ -3313,6 +3342,7 @@
                     
                     if ((exportOptions.theme || 'dark') === 'dark') setSmartExportBackground(exportContainer.querySelector('.export-onewm'));
                     exportContainer.style.width = exportOptions.layout === 'discord' ? '720px' : '';
+                    iconsToImages(exportContainer);
                     const canvas = await html2canvas(exportContainer, { scale: adaptiveScale, useCORS: true, backgroundColor: null });
                     exportContainer.style.width = '';
 
@@ -4332,7 +4362,7 @@
                                                         disabled={step.isLocked}
                                                         placeholder={t('stepDescribeAction')}
                                                         rows="1"
-                                                        className="tutorial-description-input w-full bg-transparent mt-auto p-1 border-b border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-xs text-center disabled:opacity-50 resize-none break-all"
+                                                        className="tutorial-description-input w-full bg-transparent mt-auto p-1 border-b border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-xs text-center disabled:opacity-50 resize-none break-words"
                                                     />
                                                 </div>
                                                 {step.branch && (

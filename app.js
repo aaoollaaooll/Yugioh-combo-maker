@@ -1229,6 +1229,39 @@ const MoveBadge = ({
     "aria-hidden": "true"
   }));
 };
+const iconsToImages = root => {
+  const R = 4;
+  root.querySelectorAll('i.fas, i.far, i.fab, i.fa-solid, i.fa-regular').forEach(el => {
+    if (el.dataset.iconImg) return;
+    const cs = getComputedStyle(el),
+      bs = getComputedStyle(el, '::before');
+    const ch = (bs.content || '').replace(/^["']|["']$/g, '');
+    if (!ch || ch === 'none' || cs.display === 'none') return;
+    const size = parseFloat(cs.fontSize) || 12;
+    const font = `${bs.fontWeight || cs.fontWeight} ${size * R}px ${bs.fontFamily || cs.fontFamily}`;
+    const cv = document.createElement('canvas'),
+      ctx = cv.getContext('2d');
+    ctx.font = font;
+    const m = ctx.measureText(ch);
+    const inkW = Math.max(1, m.actualBoundingBoxLeft + m.actualBoundingBoxRight),
+      inkH = Math.max(1, m.actualBoundingBoxAscent + m.actualBoundingBoxDescent);
+    const W = Math.ceil(Math.max(inkW, size * R)),
+      H = Math.ceil(Math.max(inkH, size * R));
+    cv.width = W;
+    cv.height = H;
+    ctx.font = font;
+    ctx.fillStyle = bs.color || cs.color;
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(ch, (W - inkW) / 2 + m.actualBoundingBoxLeft, (H - inkH) / 2 + m.actualBoundingBoxAscent);
+    const img = document.createElement('img');
+    img.src = cv.toDataURL('image/png');
+    img.alt = '';
+    img.style.cssText = `display:block;width:${W / R}px;height:${H / R}px;max-width:none;`;
+    el.dataset.iconImg = '1';
+    el.classList.add('icon-as-img');
+    el.appendChild(img);
+  });
+};
 const YGO_ACTIONS = [{
   name: "Normal Summon",
   emoji: "⬆️"
@@ -2242,7 +2275,8 @@ const ExportLayout = ({
   const theme = exportOptions.theme || 'dark';
   const cardFilter = exportOptions.cardFilter || 'color';
   const nbsp = str => String(str || '').replace(/ /g, '\u00A0');
-  const nbspHtml = str => String(str || '').replace(/ /g, '&nbsp;');
+  const plain = str => String(str || '');
+  const nbspHtml = str => String(str || '');
   const backgroundStyle = theme === 'dark' ? {
     backgroundColor: '#020617',
     backgroundImage: `radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(167, 139, 250, 0.15) 0%, transparent 40%)`,
@@ -2386,8 +2420,8 @@ const ExportLayout = ({
           }, React.createElement("span", {
             className: "font-bold text-lg text-slate-300"
           }, nbsp(t('step')), " ", stepNumber), React.createElement("h3", {
-            className: "font-semibold text-base text-yellow-300 h-12 flex items-center justify-center"
-          }, action.emoji, " ", nbsp(step.actionType === 'Other' ? step.customActionText || trTerm('Other') : trTerm(step.actionType))), React.createElement("div", {
+            className: "font-semibold text-base text-yellow-300 h-12 flex items-center justify-center gap-1.5"
+          }, React.createElement("span", null, action.emoji), React.createElement("span", null, nbsp(step.actionType === 'Other' ? step.customActionText || trTerm('Other') : trTerm(step.actionType)))), React.createElement("div", {
             className: "relative"
           }, React.createElement(ExportCard, {
             card: mainCard,
@@ -2406,10 +2440,10 @@ const ExportLayout = ({
               textShadow: '0 0 3px black'
             }
           }, "\u26A0\uFE0F"))))), React.createElement("p", {
-            className: "text-slate-300 text-xs mt-2 uppercase flex-grow break-all min-h-[2.5rem]"
-          }, nbsp(step.actionDescription)), step.vulnerability?.text && React.createElement("p", {
+            className: "text-slate-300 text-xs mt-2 uppercase flex-grow break-words min-h-[2.5rem]"
+          }, plain(step.actionDescription)), step.vulnerability?.text && React.createElement("p", {
             className: "text-red-400 text-xs font-bold mt-1"
-          }, nbsp(step.vulnerability.text)), step.targetCards.length > 0 && React.createElement("div", {
+          }, plain(step.vulnerability.text)), step.targetCards.length > 0 && React.createElement("div", {
             className: "flex flex-wrap justify-center items-center gap-1 w-full mt-2 relative z-10"
           }, step.targetCards.map((target, ti) => React.createElement(ExportCard, {
             key: `target-${target.instanceId}-${ti}`,
@@ -2422,13 +2456,13 @@ const ExportLayout = ({
           })))), step.branch && step.branch.steps && step.branch.steps.length > 0 && React.createElement("div", {
             className: "w-full mt-2 text-left rounded border-l-4 border-red-500 bg-red-900/20 p-2"
           }, React.createElement("p", {
-            className: "text-red-300 text-xs font-bold break-all"
+            className: "text-red-300 text-xs font-bold break-words"
           }, "\u21B3 ", nbsp(step.branch.title || t('branchLabel'))), step.branch.steps.map((bs, bi) => {
             const bc = findCard(bs.mainCardInstanceId);
             const bact = bs.actionType === 'Other' ? bs.customActionText || trTerm('Other') : trTerm(bs.actionType);
             return React.createElement("p", {
               key: bs.id,
-              className: "text-slate-200 text-xs mt-1 break-all"
+              className: "text-slate-200 text-xs mt-1 break-words"
             }, nbsp(`${stepNumber}.${bi + 1} ${bact}: ${bc ? bc.name : '?'}${bs.actionDescription ? ' — ' + bs.actionDescription : ''}`));
           })));
         }
@@ -2459,10 +2493,10 @@ const ExportLayout = ({
     }, React.createElement("div", {
       className: "flex-1 min-w-0"
     }, React.createElement("h1", {
-      className: "text-3xl font-bold text-violet-300 font-yugioh break-all"
+      className: "text-3xl font-bold text-violet-300 font-yugioh break-words"
     }, nbsp(comboTitle || t('untitledCombo'))), metaLineX && React.createElement("p", {
-      className: "text-slate-300 text-sm mt-1 break-all"
-    }, nbsp(metaLineX))), qr && React.createElement("div", {
+      className: "text-slate-300 text-sm mt-1 break-words"
+    }, plain(metaLineX))), qr && React.createElement("div", {
       className: "flex flex-col items-center shrink-0"
     }, React.createElement("img", {
       src: qr.src,
@@ -2496,7 +2530,7 @@ const ExportLayout = ({
     }, nbsp(t('comboStepsTitle'))), comboSteps.map(s => {
       if (s.type === 'group') return React.createElement("p", {
         key: s.id,
-        className: "text-amber-400 font-bold text-xs uppercase mt-3 mb-1 break-all"
+        className: "text-amber-400 font-bold text-xs uppercase mt-3 mb-1 break-words"
       }, nbsp(s.title || ''));
       if (s.type !== 'step') return null;
       dn++;
@@ -2515,18 +2549,18 @@ const ExportLayout = ({
       }), React.createElement("div", {
         className: "min-w-0 text-sm"
       }, React.createElement("p", {
-        className: "break-all"
+        className: "break-words"
       }, nbsp(`${act.emoji || ''} ${s.actionType === 'Other' ? s.customActionText || trTerm('Other') : trTerm(s.actionType)}: ${c ? c.name : '?'}${tg.length ? ' → ' + tg.join(', ') : ''}${isVul ? ' ⚠️' : ''}`)), s.actionDescription && React.createElement("p", {
-        className: "text-slate-400 text-xs break-all"
-      }, nbsp(stripMentions(s.actionDescription))), s.branch && s.branch.steps && s.branch.steps.length > 0 && React.createElement("div", {
+        className: "text-slate-400 text-xs break-words"
+      }, plain(stripMentions(s.actionDescription))), s.branch && s.branch.steps && s.branch.steps.length > 0 && React.createElement("div", {
         className: "mt-1 border-l-4 border-red-500 pl-2"
       }, React.createElement("p", {
-        className: "text-red-300 text-xs font-bold break-all"
+        className: "text-red-300 text-xs font-bold break-words"
       }, "\u21B3 ", nbsp(s.branch.title || t('branchLabel'))), s.branch.steps.map((bs, bi) => {
         const bc = findCard(bs.mainCardInstanceId);
         return React.createElement("p", {
           key: bs.id,
-          className: "text-slate-200 text-xs break-all"
+          className: "text-slate-200 text-xs break-words"
         }, nbsp(`${dn}.${bi + 1} ${trTerm(bs.actionType)}: ${bc ? bc.name : '?'}${bs.actionDescription ? ' — ' + bs.actionDescription : ''}`));
       }))));
     })), exportOptions.include.finalBoard && finalBoardCards.length > 0 && React.createElement("div", {
@@ -2554,23 +2588,26 @@ const ExportLayout = ({
   }), React.createElement("span", {
     className: "text-[11px] text-slate-300 mt-1"
   }, nbsp(t('qrCaption')))), React.createElement("h1", {
-    className: "text-5xl font-bold text-center text-violet-300 mb-8 font-yugioh",
-    style: qr ? {
-      paddingLeft: qr.size + 16,
-      paddingRight: qr.size + 16
-    } : undefined
+    className: `text-5xl font-bold text-center text-violet-300 font-yugioh ${metaLineX ? 'mb-4' : 'mb-8'}`,
+    style: {
+      lineHeight: 1.25,
+      ...(qr ? {
+        paddingLeft: qr.size + 16,
+        paddingRight: qr.size + 16
+      } : {})
+    }
   }, nbsp(comboTitle || t('untitledCombo'))), metaLineX && React.createElement("p", {
-    className: "text-center text-slate-300 -mt-6 mb-6 text-sm",
+    className: "text-center text-slate-300 mb-8 text-sm",
     style: qr ? {
       paddingLeft: qr.size + 16,
       paddingRight: qr.size + 16
     } : undefined
-  }, nbsp(metaLineX)), React.createElement("div", {
+  }, plain(metaLineX)), React.createElement("div", {
     className: "flex flex-col gap-6"
   }, (hasHandX || showNotesX || showBoardTopX) && React.createElement("div", {
     className: "flex flex-row gap-6 items-stretch"
   }, hasHandX && React.createElement("div", {
-    className: "bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex flex-col",
+    className: "bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex flex-col flex-shrink-0",
     style: {
       width: showNotesX ? '33.33%' : showBoardTopX ? '50%' : '100%'
     }
@@ -6520,6 +6557,7 @@ const App = () => {
       if (stepCountForScale > 15) adaptiveScale = Math.min(adaptiveScale, 1.5);else if (stepCountForScale > 8) adaptiveScale = Math.min(adaptiveScale, 2);
       if ((exportOptions.theme || 'dark') === 'dark') setSmartExportBackground(exportContainer.querySelector('.export-onewm'));
       exportContainer.style.width = exportOptions.layout === 'discord' ? '720px' : '';
+      iconsToImages(exportContainer);
       const canvas = await html2canvas(exportContainer, {
         scale: adaptiveScale,
         useCORS: true,
@@ -9096,7 +9134,7 @@ const App = () => {
       disabled: step.isLocked,
       placeholder: t('stepDescribeAction'),
       rows: "1",
-      className: "tutorial-description-input w-full bg-transparent mt-auto p-1 border-b border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-xs text-center disabled:opacity-50 resize-none break-all"
+      className: "tutorial-description-input w-full bg-transparent mt-auto p-1 border-b border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-xs text-center disabled:opacity-50 resize-none break-words"
     })), step.branch && React.createElement("div", {
       className: "branch-box col-span-full ml-4 md:ml-10 border-l-4 border-red-500 bg-red-900/15 rounded-r-lg p-3 flex flex-col gap-2"
     }, React.createElement("div", {
