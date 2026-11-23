@@ -913,6 +913,9 @@
         Object.entries(EXTRA_TRANSLATIONS_2).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         const EXTRA_TRANSLATIONS_3 = {"es": {"commonHandTraps": "Hand traps comunes"}, "en": {"commonHandTraps": "Common hand traps"}, "pt": {"commonHandTraps": "Hand traps comuns"}, "fr": {"commonHandTraps": "Hand traps courantes"}, "it": {"commonHandTraps": "Hand trap comuni"}, "de": {"commonHandTraps": "Häufige Handtraps"}, "ru": {"commonHandTraps": "Частые хенд-трапы"}, "ja": {"commonHandTraps": "よく使う手札誘発"}, "ko": {"commonHandTraps": "자주 쓰는 패 트랩"}, "zh": {"commonHandTraps": "常见手坑"}};
         Object.entries(EXTRA_TRANSLATIONS_3).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        // Tablero «Probar combo»: reproducción automática y velocidad
+        const EXTRA_TRANSLATIONS_PLAY = {"es": {"playStartHint": "Pulsa ▶ para ver el combo solo, o usa las flechas ‹ › (o ← → del teclado) para ir paso a paso. Toca una carta para verla en grande.", "playPlay": "Reproducir", "playPause": "Pausar", "playSpeed": "Velocidad", "speedSlow": "Lento", "speedNormal": "Normal", "speedFast": "Rápido"}, "en": {"playStartHint": "Press ▶ to watch the combo play by itself, or use the ‹ › arrows (or ← → on the keyboard) to go step by step. Tap a card to see it larger.", "playPlay": "Play", "playPause": "Pause", "playSpeed": "Speed", "speedSlow": "Slow", "speedNormal": "Normal", "speedFast": "Fast"}, "pt": {"playStartHint": "Toque em ▶ para ver o combo sozinho, ou use as setas ‹ › (ou ← → do teclado) para ir passo a passo. Toque numa carta para vê-la maior.", "playPlay": "Reproduzir", "playPause": "Pausar", "playSpeed": "Velocidade", "speedSlow": "Lento", "speedNormal": "Normal", "speedFast": "Rápido"}, "fr": {"playStartHint": "Appuyez sur ▶ pour voir le combo défiler tout seul, ou utilisez les flèches ‹ › (ou ← → du clavier) pour avancer étape par étape. Touchez une carte pour l'agrandir.", "playPlay": "Lecture", "playPause": "Pause", "playSpeed": "Vitesse", "speedSlow": "Lent", "speedNormal": "Normal", "speedFast": "Rapide"}, "it": {"playStartHint": "Premi ▶ per vedere la combo da sola, oppure usa le frecce ‹ › (o ← → della tastiera) per andare passo dopo passo. Tocca una carta per ingrandirla.", "playPlay": "Riproduci", "playPause": "Pausa", "playSpeed": "Velocità", "speedSlow": "Lento", "speedNormal": "Normale", "speedFast": "Veloce"}, "de": {"playStartHint": "Drücke ▶, um die Combo automatisch abzuspielen, oder nutze die Pfeile ‹ › (oder ← → auf der Tastatur), um Schritt für Schritt zu gehen. Tippe auf eine Karte, um sie groß zu sehen.", "playPlay": "Abspielen", "playPause": "Pause", "playSpeed": "Geschwindigkeit", "speedSlow": "Langsam", "speedNormal": "Normal", "speedFast": "Schnell"}, "ru": {"playStartHint": "Нажмите ▶, чтобы комбо проигрывалось само, или используйте стрелки ‹ › (или ← → на клавиатуре), чтобы идти по шагам. Нажмите на карту, чтобы увеличить её.", "playPlay": "Воспроизвести", "playPause": "Пауза", "playSpeed": "Скорость", "speedSlow": "Медленно", "speedNormal": "Обычно", "speedFast": "Быстро"}, "ja": {"playStartHint": "▶ を押すとコンボが自動で進みます。‹ › の矢印(キーボードの ← →)で1ステップずつ進めます。カードをタップすると大きく表示します。", "playPlay": "再生", "playPause": "一時停止", "playSpeed": "速度", "speedSlow": "遅い", "speedNormal": "普通", "speedFast": "速い"}, "ko": {"playStartHint": "▶를 누르면 콤보가 자동으로 재생됩니다. ‹ › 화살표(키보드의 ← →)로 한 단계씩 이동할 수 있습니다. 카드를 탭하면 크게 볼 수 있습니다.", "playPlay": "재생", "playPause": "일시정지", "playSpeed": "속도", "speedSlow": "느리게", "speedNormal": "보통", "speedFast": "빠르게"}, "zh": {"playStartHint": "按 ▶ 自动播放 Combo,或用 ‹ › 箭头(键盘 ← →)逐步前进。点击卡片可放大查看。", "playPlay": "播放", "playPause": "暂停", "playSpeed": "速度", "speedSlow": "慢", "speedNormal": "正常", "speedFast": "快"}};
+        Object.entries(EXTRA_TRANSLATIONS_PLAY).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
@@ -2473,7 +2476,7 @@
         // • Fusion / Synchro / Xyz / Link Summon → las targetCards (materiales) van al Cementerio (en Xyz quedan debajo como material);
         //   la principal sale del Extra Deck a la Zona Extra (si ya usas una, a la primera Zona de Monstruo libre) o a step.location.
         //   Si la principal es una Magia (p. ej. Polymerization), se activa y se invoca la primera carta de Extra Deck de las afectadas.
-        // • Activate Spell/Trap → a Magia/Trampa (o se activa donde estaba colocada); Normal, Quick-Play, Ritual y Counter pasan luego al Cementerio.
+        // • Activate Spell/Trap → a Magia/Trampa (o se activa donde estaba colocada); Normal, Quick-Play, Ritual y Counter se ven ahí durante ese paso y van al Cementerio al empezar el siguiente.
         //   Un monstruo Péndulo va a la Zona de Péndulo (Magia/Trampa 1 o 5). Cualquier otro monstruo se trata como Activate Effect.
         // • Activate Effect / Attack / Other → nada se mueve; se resaltan la principal y las afectadas.
         // • Search / Add to Hand → las targetCards (si no hay, la principal) van a la Mano (desde Deck, Cementerio, Desterradas o el campo).
@@ -2486,6 +2489,8 @@
             const s = JSON.parse(JSON.stringify(boardState));
             s.last = { uids: [], mainUid: null, dest: null };
             if (!step || step.type !== 'step') return s;
+            // Las Magias/Trampas Normales, Rápidas, de Ritual o Contraataque activadas en el paso anterior ya resolvieron: van al Cementerio.
+            PLAY_SLOTS.forEach(z => { const c = s.slots[z]; if (c && c.resolveToGy) { s.slots[z] = null; delete c.resolveToGy; playPut(s, c, 'gy'); } });
             const known = (id) => !!(id && s.info[id]);
             const mainId = known(step.mainCardInstanceId) ? step.mainCardInstanceId : null;
             const mainInfo = (mainId && s.info[mainId]) || {};
@@ -2517,8 +2522,9 @@
                 }
                 const card = summon(id, ['field', 'hand', 'deck', 'gy', 'banish'], /field/i.test(info.race || '') ? 'field' : 'st', { isMain });
                 if (/^(normal|quick-play|ritual|counter)$/i.test(info.race || '')) {
+                    // Se queda en su zona mientras se activa; al pasar al siguiente paso resuelve y va al Cementerio.
                     const z = PLAY_SLOTS.find(k => s.slots[k] && s.slots[k].uid === card.uid);
-                    if (z) { s.slots[z] = null; s.last.dest = playPut(s, card, 'gy'); }
+                    if (z) s.slots[z].resolveToGy = true;
                 }
             };
             switch (step.actionType) {
@@ -2636,22 +2642,36 @@
             const p = Math.min(pos, total);
             const board = boards[p];
             const go = useCallback((n) => setPos(Math.max(0, Math.min(total, n))), [total]);
+            // Reproducción automática (▶) con velocidad lenta / normal / rápida
+            const PLAY_DELAYS = { slow: 3000, normal: 1700, fast: 800 };
+            const [playing, setPlaying] = useState(false);
+            const [speed, setSpeed] = useState(() => { try { const v = localStorage.getItem('ygo_play_speed'); return PLAY_DELAYS[v] ? v : 'normal'; } catch (e) { return 'normal'; } });
+            useEffect(() => { try { localStorage.setItem('ygo_play_speed', speed); } catch (e) {} }, [speed]);
+            useEffect(() => {
+                if (!playing) return;
+                if (p >= total) { setPlaying(false); return; }
+                const timer = setTimeout(() => go(p + 1), PLAY_DELAYS[speed]);
+                return () => clearTimeout(timer);
+            }, [playing, p, total, speed, go]);
+            const togglePlay = () => { if (playing) { setPlaying(false); return; } if (total === 0) return; if (p >= total) go(0); setPlaying(true); };
+            const manualGo = (n) => { setPlaying(false); go(n); };
 
             useEffect(() => {
                 const onKey = (e) => {
                     if (e.ctrlKey || e.metaKey || e.altKey) return;
                     let handled = true;
                     if (e.key === 'Escape') { if (zoomCard) setZoomCard(null); else if (pileOpen) setPileOpen(null); else onClose(); }
-                    else if (e.key === 'ArrowRight') go(p + 1);
-                    else if (e.key === 'ArrowLeft') go(p - 1);
-                    else if (e.key === 'Home') go(0);
-                    else if (e.key === 'End') go(total);
+                    else if (e.key === 'ArrowRight') manualGo(p + 1);
+                    else if (e.key === 'ArrowLeft') manualGo(p - 1);
+                    else if (e.key === 'Home') manualGo(0);
+                    else if (e.key === 'End') manualGo(total);
+                    else if (e.key === ' ' && !(e.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName))) togglePlay();
                     else handled = false;
                     if (handled) { e.preventDefault(); e.stopPropagation(); }
                 };
                 window.addEventListener('keydown', onKey, true);
                 return () => window.removeEventListener('keydown', onKey, true);
-            }, [p, total, go, zoomCard, pileOpen, onClose]);
+            }, [p, total, go, zoomCard, pileOpen, onClose, playing]);
 
             useEffect(() => {
                 const prev = document.body.style.overflow;
@@ -2772,7 +2792,7 @@
                         <aside className="flex-none lg:w-80 lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-[var(--color-border)] bg-[var(--color-surface)]">
                             <h3 className="px-3 pt-3 pb-1 font-semibold text-[var(--color-secondary)]">{t('playMoves')}</h3>
                             <div ref={listRef} className="relative px-2 pb-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
-                                <button type="button" data-active={p === 0} onClick={() => go(0)} className={rowClass(p === 0)}>
+                                <button type="button" data-active={p === 0} onClick={() => manualGo(0)} className={rowClass(p === 0)}>
                                     <span className="w-7 shrink-0 text-right font-bold opacity-70">0.</span><span>{t('startingHandTitle')}</span>
                                 </button>
                                 {rows.map(r => {
@@ -2782,7 +2802,7 @@
                                     const dest = boards[r.pos].last && boards[r.pos].last.dest;
                                     const card = cardById[st.mainCardInstanceId];
                                     return (
-                                        <button key={r.key} type="button" data-active={p === r.pos} onClick={() => go(r.pos)} className={rowClass(p === r.pos)} title={card ? card.name : ''}>
+                                        <button key={r.key} type="button" data-active={p === r.pos} onClick={() => manualGo(r.pos)} className={rowClass(p === r.pos)} title={card ? card.name : ''}>
                                             <span className="w-7 shrink-0 text-right font-bold opacity-70">{r.pos}.</span>
                                             <span className="min-w-0 break-words"><b>{shortNames[st.mainCardInstanceId] || '?'}</b> {playActionEmoji(st)} {playActionText(st)}{dest ? ` → ${playDestLabel(dest, t)}` : ''}</span>
                                         </button>
@@ -2792,10 +2812,19 @@
                         </aside>
                     </div>
 
-                    <footer className="shrink-0 flex items-center justify-center gap-3 px-3 pt-2 border-t border-[var(--color-border)] bg-[var(--color-surface)]" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-                        <button type="button" onClick={() => go(p - 1)} disabled={p === 0} title={t('playPrev')} aria-label={t('playPrev')} className={navClass}><i className="fas fa-chevron-left"></i></button>
+                    <footer className="shrink-0 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-3 pt-2 border-t border-[var(--color-border)] bg-[var(--color-surface)]" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+                        <button type="button" onClick={() => manualGo(p - 1)} disabled={p === 0} title={t('playPrev')} aria-label={t('playPrev')} className={navClass}><i className="fas fa-chevron-left"></i></button>
+                        <button type="button" onClick={togglePlay} disabled={total === 0} title={playing ? t('playPause') : t('playPlay')} aria-label={playing ? t('playPause') : t('playPlay')} className={`${navClass} !bg-amber-500 !text-slate-900 hover:!bg-amber-400`}><i className={`fas ${playing ? 'fa-pause' : 'fa-play'}`}></i></button>
                         <div className="min-w-[8.5rem] text-center font-semibold" aria-live="polite">{t('stepBreadcrumb', { current: p, total })}</div>
-                        <button type="button" onClick={() => go(p + 1)} disabled={p >= total} title={t('playNext')} aria-label={t('playNext')} className={navClass}><i className="fas fa-chevron-right"></i></button>
+                        <button type="button" onClick={() => manualGo(p + 1)} disabled={p >= total} title={t('playNext')} aria-label={t('playNext')} className={navClass}><i className="fas fa-chevron-right"></i></button>
+                        <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                            <i className="fas fa-tachometer-alt" aria-hidden="true"></i>
+                            <select value={speed} onChange={e => setSpeed(e.target.value)} aria-label={t('playSpeed')} title={t('playSpeed')} className="bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md p-2 text-sm text-[var(--color-text)]">
+                                <option value="slow">{t('speedSlow')}</option>
+                                <option value="normal">{t('speedNormal')}</option>
+                                <option value="fast">{t('speedFast')}</option>
+                            </select>
+                        </label>
                     </footer>
 
                     {pileOpen && (
