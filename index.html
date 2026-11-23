@@ -936,6 +936,9 @@
         // Tanda 4: campo final al exportar y tamaño de hoja
         const EXTRA_TRANSLATIONS_T4 = {"es": {"exportBoardView": "Campo final en la hoja", "boardViewBoard": "Tablero", "boardViewCards": "Cartas", "boardViewBoth": "Ambos", "paperSize": "Hoja para imprimir", "paperAuto": "Automática", "paper_letter": "Carta", "paper_a4": "A4", "paper_oficio": "Oficio", "paper_legal": "Legal", "paper_custom": "A medida", "paperHint": "Solo cambia «Imprimir / PDF»."}, "en": {"exportBoardView": "End board on the sheet", "boardViewBoard": "Board", "boardViewCards": "Cards", "boardViewBoth": "Both", "paperSize": "Paper for printing", "paperAuto": "Automatic", "paper_letter": "Letter", "paper_a4": "A4", "paper_oficio": "Oficio (8.5×13 in)", "paper_legal": "Legal", "paper_custom": "Custom size", "paperHint": "Only affects “Print / PDF”."}, "pt": {"exportBoardView": "Campo final na folha", "boardViewBoard": "Tabuleiro", "boardViewCards": "Cartas", "boardViewBoth": "Ambos", "paperSize": "Papel para imprimir", "paperAuto": "Automático", "paper_letter": "Carta", "paper_a4": "A4", "paper_oficio": "Ofício", "paper_legal": "Legal", "paper_custom": "Personalizado", "paperHint": "Só afeta «Imprimir / PDF»."}, "fr": {"exportBoardView": "Terrain final sur la feuille", "boardViewBoard": "Plateau", "boardViewCards": "Cartes", "boardViewBoth": "Les deux", "paperSize": "Papier d'impression", "paperAuto": "Automatique", "paper_letter": "Lettre US", "paper_a4": "A4", "paper_oficio": "Oficio (8,5×13 po)", "paper_legal": "Légal US", "paper_custom": "Sur mesure", "paperHint": "Ne change que « Imprimer / PDF »."}, "it": {"exportBoardView": "Campo finale nel foglio", "boardViewBoard": "Tabellone", "boardViewCards": "Carte", "boardViewBoth": "Entrambi", "paperSize": "Carta per la stampa", "paperAuto": "Automatica", "paper_letter": "Lettera US", "paper_a4": "A4", "paper_oficio": "Oficio (8,5×13 in)", "paper_legal": "Legal US", "paper_custom": "Personalizzata", "paperHint": "Cambia solo «Stampa / PDF»."}, "de": {"exportBoardView": "Endfeld auf dem Blatt", "boardViewBoard": "Spielfeld", "boardViewCards": "Karten", "boardViewBoth": "Beides", "paperSize": "Papier zum Drucken", "paperAuto": "Automatisch", "paper_letter": "US-Letter", "paper_a4": "A4", "paper_oficio": "Oficio (8,5×13 in)", "paper_legal": "US-Legal", "paper_custom": "Eigene Größe", "paperHint": "Betrifft nur „Drucken / PDF“."}, "ru": {"exportBoardView": "Итоговое поле на листе", "boardViewBoard": "Поле", "boardViewCards": "Карты", "boardViewBoth": "Оба", "paperSize": "Бумага для печати", "paperAuto": "Автоматически", "paper_letter": "Letter (США)", "paper_a4": "A4", "paper_oficio": "Oficio (8,5×13 дюйма)", "paper_legal": "Legal (США)", "paper_custom": "Свой размер", "paperHint": "Влияет только на «Печать / PDF»."}, "ja": {"exportBoardView": "最終盤面の表示", "boardViewBoard": "盤面", "boardViewCards": "カード", "boardViewBoth": "両方", "paperSize": "印刷用紙", "paperAuto": "自動", "paper_letter": "レター", "paper_a4": "A4", "paper_oficio": "オフィシオ (8.5×13 in)", "paper_legal": "リーガル", "paper_custom": "カスタム", "paperHint": "「印刷 / PDF」にだけ影響します。"}, "ko": {"exportBoardView": "최종 필드 표시", "boardViewBoard": "보드", "boardViewCards": "카드", "boardViewBoth": "둘 다", "paperSize": "인쇄 용지", "paperAuto": "자동", "paper_letter": "레터", "paper_a4": "A4", "paper_oficio": "오피시오 (8.5×13 in)", "paper_legal": "리걸", "paper_custom": "사용자 지정", "paperHint": "'인쇄 / PDF'에만 적용됩니다."}, "zh": {"exportBoardView": "最终场面显示方式", "boardViewBoard": "棋盘", "boardViewCards": "卡片", "boardViewBoth": "两者", "paperSize": "打印纸张", "paperAuto": "自动", "paper_letter": "Letter", "paper_a4": "A4", "paper_oficio": "Oficio (8.5×13 英寸)", "paper_legal": "Legal", "paper_custom": "自定义", "paperHint": "仅影响“打印 / PDF”。"}};
         Object.entries(EXTRA_TRANSLATIONS_T4).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        // Modo práctica del tablero
+        const EXTRA_TRANSLATIONS_PRACTICE = {"es": {"playModeWatch": "Ver", "playModePractice": "Practicar", "practiceQuestion": "Paso {n} de {total}: ¿qué carta usas ahora?", "practiceDontKnow": "No lo sé", "practiceCorrect": "¡Correcto!", "practiceWrong": "Era esta:", "practiceNext": "Siguiente", "practiceDone": "¡Terminaste!", "practiceScore": "Acertaste {ok} de {total}.", "practiceReview": "Repasa estos pasos:", "practiceAgain": "Practicar de nuevo", "practicePerfect": "¡Perfecto, sin fallos!", "practiceHint": "Mira el tablero y adivina la siguiente carta del combo."}, "en": {"playModeWatch": "Watch", "playModePractice": "Practice", "practiceQuestion": "Step {n} of {total}: which card do you use now?", "practiceDontKnow": "I don't know", "practiceCorrect": "Correct!", "practiceWrong": "It was this one:", "practiceNext": "Next", "practiceDone": "Finished!", "practiceScore": "You got {ok} of {total} right.", "practiceReview": "Review these steps:", "practiceAgain": "Practice again", "practicePerfect": "Perfect, no mistakes!", "practiceHint": "Look at the board and guess the next card of the combo."}, "pt": {"playModeWatch": "Ver", "playModePractice": "Praticar", "practiceQuestion": "Passo {n} de {total}: qual carta você usa agora?", "practiceDontKnow": "Não sei", "practiceCorrect": "Correto!", "practiceWrong": "Era esta:", "practiceNext": "Próximo", "practiceDone": "Terminou!", "practiceScore": "Você acertou {ok} de {total}.", "practiceReview": "Revise estes passos:", "practiceAgain": "Praticar de novo", "practicePerfect": "Perfeito, sem erros!", "practiceHint": "Olhe o tabuleiro e adivinhe a próxima carta do combo."}, "fr": {"playModeWatch": "Voir", "playModePractice": "S'entraîner", "practiceQuestion": "Étape {n} sur {total} : quelle carte utilisez-vous maintenant ?", "practiceDontKnow": "Je ne sais pas", "practiceCorrect": "Correct !", "practiceWrong": "C'était celle-ci :", "practiceNext": "Suivant", "practiceDone": "Terminé !", "practiceScore": "Vous avez trouvé {ok} sur {total}.", "practiceReview": "Révisez ces étapes :", "practiceAgain": "Recommencer", "practicePerfect": "Parfait, aucune erreur !", "practiceHint": "Regardez le plateau et devinez la prochaine carte du combo."}, "it": {"playModeWatch": "Guarda", "playModePractice": "Allenati", "practiceQuestion": "Passo {n} di {total}: quale carta usi adesso?", "practiceDontKnow": "Non lo so", "practiceCorrect": "Giusto!", "practiceWrong": "Era questa:", "practiceNext": "Avanti", "practiceDone": "Finito!", "practiceScore": "Hai indovinato {ok} su {total}.", "practiceReview": "Ripassa questi passi:", "practiceAgain": "Riprova", "practicePerfect": "Perfetto, nessun errore!", "practiceHint": "Guarda il tabellone e indovina la prossima carta della combo."}, "de": {"playModeWatch": "Ansehen", "playModePractice": "Üben", "practiceQuestion": "Schritt {n} von {total}: Welche Karte nutzt du jetzt?", "practiceDontKnow": "Weiß ich nicht", "practiceCorrect": "Richtig!", "practiceWrong": "Es war diese:", "practiceNext": "Weiter", "practiceDone": "Fertig!", "practiceScore": "Du hattest {ok} von {total} richtig.", "practiceReview": "Wiederhole diese Schritte:", "practiceAgain": "Nochmal üben", "practicePerfect": "Perfekt, keine Fehler!", "practiceHint": "Schau aufs Spielfeld und rate die nächste Karte der Combo."}, "ru": {"playModeWatch": "Смотреть", "playModePractice": "Тренировка", "practiceQuestion": "Шаг {n} из {total}: какую карту используете сейчас?", "practiceDontKnow": "Не знаю", "practiceCorrect": "Верно!", "practiceWrong": "Правильный ответ:", "practiceNext": "Далее", "practiceDone": "Готово!", "practiceScore": "Верно {ok} из {total}.", "practiceReview": "Повторите эти шаги:", "practiceAgain": "Ещё раз", "practicePerfect": "Отлично, без ошибок!", "practiceHint": "Посмотрите на поле и угадайте следующую карту комбо."}, "ja": {"playModeWatch": "見る", "playModePractice": "練習", "practiceQuestion": "ステップ {n}/{total}: 次に使うカードは?", "practiceDontKnow": "わからない", "practiceCorrect": "正解!", "practiceWrong": "正解はこれ:", "practiceNext": "次へ", "practiceDone": "完了!", "practiceScore": "{total}問中 {ok}問正解。", "practiceReview": "復習するステップ:", "practiceAgain": "もう一度", "practicePerfect": "完璧、ミスなし!", "practiceHint": "盤面を見て、コンボの次のカードを当てよう。"}, "ko": {"playModeWatch": "보기", "playModePractice": "연습", "practiceQuestion": "{total}단계 중 {n}단계: 지금 사용할 카드는?", "practiceDontKnow": "모르겠어요", "practiceCorrect": "정답!", "practiceWrong": "정답은 이것:", "practiceNext": "다음", "practiceDone": "완료!", "practiceScore": "{total}개 중 {ok}개 정답.", "practiceReview": "다시 볼 단계:", "practiceAgain": "다시 연습", "practicePerfect": "완벽해요, 실수 없음!", "practiceHint": "보드를 보고 콤보의 다음 카드를 맞혀 보세요."}, "zh": {"playModeWatch": "观看", "playModePractice": "练习", "practiceQuestion": "第 {n}/{total} 步:现在用哪张卡?", "practiceDontKnow": "不知道", "practiceCorrect": "正确!", "practiceWrong": "答案是这张:", "practiceNext": "下一步", "practiceDone": "完成!", "practiceScore": "答对 {ok}/{total}。", "practiceReview": "复习这些步骤:", "practiceAgain": "再练一次", "practicePerfect": "完美,没有失误!", "practiceHint": "观察场面,猜出 Combo 的下一张卡。"}};
+        Object.entries(EXTRA_TRANSLATIONS_PRACTICE).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
@@ -2738,6 +2741,10 @@
             const [pos, setPos] = useState(0);
             const [pileOpen, setPileOpen] = useState(null);
             const [zoomCard, setZoomCard] = useState(null);
+            // Modo práctica: adivinar la carta del siguiente paso
+            const [practice, setPractice] = useState(false);
+            const [answer, setAnswer] = useState(null); // instanceId elegido o 'reveal'
+            const [score, setScore] = useState({ ok: 0, wrong: [] });
             const listRef = useRef(null);
 
             // Línea de tiempo: solo los pasos de verdad avanzan; las notas se muestran con el paso anterior y los grupos como títulos.
@@ -2776,10 +2783,37 @@
             }, [playing, p, total, speed, go]);
             const togglePlay = () => { if (playing) { setPlaying(false); return; } if (total === 0) return; if (p >= total) go(0); setPlaying(true); };
             const manualGo = (n) => { setPlaying(false); go(n); };
+            const startPractice = () => { setPlaying(false); setPractice(true); setAnswer(null); setScore({ ok: 0, wrong: [] }); go(0); };
+            const stopPractice = () => { setPractice(false); setAnswer(null); };
+            const quizStep = practice && p < total ? steps[p] : null;
+            const quizOptions = useMemo(() => {
+                if (!practice || p >= total) return [];
+                const correct = steps[p].mainCardInstanceId;
+                const correctName = (cardById[correct] || {}).name;
+                const seen = new Set(), others = [];
+                cardPool.forEach(c => { if (!c || c.instanceId === correct || c.name === correctName || seen.has(c.name)) return; seen.add(c.name); others.push(c.instanceId); });
+                let seed = (p + 1) * 9301 + total * 49297;
+                const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+                const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+                return shuffle([correct, ...shuffle(others).slice(0, 3)]);
+            }, [practice, p, total, steps, cardPool, cardById]);
+            const answerQuiz = (id) => {
+                if (answer || !quizStep) return;
+                const ok = id === quizStep.mainCardInstanceId;
+                setAnswer(id);
+                setScore(sc => ok ? { ...sc, ok: sc.ok + 1 } : { ...sc, wrong: [...sc.wrong, p + 1] });
+            };
+            const nextQuiz = () => { setAnswer(null); go(p + 1); };
+            useEffect(() => {
+                if (!practice || !answer || !quizStep || answer !== quizStep.mainCardInstanceId) return;
+                const tm = setTimeout(() => { setAnswer(null); go(p + 1); }, 900);
+                return () => clearTimeout(tm);
+            }, [practice, answer, p, quizStep, go]);
 
             useEffect(() => {
                 const onKey = (e) => {
                     if (e.ctrlKey || e.metaKey || e.altKey) return;
+                    if (practice && e.key !== 'Escape') return;
                     let handled = true;
                     if (e.key === 'Escape') { if (zoomCard) setZoomCard(null); else if (pileOpen) setPileOpen(null); else onClose(); }
                     else if (e.key === 'ArrowRight') manualGo(p + 1);
@@ -2792,7 +2826,7 @@
                 };
                 window.addEventListener('keydown', onKey, true);
                 return () => window.removeEventListener('keydown', onKey, true);
-            }, [p, total, go, zoomCard, pileOpen, onClose, playing]);
+            }, [p, total, go, zoomCard, pileOpen, onClose, playing, practice]);
 
             useEffect(() => {
                 const prev = document.body.style.overflow;
@@ -2862,11 +2896,64 @@
                                 ))}
                             </div>
                         )}
+                        <div className="flex rounded-md overflow-hidden border border-[var(--color-border)]" role="group">
+                            <button type="button" onClick={stopPractice} aria-pressed={!practice} className={`px-3 py-2 text-sm font-semibold ${!practice ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-surface-light)]'}`}><i className="fas fa-eye mr-1"></i>{t('playModeWatch')}</button>
+                            <button type="button" onClick={startPractice} disabled={total === 0} aria-pressed={practice} className={`px-3 py-2 text-sm font-semibold disabled:opacity-40 ${practice ? 'bg-amber-500 text-slate-900' : 'bg-[var(--color-surface-light)]'}`}><i className="fas fa-graduation-cap mr-1"></i>{t('playModePractice')}</button>
+                        </div>
                         <button type="button" onClick={onClose} title={t('playClose')} aria-label={t('playClose')} className="w-11 h-11 rounded-full flex items-center justify-center text-xl bg-[var(--color-surface-light)] hover:bg-red-600 hover:text-white"><i className="fas fa-times"></i></button>
                     </header>
 
                     <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
                         <section className="flex-none lg:flex-1 lg:min-h-0 lg:overflow-y-auto p-3 flex flex-col items-center gap-3">
+                            {practice ? (
+                            <div className="w-full max-w-[42rem] rounded-lg p-3 bg-[var(--color-surface)] border-2 border-amber-500/60">
+                                {quizStep ? (
+                                    <React.Fragment>
+                                        <div className="font-semibold">{t('practiceQuestion', { n: p + 1, total })}</div>
+                                        {!answer && <p className="text-xs text-[var(--color-text-muted)] mt-1">{t('practiceHint')}</p>}
+                                        <div className="grid grid-cols-4 gap-2 mt-3">
+                                            {quizOptions.map(id => {
+                                                const c = cardById[id];
+                                                const isRight = id === quizStep.mainCardInstanceId;
+                                                const look = !answer ? 'hover:ring-2 hover:ring-amber-400' : isRight ? 'ring-4 ring-green-500' : (answer === id ? 'ring-4 ring-red-500 opacity-80' : 'opacity-40');
+                                                return (
+                                                    <button key={id} type="button" onClick={() => answerQuiz(id)} disabled={!!answer} title={c ? c.name : ''} className={`rounded-md overflow-hidden bg-black/20 text-[0.7rem] leading-tight text-center p-1 ${look}`}>
+                                                        {c && c.image_url_small ? <img src={c.image_url_small} alt="" className="w-full rounded" draggable="false" /> : null}
+                                                        <span className="block mt-1">{c ? c.name : '?'}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                                            {!answer && <button type="button" onClick={() => answerQuiz('reveal')} className="px-3 py-2 rounded-md bg-[var(--color-surface-light)] text-sm font-semibold">{t('practiceDontKnow')}</button>}
+                                            {answer && answer === quizStep.mainCardInstanceId && <span className="text-green-400 font-bold">✓ {t('practiceCorrect')}</span>}
+                                            {answer && answer !== quizStep.mainCardInstanceId && (
+                                                <React.Fragment>
+                                                    <span className="text-red-400 font-semibold">✗ {t('practiceWrong')} <b className="text-[var(--color-text)]">{(cardById[quizStep.mainCardInstanceId] || {}).name || '?'}</b> · {playActionEmoji(quizStep)} {playActionText(quizStep)}</span>
+                                                    <button type="button" onClick={nextQuiz} className="ml-auto px-4 py-2 rounded-md bg-amber-500 text-slate-900 font-bold">{t('practiceNext')} →</button>
+                                                </React.Fragment>
+                                            )}
+                                        </div>
+                                        {answer && answer !== quizStep.mainCardInstanceId && quizStep.actionDescription && <p className="text-sm mt-2 whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: sanitizeHTML(quizStep.actionDescription) }}></p>}
+                                    </React.Fragment>
+                                ) : (
+                                    <React.Fragment>
+                                        <div className="font-bold text-lg">🎉 {t('practiceDone')}</div>
+                                        <p className="mt-1">{t('practiceScore', { ok: score.ok, total })}</p>
+                                        {score.wrong.length ? (
+                                            <div className="mt-2 text-sm">
+                                                <div className="font-semibold">{t('practiceReview')}</div>
+                                                <ul className="list-disc pl-5">{score.wrong.map(n => { const st = steps[n - 1]; const c = st && cardById[st.mainCardInstanceId]; return <li key={n}>{n}. {c ? c.name : '?'} · {st ? playActionText(st) : ''}</li>; })}</ul>
+                                            </div>
+                                        ) : <p className="mt-1 text-green-400 font-semibold">{t('practicePerfect')}</p>}
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            <button type="button" onClick={startPractice} className="px-4 py-2 rounded-md bg-amber-500 text-slate-900 font-bold">{t('practiceAgain')}</button>
+                                            <button type="button" onClick={stopPractice} className="px-4 py-2 rounded-md bg-[var(--color-surface-light)] font-semibold">{t('playModeWatch')}</button>
+                                        </div>
+                                    </React.Fragment>
+                                )}
+                            </div>
+                            ) : (
                             <div className="w-full max-w-[42rem] rounded-lg p-3 bg-[var(--color-surface)] border border-[var(--color-border)]">
                                 {groupAt[p] && <div className="text-xs font-bold uppercase tracking-wide text-amber-500 mb-1">{groupAt[p]}</div>}
                                 {curStep ? (
@@ -2887,7 +2974,7 @@
                                 )}
                                 {notesAt[p].map((n, i) => <p key={i} className="text-sm mt-2 p-2 rounded border-l-4 border-yellow-500 bg-yellow-500/15 whitespace-pre-wrap break-words"><i className="fas fa-sticky-note mr-1 text-yellow-500"></i>{n}</p>)}
                             </div>
-
+                            )}
                             <div className="w-full max-w-[42rem] play-field">
                                 {slot('Extra Monster 1', 'emz', { gridColumn: 3, gridRow: 1 })}
                                 {slot('Extra Monster 2', 'emz', { gridColumn: 5, gridRow: 1 })}
@@ -2913,17 +3000,19 @@
                         <aside className="flex-none lg:w-80 lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-[var(--color-border)] bg-[var(--color-surface)]">
                             <h3 className="px-3 pt-3 pb-1 font-semibold text-[var(--color-secondary)]">{t('playMoves')}</h3>
                             <div ref={listRef} className="relative px-2 pb-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
-                                <button type="button" data-active={p === 0} onClick={() => manualGo(0)} className={rowClass(p === 0)}>
+                                <button type="button" data-active={p === 0} onClick={() => { if (!practice) manualGo(0); }} className={rowClass(p === 0)}>
                                     <span className="w-7 shrink-0 text-right font-bold opacity-70">0.</span><span>{t('startingHandTitle')}</span>
                                 </button>
                                 {rows.map(r => {
                                     if (r.kind === 'group') return <div key={r.key} className="px-2 pt-3 pb-1 text-xs font-bold uppercase tracking-wide text-amber-500">{r.text}</div>;
+                                    if (r.kind === 'note' && practice) return null;
+                                    if (r.kind === 'step' && practice && r.pos > p) return <div key={r.key} className={rowClass(false) + ' opacity-50'}><span className="w-7 shrink-0 text-right font-bold opacity-70">{r.pos}.</span><span>? ? ?</span></div>;
                                     if (r.kind === 'note') return <div key={r.key} className="pl-11 pr-2 py-1 text-xs italic text-[var(--color-text-muted)] line-clamp-2 break-words">📝 {r.text}</div>;
                                     const st = r.step;
                                     const dest = boards[r.pos].last && boards[r.pos].last.dest;
                                     const card = cardById[st.mainCardInstanceId];
                                     return (
-                                        <button key={r.key} type="button" data-active={p === r.pos} onClick={() => manualGo(r.pos)} className={rowClass(p === r.pos)} title={card ? card.name : ''}>
+                                        <button key={r.key} type="button" data-active={p === r.pos} onClick={() => { if (!practice) manualGo(r.pos); }} className={rowClass(p === r.pos)} title={card ? card.name : ''}>
                                             <span className="w-7 shrink-0 text-right font-bold opacity-70">{r.pos}.</span>
                                             <span className="min-w-0 break-words"><b>{shortNames[st.mainCardInstanceId] || '?'}</b> {playActionEmoji(st)} {playActionText(st)}{dest ? ` → ${playDestLabel(dest, t)}` : ''}</span>
                                         </button>
@@ -2934,11 +3023,11 @@
                     </div>
 
                     <footer className="shrink-0 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-3 pt-2 border-t border-[var(--color-border)] bg-[var(--color-surface)]" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-                        <button type="button" onClick={() => manualGo(p - 1)} disabled={p === 0} title={t('playPrev')} aria-label={t('playPrev')} className={navClass}><i className="fas fa-chevron-left"></i></button>
-                        <button type="button" onClick={togglePlay} disabled={total === 0} title={playing ? t('playPause') : t('playPlay')} aria-label={playing ? t('playPause') : t('playPlay')} className={`${navClass} !bg-amber-500 !text-slate-900 hover:!bg-amber-400`}><i className={`fas ${playing ? 'fa-pause' : 'fa-play'}`}></i></button>
+                        <button type="button" onClick={() => manualGo(p - 1)} disabled={p === 0} title={t('playPrev')} aria-label={t('playPrev')} className={`${navClass} ${practice ? 'hidden' : ''}`}><i className="fas fa-chevron-left"></i></button>
+                        <button type="button" onClick={togglePlay} disabled={total === 0} title={playing ? t('playPause') : t('playPlay')} aria-label={playing ? t('playPause') : t('playPlay')} className={`${navClass} !bg-amber-500 !text-slate-900 hover:!bg-amber-400 ${practice ? 'hidden' : ''}`}><i className={`fas ${playing ? 'fa-pause' : 'fa-play'}`}></i></button>
                         <div className="min-w-[8.5rem] text-center font-semibold" aria-live="polite">{t('stepBreadcrumb', { current: p, total })}</div>
-                        <button type="button" onClick={() => manualGo(p + 1)} disabled={p >= total} title={t('playNext')} aria-label={t('playNext')} className={navClass}><i className="fas fa-chevron-right"></i></button>
-                        <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                        <button type="button" onClick={() => manualGo(p + 1)} disabled={p >= total} title={t('playNext')} aria-label={t('playNext')} className={`${navClass} ${practice ? 'hidden' : ''}`}><i className="fas fa-chevron-right"></i></button>
+                        <label className={`flex items-center gap-2 text-sm text-[var(--color-text-muted)] ${practice ? 'hidden' : ''}`}>
                             <i className="fas fa-tachometer-alt" aria-hidden="true"></i>
                             <select value={speed} onChange={e => setSpeed(e.target.value)} aria-label={t('playSpeed')} title={t('playSpeed')} className="bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md p-2 text-sm text-[var(--color-text)]">
                                 <option value="slow">{t('speedSlow')}</option>
