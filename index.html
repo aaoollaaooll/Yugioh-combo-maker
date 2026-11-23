@@ -504,6 +504,7 @@
         @media (min-width: 768px) { .mobile-tabbar { display: none; } }
         .pill-meta { display: inline-block; padding: 1px 8px; border: 1px solid var(--color-border); border-radius: 999px; font-size: .72rem; color: var(--color-text-muted); }
         .card-inspector { position: fixed; right: 12px; bottom: 12px; width: 18rem; max-height: 78vh; overflow: auto; z-index: 35; flex-direction: column; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+        .gif-capturing .play-hl, .gif-capturing .play-main, .gif-capturing .play-pile-hl { animation: none !important; }
     </style>
 </head>
 <body
@@ -954,6 +955,8 @@
         Object.entries(EXTRA_TRANSLATIONS_BRANCH).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // Datos del combo
         const FORMAT_LABEL = { md: 'Master Duel', tcg: 'TCG', ocg: 'OCG' };
+        // GIF animado del tablero
+        Object.entries({"es": {"gifTitle": "Exportar GIF animado", "gifHelp": "Se toma una imagen del tablero por cada paso y se unen en un GIF. Puede tardar unos segundos.", "gifSmall": "Pequeño (Discord)", "gifLarge": "Grande", "gifSpeedNote": "Velocidad", "gifCreate": "Crear GIF", "gifWorking": "Creando GIF… {done} de {total}", "gifDownload": "Descargar GIF", "gifError": "No se pudo crear el GIF. Inténtalo de nuevo."}, "en": {"gifTitle": "Export animated GIF", "gifHelp": "One picture of the board is taken per step and joined into a GIF. It may take a few seconds.", "gifSmall": "Small (Discord)", "gifLarge": "Large", "gifSpeedNote": "Speed", "gifCreate": "Create GIF", "gifWorking": "Creating GIF… {done} of {total}", "gifDownload": "Download GIF", "gifError": "The GIF could not be created. Please try again."}, "pt": {"gifTitle": "Exportar GIF animado", "gifHelp": "Uma imagem do tabuleiro é capturada em cada passo e unida em um GIF. Pode levar alguns segundos.", "gifSmall": "Pequeno (Discord)", "gifLarge": "Grande", "gifSpeedNote": "Velocidade", "gifCreate": "Criar GIF", "gifWorking": "Criando GIF… {done} de {total}", "gifDownload": "Baixar GIF", "gifError": "Não foi possível criar o GIF. Tente de novo."}, "fr": {"gifTitle": "Exporter un GIF animé", "gifHelp": "Une image du plateau est prise à chaque étape puis assemblée en GIF. Cela peut prendre quelques secondes.", "gifSmall": "Petit (Discord)", "gifLarge": "Grand", "gifSpeedNote": "Vitesse", "gifCreate": "Créer le GIF", "gifWorking": "Création du GIF… {done} sur {total}", "gifDownload": "Télécharger le GIF", "gifError": "Impossible de créer le GIF. Réessayez."}, "it": {"gifTitle": "Esporta GIF animata", "gifHelp": "Viene catturata un'immagine del tabellone per ogni passo e unita in una GIF. Può richiedere qualche secondo.", "gifSmall": "Piccola (Discord)", "gifLarge": "Grande", "gifSpeedNote": "Velocità", "gifCreate": "Crea GIF", "gifWorking": "Creazione GIF… {done} di {total}", "gifDownload": "Scarica GIF", "gifError": "Impossibile creare la GIF. Riprova."}, "de": {"gifTitle": "Animiertes GIF exportieren", "gifHelp": "Für jeden Schritt wird ein Bild des Spielfelds aufgenommen und zu einem GIF verbunden. Das kann ein paar Sekunden dauern.", "gifSmall": "Klein (Discord)", "gifLarge": "Groß", "gifSpeedNote": "Geschwindigkeit", "gifCreate": "GIF erstellen", "gifWorking": "GIF wird erstellt… {done} von {total}", "gifDownload": "GIF herunterladen", "gifError": "Das GIF konnte nicht erstellt werden. Versuche es erneut."}, "ru": {"gifTitle": "Экспорт анимированного GIF", "gifHelp": "Для каждого шага делается снимок поля, затем снимки объединяются в GIF. Это может занять несколько секунд.", "gifSmall": "Маленький (Discord)", "gifLarge": "Большой", "gifSpeedNote": "Скорость", "gifCreate": "Создать GIF", "gifWorking": "Создание GIF… {done} из {total}", "gifDownload": "Скачать GIF", "gifError": "Не удалось создать GIF. Попробуйте снова."}, "ja": {"gifTitle": "アニメーション GIF を書き出し", "gifHelp": "盤面の各ステップを画像にして、1つの GIF にまとめます。数秒かかることがあります。", "gifSmall": "小 (Discord)", "gifLarge": "大", "gifSpeedNote": "速度", "gifCreate": "GIF を作成", "gifWorking": "GIF を作成中… {done}/{total}", "gifDownload": "GIF をダウンロード", "gifError": "GIF を作成できませんでした。もう一度お試しください。"}, "ko": {"gifTitle": "움직이는 GIF 내보내기", "gifHelp": "보드의 각 단계를 이미지로 찍어 하나의 GIF로 합칩니다. 몇 초 걸릴 수 있습니다.", "gifSmall": "작게 (Discord)", "gifLarge": "크게", "gifSpeedNote": "속도", "gifCreate": "GIF 만들기", "gifWorking": "GIF 만드는 중… {done}/{total}", "gifDownload": "GIF 다운로드", "gifError": "GIF를 만들지 못했습니다. 다시 시도하세요."}, "zh": {"gifTitle": "导出动态 GIF", "gifHelp": "会为棋盘的每一步截一张图,再合成一个 GIF。可能需要几秒钟。", "gifSmall": "小 (Discord)", "gifLarge": "大", "gifSpeedNote": "速度", "gifCreate": "生成 GIF", "gifWorking": "正在生成 GIF… {done}/{total}", "gifDownload": "下载 GIF", "gifError": "无法生成 GIF,请重试。"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // Atajos, menciones, ficha fija, importar mazo, Discord y QR
         Object.entries({"es": {"stepsViewCompact": "Vista compacta", "shortcutsTitle": "Atajos de teclado", "scSearch": "Buscar carta", "scNewStep": "Nuevo paso", "scTest": "Probar combo", "scExport": "Exportar", "scUndoRedo": "Deshacer / Rehacer", "scSave": "Guardar", "scHelp": "Ver estos atajos", "mentionedCards": "Cartas mencionadas", "mentionHint": "Escribe [[Nombre de la carta]] para mencionar una carta.", "inspectorTitle": "Ficha de carta", "inspectorEmpty": "Pasa el mouse sobre una carta para ver su ficha aquí.", "inspectorToggle": "Ficha de carta fija (PC)", "importDeck": "Importar mazo (.ydk / ydke://)", "importDeckHelp": "Pega un enlace ydke:// o el contenido de un archivo .ydk, o elige el archivo. Las cartas del Main y del Extra Deck se añaden al pool.", "importDeckButton": "Importar", "importDeckFile": "Elegir archivo .ydk", "importDeckDone": "Se añadieron {n} cartas al pool.", "importDeckNone": "No se encontraron cartas en ese texto.", "importDeckError": "No se pudieron cargar las cartas. Revisa tu conexión e inténtalo otra vez.", "exportContentDiscord": "Discord (vertical)", "qrTitle": "Código QR con el enlace", "qrCaption": "Escanea para abrir el combo"}, "en": {"stepsViewCompact": "Compact view", "shortcutsTitle": "Keyboard shortcuts", "scSearch": "Search card", "scNewStep": "New step", "scTest": "Test combo", "scExport": "Export", "scUndoRedo": "Undo / Redo", "scSave": "Save", "scHelp": "Show these shortcuts", "mentionedCards": "Mentioned cards", "mentionHint": "Type [[Card name]] to mention a card.", "inspectorTitle": "Card details", "inspectorEmpty": "Hover over a card to see its details here.", "inspectorToggle": "Pinned card details (PC)", "importDeck": "Import deck (.ydk / ydke://)", "importDeckHelp": "Paste a ydke:// link or the contents of a .ydk file, or choose the file. Main and Extra Deck cards are added to the pool.", "importDeckButton": "Import", "importDeckFile": "Choose .ydk file", "importDeckDone": "{n} cards were added to the pool.", "importDeckNone": "No cards were found in that text.", "importDeckError": "Could not load the cards. Check your connection and try again.", "exportContentDiscord": "Discord (vertical)", "qrTitle": "QR code with the link", "qrCaption": "Scan to open the combo"}, "pt": {"stepsViewCompact": "Visão compacta", "shortcutsTitle": "Atalhos de teclado", "scSearch": "Buscar carta", "scNewStep": "Novo passo", "scTest": "Testar combo", "scExport": "Exportar", "scUndoRedo": "Desfazer / Refazer", "scSave": "Salvar", "scHelp": "Ver estes atalhos", "mentionedCards": "Cartas mencionadas", "mentionHint": "Escreva [[Nome da carta]] para mencionar uma carta.", "inspectorTitle": "Ficha da carta", "inspectorEmpty": "Passe o mouse sobre uma carta para ver a ficha aqui.", "inspectorToggle": "Ficha de carta fixa (PC)", "importDeck": "Importar deck (.ydk / ydke://)", "importDeckHelp": "Cole um link ydke:// ou o conteúdo de um arquivo .ydk, ou escolha o arquivo. As cartas do Main e do Extra Deck vão para o pool.", "importDeckButton": "Importar", "importDeckFile": "Escolher arquivo .ydk", "importDeckDone": "{n} cartas foram adicionadas ao pool.", "importDeckNone": "Nenhuma carta encontrada nesse texto.", "importDeckError": "Não foi possível carregar as cartas. Verifique a conexão e tente de novo.", "exportContentDiscord": "Discord (vertical)", "qrTitle": "QR code com o link", "qrCaption": "Escaneie para abrir o combo"}, "fr": {"stepsViewCompact": "Vue compacte", "shortcutsTitle": "Raccourcis clavier", "scSearch": "Chercher une carte", "scNewStep": "Nouvelle étape", "scTest": "Tester le combo", "scExport": "Exporter", "scUndoRedo": "Annuler / Rétablir", "scSave": "Enregistrer", "scHelp": "Voir ces raccourcis", "mentionedCards": "Cartes mentionnées", "mentionHint": "Écrivez [[Nom de la carte]] pour mentionner une carte.", "inspectorTitle": "Fiche de carte", "inspectorEmpty": "Survolez une carte pour voir sa fiche ici.", "inspectorToggle": "Fiche de carte fixe (PC)", "importDeck": "Importer un deck (.ydk / ydke://)", "importDeckHelp": "Collez un lien ydke:// ou le contenu d'un fichier .ydk, ou choisissez le fichier. Les cartes du Main et de l'Extra Deck sont ajoutées au pool.", "importDeckButton": "Importer", "importDeckFile": "Choisir un fichier .ydk", "importDeckDone": "{n} cartes ont été ajoutées au pool.", "importDeckNone": "Aucune carte trouvée dans ce texte.", "importDeckError": "Impossible de charger les cartes. Vérifiez votre connexion et réessayez.", "exportContentDiscord": "Discord (vertical)", "qrTitle": "QR code avec le lien", "qrCaption": "Scannez pour ouvrir le combo"}, "it": {"stepsViewCompact": "Vista compatta", "shortcutsTitle": "Scorciatoie da tastiera", "scSearch": "Cerca carta", "scNewStep": "Nuovo passo", "scTest": "Prova combo", "scExport": "Esporta", "scUndoRedo": "Annulla / Ripeti", "scSave": "Salva", "scHelp": "Mostra queste scorciatoie", "mentionedCards": "Carte menzionate", "mentionHint": "Scrivi [[Nome della carta]] per menzionare una carta.", "inspectorTitle": "Scheda della carta", "inspectorEmpty": "Passa il mouse su una carta per vedere qui la sua scheda.", "inspectorToggle": "Scheda carta fissa (PC)", "importDeck": "Importa deck (.ydk / ydke://)", "importDeckHelp": "Incolla un link ydke:// o il contenuto di un file .ydk, oppure scegli il file. Le carte del Main e dell'Extra Deck vengono aggiunte al pool.", "importDeckButton": "Importa", "importDeckFile": "Scegli file .ydk", "importDeckDone": "{n} carte aggiunte al pool.", "importDeckNone": "Nessuna carta trovata in quel testo.", "importDeckError": "Impossibile caricare le carte. Controlla la connessione e riprova.", "exportContentDiscord": "Discord (verticale)", "qrTitle": "Codice QR con il link", "qrCaption": "Scansiona per aprire la combo"}, "de": {"stepsViewCompact": "Kompaktansicht", "shortcutsTitle": "Tastenkürzel", "scSearch": "Karte suchen", "scNewStep": "Neuer Schritt", "scTest": "Combo testen", "scExport": "Exportieren", "scUndoRedo": "Rückgängig / Wiederholen", "scSave": "Speichern", "scHelp": "Diese Kürzel anzeigen", "mentionedCards": "Erwähnte Karten", "mentionHint": "Schreibe [[Kartenname]], um eine Karte zu erwähnen.", "inspectorTitle": "Kartendetails", "inspectorEmpty": "Fahre mit der Maus über eine Karte, um hier ihre Details zu sehen.", "inspectorToggle": "Feste Kartendetails (PC)", "importDeck": "Deck importieren (.ydk / ydke://)", "importDeckHelp": "Füge einen ydke://-Link oder den Inhalt einer .ydk-Datei ein oder wähle die Datei. Karten aus Main- und Extra-Deck kommen in den Pool.", "importDeckButton": "Importieren", "importDeckFile": ".ydk-Datei wählen", "importDeckDone": "{n} Karten wurden zum Pool hinzugefügt.", "importDeckNone": "In diesem Text wurden keine Karten gefunden.", "importDeckError": "Die Karten konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.", "exportContentDiscord": "Discord (vertikal)", "qrTitle": "QR-Code mit dem Link", "qrCaption": "Scannen, um die Combo zu öffnen"}, "ru": {"stepsViewCompact": "Компактный вид", "shortcutsTitle": "Горячие клавиши", "scSearch": "Найти карту", "scNewStep": "Новый шаг", "scTest": "Тест комбо", "scExport": "Экспорт", "scUndoRedo": "Отменить / Повторить", "scSave": "Сохранить", "scHelp": "Показать эти клавиши", "mentionedCards": "Упомянутые карты", "mentionHint": "Напишите [[Название карты]], чтобы упомянуть карту.", "inspectorTitle": "Карточка карты", "inspectorEmpty": "Наведите курсор на карту, чтобы увидеть её описание здесь.", "inspectorToggle": "Закреплённая карточка (ПК)", "importDeck": "Импорт колоды (.ydk / ydke://)", "importDeckHelp": "Вставьте ссылку ydke:// или содержимое файла .ydk, либо выберите файл. Карты основной и дополнительной колоды добавятся в пул.", "importDeckButton": "Импорт", "importDeckFile": "Выбрать файл .ydk", "importDeckDone": "В пул добавлено карт: {n}.", "importDeckNone": "В этом тексте не найдено карт.", "importDeckError": "Не удалось загрузить карты. Проверьте подключение и попробуйте снова.", "exportContentDiscord": "Discord (вертикально)", "qrTitle": "QR-код со ссылкой", "qrCaption": "Отсканируйте, чтобы открыть комбо"}, "ja": {"stepsViewCompact": "コンパクト表示", "shortcutsTitle": "キーボードショートカット", "scSearch": "カードを検索", "scNewStep": "新しいステップ", "scTest": "コンボをテスト", "scExport": "エクスポート", "scUndoRedo": "元に戻す / やり直す", "scSave": "保存", "scHelp": "このショートカットを表示", "mentionedCards": "言及したカード", "mentionHint": "[[カード名]] と書くとカードを言及できます。", "inspectorTitle": "カード詳細", "inspectorEmpty": "カードにマウスを乗せると、ここに詳細が表示されます。", "inspectorToggle": "カード詳細を固定 (PC)", "importDeck": "デッキをインポート (.ydk / ydke://)", "importDeckHelp": "ydke:// リンクか .ydk ファイルの内容を貼り付けるか、ファイルを選んでください。メインとエクストラデッキのカードがプールに追加されます。", "importDeckButton": "インポート", "importDeckFile": ".ydk ファイルを選ぶ", "importDeckDone": "{n} 枚のカードをプールに追加しました。", "importDeckNone": "その文字列にカードが見つかりませんでした。", "importDeckError": "カードを読み込めませんでした。接続を確認して、もう一度お試しください。", "exportContentDiscord": "Discord (縦長)", "qrTitle": "リンクの QR コード", "qrCaption": "スキャンしてコンボを開く"}, "ko": {"stepsViewCompact": "간단히 보기", "shortcutsTitle": "키보드 단축키", "scSearch": "카드 검색", "scNewStep": "새 단계", "scTest": "콤보 테스트", "scExport": "내보내기", "scUndoRedo": "실행 취소 / 다시 실행", "scSave": "저장", "scHelp": "단축키 보기", "mentionedCards": "언급한 카드", "mentionHint": "[[카드 이름]]을 쓰면 카드를 언급할 수 있습니다.", "inspectorTitle": "카드 정보", "inspectorEmpty": "카드에 마우스를 올리면 여기에서 정보를 볼 수 있습니다.", "inspectorToggle": "카드 정보 고정 (PC)", "importDeck": "덱 가져오기 (.ydk / ydke://)", "importDeckHelp": "ydke:// 링크나 .ydk 파일 내용을 붙여 넣거나 파일을 선택하세요. 메인 덱과 엑스트라 덱 카드가 풀에 추가됩니다.", "importDeckButton": "가져오기", "importDeckFile": ".ydk 파일 선택", "importDeckDone": "카드 {n}장을 풀에 추가했습니다.", "importDeckNone": "그 텍스트에서 카드를 찾지 못했습니다.", "importDeckError": "카드를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.", "exportContentDiscord": "Discord (세로)", "qrTitle": "링크 QR 코드", "qrCaption": "스캔해서 콤보 열기"}, "zh": {"stepsViewCompact": "紧凑视图", "shortcutsTitle": "键盘快捷键", "scSearch": "搜索卡片", "scNewStep": "新步骤", "scTest": "测试 Combo", "scExport": "导出", "scUndoRedo": "撤销 / 重做", "scSave": "保存", "scHelp": "显示这些快捷键", "mentionedCards": "提到的卡", "mentionHint": "输入 [[卡名]] 即可提到一张卡。", "inspectorTitle": "卡片信息", "inspectorEmpty": "将鼠标移到卡片上,即可在此查看信息。", "inspectorToggle": "固定卡片信息 (PC)", "importDeck": "导入卡组 (.ydk / ydke://)", "importDeckHelp": "粘贴 ydke:// 链接或 .ydk 文件内容,或选择文件。主卡组和额外卡组的卡会加入卡池。", "importDeckButton": "导入", "importDeckFile": "选择 .ydk 文件", "importDeckDone": "已向卡池添加 {n} 张卡。", "importDeckNone": "该文本中没有找到卡片。", "importDeckError": "无法加载卡片。请检查网络后重试。", "exportContentDiscord": "Discord (竖版)", "qrTitle": "带链接的二维码", "qrCaption": "扫码打开 Combo"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         const MENTION_RE = /\[\[([^\[\]<>]{2,80})\]\]/g;
@@ -2868,6 +2871,63 @@
             }, [playing, p, total, speed, go]);
             const togglePlay = () => { if (playing) { setPlaying(false); return; } if (total === 0) return; if (p >= total) go(0); setPlaying(true); };
             const manualGo = (n) => { setPlaying(false); go(n); };
+            // GIF animado: una foto del tablero por paso (html2canvas) y se unen en el navegador con gifenc
+            const [gifState, setGifState] = useState(null); // null | {phase:'options'} | {phase:'working',done,total} | {phase:'ready',url,bytes} | {phase:'error'}
+            const [gifSize, setGifSize] = useState('small');
+            const makeGif = async () => {
+                setPlaying(false);
+                const target = document.querySelector('[data-gif-capture]');
+                if (!target || !window.html2canvas) { setGifState({ phase: 'error' }); return; }
+                const overlay = target.closest('.play-overlay');
+                const startPos = p;
+                const width = gifSize === 'large' ? 800 : 480;
+                const bg = document.documentElement.getAttribute('data-theme') === 'light' ? '#f1f5f9' : '#0b1020';
+                const frames = [];
+                try {
+                    const mod = await (new Function('u', 'return import(u)'))('https://unpkg.com/gifenc@1.0.3/dist/gifenc.esm.js');
+                    const { GIFEncoder, quantize, applyPalette } = mod;
+                    if (overlay) overlay.classList.add('gif-capturing');
+                    for (let i = 0; i <= total; i++) {
+                        setGifState({ phase: 'working', done: i, total: total + 1 });
+                        go(i);
+                        await new Promise(r => setTimeout(r, 180));
+                        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                        const shot = await window.html2canvas(target, { useCORS: true, backgroundColor: bg, scale: 1, logging: false,
+                            onclone: (doc) => { const c = doc.querySelector('[data-gif-capture]'); if (c) { c.style.overflow = 'visible'; c.style.height = 'auto'; c.style.maxHeight = 'none'; } } });
+                        const k = width / shot.width;
+                        const small = document.createElement('canvas');
+                        small.width = width; small.height = Math.max(1, Math.round(shot.height * k));
+                        const sctx = small.getContext('2d');
+                        sctx.imageSmoothingQuality = 'high';
+                        sctx.drawImage(shot, 0, 0, small.width, small.height);
+                        frames.push(small);
+                    }
+                    const H = Math.max(...frames.map(f => f.height));
+                    const enc = GIFEncoder();
+                    const out = document.createElement('canvas');
+                    out.width = width; out.height = H;
+                    const octx = out.getContext('2d', { willReadFrequently: true });
+                    const delay = PLAY_DELAYS[speed];
+                    frames.forEach((f, idx) => {
+                        octx.fillStyle = bg; octx.fillRect(0, 0, width, H);
+                        octx.drawImage(f, 0, 0);
+                        const { data } = octx.getImageData(0, 0, width, H);
+                        const palette = quantize(data, 256);
+                        const index = applyPalette(data, palette);
+                        enc.writeFrame(index, width, H, { palette, delay: idx === frames.length - 1 ? delay * 2 : delay, repeat: 0 });
+                    });
+                    enc.finish();
+                    const bytes = enc.bytes();
+                    const url = URL.createObjectURL(new Blob([bytes], { type: 'image/gif' }));
+                    setGifState({ phase: 'ready', url, bytes: bytes.length });
+                } catch (e) {
+                    console.error('No se pudo crear el GIF', e);
+                    setGifState({ phase: 'error' });
+                } finally {
+                    if (overlay) overlay.classList.remove('gif-capturing');
+                    go(startPos);
+                }
+            };
             const startPractice = () => { setPlaying(false); setPractice(true); setAnswer(null); setScore({ ok: 0, wrong: [] }); go(0); };
             const stopPractice = () => { setPractice(false); setAnswer(null); };
             const quizStep = practice && p < total ? steps[p] : null;
@@ -2990,7 +3050,7 @@
                     </header>
 
                     <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
-                        <section className="flex-none lg:flex-1 lg:min-h-0 lg:overflow-y-auto p-3 flex flex-col items-center gap-3">
+                        <section data-gif-capture="1" className="flex-none lg:flex-1 lg:min-h-0 lg:overflow-y-auto p-3 flex flex-col items-center gap-3">
                             {practice ? (
                             <div className="w-full max-w-[42rem] rounded-lg p-3 bg-[var(--color-surface)] border-2 border-amber-500/60">
                                 {quizStep ? (
@@ -3116,6 +3176,7 @@
                         <button type="button" onClick={togglePlay} disabled={total === 0} title={playing ? t('playPause') : t('playPlay')} aria-label={playing ? t('playPause') : t('playPlay')} className={`${navClass} !bg-amber-500 !text-slate-900 hover:!bg-amber-400 ${practice ? 'hidden' : ''}`}><i className={`fas ${playing ? 'fa-pause' : 'fa-play'}`}></i></button>
                         <div className="min-w-[8.5rem] text-center font-semibold" aria-live="polite">{t('stepBreadcrumb', { current: p, total })}</div>
                         <button type="button" onClick={() => manualGo(p + 1)} disabled={p >= total} title={t('playNext')} aria-label={t('playNext')} className={`${navClass} ${practice ? 'hidden' : ''}`}><i className="fas fa-chevron-right"></i></button>
+                        <button type="button" onClick={() => setGifState({ phase: 'options' })} disabled={total === 0} title={t('gifTitle')} aria-label={t('gifTitle')} className={`h-14 px-4 rounded-xl bg-[var(--color-surface-light)] text-[var(--color-text)] font-bold flex items-center gap-2 hover:bg-[var(--color-primary)] hover:text-white disabled:opacity-30 ${practice ? 'hidden' : ''}`}><i className="fas fa-film"></i> GIF</button>
                         <label className={`flex items-center gap-2 text-sm text-[var(--color-text-muted)] ${practice ? 'hidden' : ''}`}>
                             <i className="fas fa-tachometer-alt" aria-hidden="true"></i>
                             <select value={speed} onChange={e => setSpeed(e.target.value)} aria-label={t('playSpeed')} title={t('playSpeed')} className="bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md p-2 text-sm text-[var(--color-text)]">
@@ -3126,6 +3187,48 @@
                         </label>
                     </footer>
 
+                    {gifState && (
+                        <div className="absolute inset-0 z-20 bg-black/70 flex items-center justify-center p-4" onClick={() => { if (gifState.phase !== 'working') { if (gifState.url) URL.revokeObjectURL(gifState.url); setGifState(null); } }}>
+                            <div className="w-full max-w-md max-h-[90%] overflow-y-auto bg-[var(--color-surface)] rounded-2xl shadow-xl p-4" onClick={e => e.stopPropagation()}>
+                                <h3 className="font-semibold mb-2"><i className="fas fa-film mr-2"></i>{t('gifTitle')}</h3>
+                                {gifState.phase === 'options' && (
+                                    <React.Fragment>
+                                        <p className="text-sm text-[var(--color-text-muted)] mb-3">{t('gifHelp')}</p>
+                                        <div className="flex gap-2 mb-3">
+                                            {[['small', t('gifSmall')], ['large', t('gifLarge')]].map(([k, l]) => <button key={k} type="button" onClick={() => setGifSize(k)} className={`flex-1 py-2 rounded-md text-sm font-semibold ${gifSize === k ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-surface-light)]'}`}>{l}</button>)}
+                                        </div>
+                                        <p className="text-xs text-[var(--color-text-muted)] mb-3">{t('gifSpeedNote')}: {t(speed === 'slow' ? 'speedSlow' : speed === 'fast' ? 'speedFast' : 'speedNormal')}</p>
+                                        <div className="flex justify-end gap-2">
+                                            <button type="button" onClick={() => setGifState(null)} className="px-4 py-2 rounded-md bg-[var(--color-surface-light)]">{t('cancel')}</button>
+                                            <button type="button" onClick={makeGif} className="px-4 py-2 rounded-md bg-amber-500 text-slate-900 font-bold">{t('gifCreate')}</button>
+                                        </div>
+                                    </React.Fragment>
+                                )}
+                                {gifState.phase === 'working' && (
+                                    <React.Fragment>
+                                        <p className="text-sm mb-2">{t('gifWorking', { done: gifState.done, total: gifState.total })}</p>
+                                        <div className="w-full h-3 bg-[var(--color-surface-light)] rounded-full overflow-hidden"><div className="h-3 bg-amber-500" style={{ width: `${Math.round(gifState.done / gifState.total * 100)}%` }}></div></div>
+                                    </React.Fragment>
+                                )}
+                                {gifState.phase === 'ready' && (
+                                    <React.Fragment>
+                                        <img src={gifState.url} alt="GIF" className="w-full rounded border border-[var(--color-border)]" />
+                                        <p className="text-xs text-[var(--color-text-muted)] mt-2">{(gifState.bytes / 1048576).toFixed(1)} MB</p>
+                                        <div className="flex justify-end gap-2 mt-3">
+                                            <button type="button" onClick={() => { URL.revokeObjectURL(gifState.url); setGifState(null); }} className="px-4 py-2 rounded-md bg-[var(--color-surface-light)]">{t('closeLabel')}</button>
+                                            <a href={gifState.url} download={`${(comboTitle || 'combo').replace(/[\\/:*?"<>|]+/g, '').trim().slice(0, 60) || 'combo'}.gif`} className="px-4 py-2 rounded-md bg-green-600 text-white font-bold"><i className="fas fa-download mr-2"></i>{t('gifDownload')}</a>
+                                        </div>
+                                    </React.Fragment>
+                                )}
+                                {gifState.phase === 'error' && (
+                                    <React.Fragment>
+                                        <p className="text-sm text-red-400">{t('gifError')}</p>
+                                        <div className="flex justify-end mt-3"><button type="button" onClick={() => setGifState(null)} className="px-4 py-2 rounded-md bg-[var(--color-surface-light)]">{t('closeLabel')}</button></div>
+                                    </React.Fragment>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     {pileOpen && (
                         <div className="absolute inset-0 z-10 bg-black/70 flex items-end sm:items-center justify-center sm:p-4" onClick={() => setPileOpen(null)}>
                             <div className="w-full sm:max-w-lg max-h-[75%] flex flex-col bg-[var(--color-surface)] rounded-t-2xl sm:rounded-2xl shadow-xl" onClick={e => e.stopPropagation()}>
