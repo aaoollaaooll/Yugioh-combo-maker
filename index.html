@@ -513,13 +513,15 @@
         if (!text) return hide();
         current = el;
         tip.textContent = text;
+        // body tiene zoom 0.9: se mide en píxeles visibles y se divide por el zoom al posicionar
+        var zv = parseFloat(getComputedStyle(document.body).zoom); var z = (zv && !isNaN(zv)) ? zv : 1;
         var r = el.getBoundingClientRect();
-        var w = tip.offsetWidth, h = tip.offsetHeight;
+        var tr = tip.getBoundingClientRect(); var w = tr.width, h = tr.height;
         var left = Math.max(6, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 6));
         var top = r.bottom + 8;
         if (top + h > window.innerHeight - 6) top = Math.max(6, r.top - h - 8);
-        tip.style.left = left + 'px';
-        tip.style.top = top + 'px';
+        tip.style.left = (left / z) + 'px';
+        tip.style.top = (top / z) + 'px';
         tip.classList.add('visible');
       }
       document.addEventListener('pointerover', function(e){
@@ -909,6 +911,8 @@
         // Tanda 2: carta directo a su lugar, pasos en lista, tablero final y hoja rápida
         const EXTRA_TRANSLATIONS_2 = {"es": {"stepsViewList": "Lista", "stepsViewGrid": "Cuadrícula", "destTitle": "¿Dónde la pongo?", "destPool": "Solo al pool", "destStep": "Nuevo paso", "destHand": "Mano inicial", "destBoard": "Campo final", "allCardsSection": "Todas las cartas", "typeToSearchAll": "Escribe 3 letras para buscar entre todas las cartas", "searchingCards": "Buscando…", "exportContent": "Contenido", "exportContentFull": "Completo", "exportContentQuick": "Hoja rápida"}, "en": {"stepsViewList": "List", "stepsViewGrid": "Grid", "destTitle": "Where should it go?", "destPool": "Pool only", "destStep": "New step", "destHand": "Starting hand", "destBoard": "Final board", "allCardsSection": "All cards", "typeToSearchAll": "Type 3 letters to search all cards", "searchingCards": "Searching…", "exportContent": "Content", "exportContentFull": "Full", "exportContentQuick": "Quick sheet"}, "pt": {"stepsViewList": "Lista", "stepsViewGrid": "Grade", "destTitle": "Onde colocar?", "destPool": "Só no pool", "destStep": "Novo passo", "destHand": "Mão inicial", "destBoard": "Campo final", "allCardsSection": "Todas as cartas", "typeToSearchAll": "Digite 3 letras para buscar em todas as cartas", "searchingCards": "Buscando…", "exportContent": "Conteúdo", "exportContentFull": "Completo", "exportContentQuick": "Folha rápida"}, "fr": {"stepsViewList": "Liste", "stepsViewGrid": "Grille", "destTitle": "Où la placer ?", "destPool": "Pool uniquement", "destStep": "Nouvelle étape", "destHand": "Main de départ", "destBoard": "Terrain final", "allCardsSection": "Toutes les cartes", "typeToSearchAll": "Tapez 3 lettres pour chercher parmi toutes les cartes", "searchingCards": "Recherche…", "exportContent": "Contenu", "exportContentFull": "Complet", "exportContentQuick": "Fiche rapide"}, "it": {"stepsViewList": "Elenco", "stepsViewGrid": "Griglia", "destTitle": "Dove la metto?", "destPool": "Solo nel pool", "destStep": "Nuovo passo", "destHand": "Mano iniziale", "destBoard": "Campo finale", "allCardsSection": "Tutte le carte", "typeToSearchAll": "Scrivi 3 lettere per cercare tra tutte le carte", "searchingCards": "Ricerca…", "exportContent": "Contenuto", "exportContentFull": "Completo", "exportContentQuick": "Scheda rapida"}, "de": {"stepsViewList": "Liste", "stepsViewGrid": "Raster", "destTitle": "Wohin damit?", "destPool": "Nur in den Pool", "destStep": "Neuer Schritt", "destHand": "Starthand", "destBoard": "Endfeld", "allCardsSection": "Alle Karten", "typeToSearchAll": "Tippe 3 Buchstaben, um alle Karten zu durchsuchen", "searchingCards": "Suche…", "exportContent": "Inhalt", "exportContentFull": "Vollständig", "exportContentQuick": "Kurzübersicht"}, "ru": {"stepsViewList": "Список", "stepsViewGrid": "Сетка", "destTitle": "Куда положить?", "destPool": "Только в пул", "destStep": "Новый шаг", "destHand": "Стартовая рука", "destBoard": "Итоговое поле", "allCardsSection": "Все карты", "typeToSearchAll": "Введите 3 буквы для поиска по всем картам", "searchingCards": "Поиск…", "exportContent": "Содержание", "exportContentFull": "Полностью", "exportContentQuick": "Краткий лист"}, "ja": {"stepsViewList": "リスト", "stepsViewGrid": "グリッド", "destTitle": "どこに置きますか？", "destPool": "プールのみ", "destStep": "新しいステップ", "destHand": "初手", "destBoard": "最終盤面", "allCardsSection": "すべてのカード", "typeToSearchAll": "3文字入力すると全カードから検索します", "searchingCards": "検索中…", "exportContent": "内容", "exportContentFull": "完全版", "exportContentQuick": "クイックシート"}, "ko": {"stepsViewList": "목록", "stepsViewGrid": "격자", "destTitle": "어디에 둘까요?", "destPool": "풀에만", "destStep": "새 단계", "destHand": "초기 패", "destBoard": "최종 필드", "allCardsSection": "모든 카드", "typeToSearchAll": "3글자를 입력하면 모든 카드에서 검색합니다", "searchingCards": "검색 중…", "exportContent": "내용", "exportContentFull": "전체", "exportContentQuick": "요약 시트"}, "zh": {"stepsViewList": "列表", "stepsViewGrid": "网格", "destTitle": "放到哪里？", "destPool": "仅加入卡池", "destStep": "新步骤", "destHand": "起手", "destBoard": "最终场面", "allCardsSection": "所有卡片", "typeToSearchAll": "输入 3 个字母即可搜索所有卡片", "searchingCards": "搜索中…", "exportContent": "内容", "exportContentFull": "完整", "exportContentQuick": "速查表"}};
         Object.entries(EXTRA_TRANSLATIONS_2).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        const EXTRA_TRANSLATIONS_3 = {"es": {"commonHandTraps": "Hand traps comunes"}, "en": {"commonHandTraps": "Common hand traps"}, "pt": {"commonHandTraps": "Hand traps comuns"}, "fr": {"commonHandTraps": "Hand traps courantes"}, "it": {"commonHandTraps": "Hand trap comuni"}, "de": {"commonHandTraps": "Häufige Handtraps"}, "ru": {"commonHandTraps": "Частые хенд-трапы"}, "ja": {"commonHandTraps": "よく使う手札誘発"}, "ko": {"commonHandTraps": "자주 쓰는 패 트랩"}, "zh": {"commonHandTraps": "常见手坑"}};
+        Object.entries(EXTRA_TRANSLATIONS_3).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
@@ -979,6 +983,8 @@
         const AUTO_SAVE_KEY = 'ygo_combo_autosave';
         const debounce = (func, delay) => { let timeout; return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); }; };
         const generateId = () => crypto.randomUUID();
+        // La página usa body { zoom: 0.9 }: las coordenadas del mouse hay que dividirlas por esto para posicionar cosas fijas
+        const getBodyZoom = () => { const z = parseFloat(getComputedStyle(document.body).zoom); return z && !isNaN(z) ? z : 1; };
         const sanitizeHTML = (str) => window.DOMPurify ? window.DOMPurify.sanitize(str, {ALLOWED_TAGS: ['b', 'i', 'u', 'br', 'ul', 'ol', 'li', 'p', 'div', 'span'], ALLOWED_ATTR: ['style']}) : str;
         const createComboCardInstance = (apiCard, imageProxy) => {
             if (!apiCard) return null;
@@ -1130,16 +1136,16 @@
             const mx = window.__YGO_MOUSE__?.x || 0;
             const my = window.__YGO_MOUSE__?.y || 0;
         
-            const pad = 16, boxW = 320, boxH = 280;
+            const zf = getBodyZoom();
+            const pad = 16, boxW = 320 * zf, boxH = 280 * zf;
             let left = mx + 24;
             let top = my - boxH / 2;
-        
             if (left + boxW > window.innerWidth - pad) {
                 left = mx - boxW - 24;
             }
             top = Math.max(pad, Math.min(top, window.innerHeight - boxH - pad));
-        
-            const style = { position: 'fixed', top: `${top}px`, left: `${left}px` };
+            // body tiene zoom 0.9: el mouse da píxeles visibles; left/top van en píxeles de la página
+            const style = { position: 'fixed', top: `${top / zf}px`, left: `${left / zf}px` };
         
             const previewContent = (
                 <div id="card-hover-preview" style={style} className={card ? 'visible' : ''}>
@@ -1239,8 +1245,11 @@
             );
         };
 
-        const CardSelector = ({ cardPool, onCardSelected, buttonText, displayAs = 'button', t, wrapperClassName = '', onMouseEnter, onMouseLeave, onMouseMove, preferredDirection = 'down' }) => {
+        const CardSelector = ({ cardPool, onCardSelected, buttonText, displayAs = 'button', t, wrapperClassName = '', onMouseEnter, onMouseLeave, onMouseMove, preferredDirection = 'down', mode = 'pool' }) => {
+            const allMode = mode === 'all'; // «todas las cartas»: primero la base de datos, sin pool ni notas, y no agrega al pool
             const [isOpen, setIsOpen] = useState(false);
+            const [quickPicks, setQuickPicks] = useState(handTrapCache.data);
+            useEffect(() => { if (isOpen && allMode && !quickPicks) { let alive = true; loadHandTraps().then(list => { if (alive) setQuickPicks(list); }); return () => { alive = false; }; } }, [isOpen, allMode]);
             const inputRef = useRef(null);
             const [filter, setFilter] = useState('');
             const containerRef = useRef(null);
@@ -1324,42 +1333,56 @@
                 setFilter('');
             };
             const poolIdSet = (cardSourceRef.current && cardSourceRef.current.poolIds) || new Set(cardPool.map(c => c.ygoprodeck_id));
-            const apiVisible = apiResults.filter(c => !poolIdSet.has(c.id));
-            const pickApiCard = (apiCard) => handleSelect(cardSourceRef.current ? cardSourceRef.current.prepareApiCard(apiCard) : null);
+            const apiVisible = allMode ? apiResults : apiResults.filter(c => !poolIdSet.has(c.id));
+            const pickApiCard = (apiCard) => handleSelect(allMode ? createComboCardInstance(apiCard, 'https://images.weserv.nl/?url=') : (cardSourceRef.current ? cardSourceRef.current.prepareApiCard(apiCard) : null));
             const apiThumb = (c) => { const u = c.card_images?.[0]?.image_url_small; return u ? 'https://images.weserv.nl/?url=' + u.replace(/^https?:\/\//, '') : ''; };
+            const renderApiList = (list, mobile) => mobile ? (
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
+                    {list.map(c => <CardDisplay key={`api-${c.id}`} card={createComboCardInstance(c, 'https://images.weserv.nl/?url=')} size="small" onClick={() => pickApiCard(c)} />)}
+                </div>
+            ) : (
+                <div>
+                    {list.map(c => (
+                        <div key={`api-${c.id}`} onMouseDown={() => pickApiCard(c)} className="flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm">
+                            <img src={apiThumb(c)} alt={c.name} className="w-10 h-14 object-cover rounded-sm mr-2" />
+                            <span className="truncate">{c.name}</span>
+                        </div>
+                    ))}
+                </div>
+            );
             const renderApiSection = (mobile) => {
-                if (!cardSourceRef.current) return null;
+                if (!cardSourceRef.current && !allMode) return null;
                 const q = filter.trim();
                 const msgCls = mobile ? 'text-slate-400 p-3 text-center text-sm' : 'p-2 text-gray-400 text-xs';
+                const headCls = `${mobile ? 'text-sm px-1 mb-2' : 'px-2 pt-2 text-xs'} font-semibold text-violet-300 uppercase tracking-wide`;
+                if (allMode && q.length < 3) {
+                    return (
+                        <div className={mobile ? 'mt-1' : ''}>
+                            <div className={msgCls}>{t('typeToSearchAll')}</div>
+                            {quickPicks === null ? <div className={msgCls}>{t('searchingCards')}</div> : quickPicks.length > 0 && (
+                                <React.Fragment>
+                                    <div className={headCls}>{t('commonHandTraps')}</div>
+                                    {renderApiList(quickPicks, mobile)}
+                                </React.Fragment>
+                            )}
+                        </div>
+                    );
+                }
                 let body;
                 if (q.length < 3) body = <div className={msgCls}>{t('typeToSearchAll')}</div>;
                 else if (apiLoading) body = <div className={msgCls}>{t('searchingCards')}</div>;
                 else if (apiVisible.length === 0) body = <div className={msgCls}>{t('cardSelectorNoMatch')}</div>;
-                else if (mobile) body = (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
-                        {apiVisible.map(c => <CardDisplay key={`api-${c.id}`} card={createComboCardInstance(c, 'https://images.weserv.nl/?url=')} size="small" onClick={() => pickApiCard(c)} />)}
-                    </div>
-                );
-                else body = (
-                    <div>
-                        {apiVisible.map(c => (
-                            <div key={`api-${c.id}`} onMouseDown={() => pickApiCard(c)} className="flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm">
-                                <img src={apiThumb(c)} alt={c.name} className="w-10 h-14 object-cover rounded-sm mr-2" />
-                                <span className="truncate">{c.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                );
+                else body = renderApiList(apiVisible, mobile);
                 return (
-                    <div className={mobile ? 'mt-3' : 'border-t border-slate-700'}>
-                        <div className={`${mobile ? 'text-sm px-1 mb-2' : 'px-2 pt-2 text-xs'} font-semibold text-violet-300 uppercase tracking-wide`}>{t('allCardsSection')}</div>
+                    <div className={mobile ? 'mt-3' : (allMode ? '' : 'border-t border-slate-700')}>
+                        <div className={headCls}>{t('allCardsSection')}</div>
                         {body}
                     </div>
                 );
             };
 
             const DesktopMenu = () => {
-                const isTwoColumn = filteredPool.length > 7;
+                const isTwoColumn = !allMode && filteredPool.length > 7;
                 const menuWidthClass = isTwoColumn ? 'w-[30rem]' : 'w-72';
                 return (
                      <div className={`absolute ${positionClasses} ${menuWidthClass} bg-slate-800 rounded-md shadow-lg border border-slate-700 z-50 flex flex-col max-h-80`}>
@@ -1369,20 +1392,20 @@
                             placeholder={t('cardSelectorSearch')}
                             value={filter}
                             onChange={e => { setFilter(e.target.value); }}
-                            onKeyDown={e => { if (e.key === 'Enter') { if (filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } else if (apiVisible.length > 0) { e.preventDefault(); pickApiCard(apiVisible[0]); } } }}
+                            onKeyDown={e => { if (e.key === 'Enter') { if (!allMode && filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } else if (apiVisible.length > 0) { e.preventDefault(); pickApiCard(apiVisible[0]); } } }}
                             ref={inputRef}
                             autoFocus
                             className="p-2 bg-slate-900 text-white placeholder-gray-400 focus:ring-0 outline-none sticky top-0"
                         />
-                        <div
+                        {!allMode && (<div
                             onMouseDown={() => handleSelect({ isNote: true })}
                             className="flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm text-amber-300 font-semibold border-b border-slate-700"
                         >
                             <i className="fas fa-sticky-note w-10 text-center mr-2"></i>
                             <span>{t('addNote')}</span>
-                        </div>
+                        </div>)}
                         <div className="overflow-y-auto"><div className={isTwoColumn ? 'grid grid-cols-2 gap-1 p-1' : ''}>
-                            {filteredPool.length > 0 ? filteredPool.map(card => (
+                            {!allMode && filteredPool.length > 0 ? filteredPool.map(card => (
                                 <div
                                     key={card.instanceId}
                                     onMouseDown={() => handleSelect(card)}
@@ -1411,12 +1434,12 @@
                             onChange={e => { setFilter(e.target.value); }}
                             ref={inputRef}
                             autoFocus
-                            onKeyDown={e => { if (e.key === 'Enter') { if (filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } else if (apiVisible.length > 0) { e.preventDefault(); pickApiCard(apiVisible[0]); } } }}
+                            onKeyDown={e => { if (e.key === 'Enter') { if (!allMode && filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } else if (apiVisible.length > 0) { e.preventDefault(); pickApiCard(apiVisible[0]); } } }}
                             className="w-full min-w-0 flex-1 p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:outline-none"
                         />
                         <button onClick={() => setIsOpen(false)} aria-label="Cerrar" className="flex-shrink-0 p-3 bg-red-600 text-white rounded-full"><i className="fas fa-times"></i></button>
                     </div>
-                    <div className="flex-shrink-0 mb-2">
+                    {!allMode && (<div className="flex-shrink-0 mb-2">
                         <button
                             onClick={() => handleSelect({ isNote: true })}
                             className="w-full p-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors"
@@ -1424,10 +1447,10 @@
                             <i className="fas fa-sticky-note mr-2"></i>
                             {t('addNote')}
                         </button>
-                    </div>
+                    </div>)}
                     <div className="flex-grow overflow-y-auto bg-slate-900/50 rounded-lg p-2">
                         <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
-                            {filteredPool.length > 0 ? filteredPool.map(card => (
+                            {!allMode && filteredPool.length > 0 ? filteredPool.map(card => (
                                 <CardDisplay key={card.instanceId} card={card} size="small" onClick={() => handleSelect(card)} />
                             )) : (cardSourceRef.current ? null : <p className="text-slate-400 p-4 text-center w-full col-span-full">{t('cardSelectorNoMatch')}</p>)}
                         </div>
@@ -1512,6 +1535,19 @@
             if (/Spell|Trap/.test(type)) return card.race === 'Field' ? 'Field Zone' : (firstFree(STZ) || STZ[0]);
             if (/Link/.test(type)) return firstFree(EMZ) || firstFree(MMZ) || MMZ[0];
             return firstFree(MMZ) || MMZ[0];
+        };
+        // Cartas rápidas para «vulnerable a…»: hand traps comunes, pedidas una sola vez
+        const HAND_TRAP_NAMES = ["Ash Blossom & Joyous Spring", "Maxx \"C\"", "Effect Veiler", "Infinite Impermanence", "Nibiru, the Primal Being", "Ghost Belle & Haunted Mansion", "Ghost Ogre & Snow Rabbit", "Droll & Lock Bird", "D.D. Crow", "Called by the Grave"];
+        const handTrapCache = { data: null, promise: null };
+        const loadHandTraps = () => {
+            if (handTrapCache.data) return Promise.resolve(handTrapCache.data);
+            if (!handTrapCache.promise) {
+                handTrapCache.promise = fetch(`${YGOPRODECK_API_BASE_URL}?name=${encodeURIComponent(HAND_TRAP_NAMES.join('|'))}`)
+                    .then(r => r.ok ? r.json() : { data: [] })
+                    .then(j => { const list = Array.isArray(j.data) ? j.data : []; list.sort((a, b) => HAND_TRAP_NAMES.indexOf(a.name) - HAND_TRAP_NAMES.indexOf(b.name)); handTrapCache.data = list; return list; })
+                    .catch(() => { handTrapCache.promise = null; return []; });
+            }
+            return handTrapCache.promise;
         };
         // La app le presta a los selectores de cartas la forma de agregar cualquier carta de la base de datos
         const cardSourceRef = { current: null };
@@ -1599,7 +1635,7 @@
                                         {step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (
                                             <div className="absolute -right-3 -top-3 z-10 flex flex-col gap-1">
                                                 {step.vulnerability.cards.map(vCard => (
-                                                    <ExportCard key={vCard.instanceId} card={findCard(vCard.instanceId)} size="micro" useCropped={true}>
+                                                    <ExportCard key={vCard.instanceId} card={vCard.card || findCard(vCard.instanceId)} size="micro" useCropped={true}>
                                                         <span className="absolute top-0 right-0 text-lg z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span>
                                                     </ExportCard>
                                                 ))}
@@ -2700,7 +2736,7 @@
                                             {board.last && board.last.dest && <span className="text-[var(--color-text-muted)]">→ {playDestLabel(board.last.dest, t)}</span>}
                                         </div>
                                         {curStep.actionDescription && <p className="text-sm mt-1 whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: sanitizeHTML(curStep.actionDescription) }}></p>}
-                                        {curStep.vulnerability && curStep.vulnerability.text && <p className="text-xs mt-1 text-red-500">⚠️ <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(curStep.vulnerability.text) }}></span></p>}
+                                        {curStep.vulnerability && (() => { const vNames = (curStep.vulnerability.cards || []).map(vc => (vc.card || cardById[vc.instanceId] || {}).name).filter(Boolean).join(', '); if (vNames) return <p className="text-xs mt-1 text-red-500">⚠️ {vNames}</p>; return curStep.vulnerability.text ? <p className="text-xs mt-1 text-red-500">⚠️ <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(curStep.vulnerability.text) }}></span></p> : null; })()}
                                     </React.Fragment>
                                 ) : (
                                     <React.Fragment>
@@ -3302,7 +3338,7 @@
                 setExportProgress(0);
                 const allCardInstances = [ ...startingHand.flat().map(item => item.instanceId), ...comboSteps.flatMap(s => s.type === 'step' ? [s.mainCardInstanceId, ...s.targetCards.map(tc => tc.instanceId), ...(s.vulnerability?.cards.map(vc => vc.instanceId) || [])] : []), ...finalBoardCards.map(fb => fb.card.instanceId) ];
                 const uniqueCardIds = [...new Set(allCardInstances)];
-                const cardsToExport = uniqueCardIds.map(id => findCard(id)).filter(Boolean);
+                const cardsToExport = [...uniqueCardIds.map(id => findCard(id)).filter(Boolean), ...comboSteps.flatMap(s => s.type === 'step' ? (s.vulnerability?.cards || []).map(vc => vc.card).filter(Boolean) : [])];
                 const imageUrls = cardsToExport.flatMap(c => c.isCustom ? [c.image_url] : [c.image_url_small, c.image_url_cropped]).filter(Boolean);
                 const uniqueImageUrls = [...new Set(imageUrls)];
                 const imageMap = {};
@@ -3770,7 +3806,8 @@
                         {isExportingPng && <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"><div className="bg-slate-800 rounded-lg shadow-xl p-8 text-center"><h3 className="text-xl font-bold mb-4 text-violet-300">{exportMessage}</h3><div className="w-full bg-slate-600 rounded-full h-4"><div className="bg-violet-500 h-4 rounded-full" style={{ width: `${exportProgress}%` }}></div></div><p className="text-white mt-2">{Math.round(exportProgress)}%</p></div></div>}
                         {destMenu && (() => {
                             const sheet = window.innerWidth <= 768;
-                            const pos = sheet ? {} : { left: Math.max(8, Math.min(destMenu.x + 8, window.innerWidth - 232)), top: Math.max(8, Math.min(destMenu.y + 8, window.innerHeight - 250)) };
+                            const zf = getBodyZoom();
+                            const pos = sheet ? {} : { left: Math.max(8, Math.min(destMenu.x + 8, window.innerWidth - 232 * zf)) / zf, top: Math.max(8, Math.min(destMenu.y + 8, window.innerHeight - 250 * zf)) / zf };
                             return (
                                 <div className="fixed inset-0 z-[60]" onClick={() => setDestMenu(null)} onContextMenu={e => { e.preventDefault(); setDestMenu(null); }}>
                                     <div className={sheet ? 'dest-sheet' : 'dest-pop'} style={pos} role="menu" onClick={e => e.stopPropagation()}>
@@ -3783,7 +3820,7 @@
                                 </div>
                             );
                         })()}
-                        {contextMenu.card && <div className="fixed inset-0 z-50" onClick={closeContextMenu} onContextMenu={e => { e.preventDefault(); closeContextMenu(); }}><div style={{ position: 'fixed', top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }} className="bg-slate-800 border border-slate-600 rounded-md shadow-lg py-2 w-48">{contextMenu.options.map(option => (<button key={option.label} onClick={() => { option.action(); closeContextMenu(); }} className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-violet-600">{option.label}</button>))}</div></div>}
+                        {contextMenu.card && <div className="fixed inset-0 z-50" onClick={closeContextMenu} onContextMenu={e => { e.preventDefault(); closeContextMenu(); }}><div style={{ position: 'fixed', top: `${contextMenu.y / getBodyZoom()}px`, left: `${contextMenu.x / getBodyZoom()}px` }} className="bg-slate-800 border border-slate-600 rounded-md shadow-lg py-2 w-48">{contextMenu.options.map(option => (<button key={option.label} onClick={() => { option.action(); closeContextMenu(); }} className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-violet-600">{option.label}</button>))}</div></div>}
 
                         <button onClick={() => setIsSearchPanelOpen(true)} className={`fixed top-1/2 -translate-y-1/2 left-0 z-30 bg-violet-700/80 backdrop-blur-sm text-white p-2 rounded-r-lg shadow-lg transition-all duration-300 hover:bg-violet-600 ${isSearchPanelOpen ? 'opacity-0 -translate-x-full' : 'opacity-100 translate-x-0'}`} aria-label="Abrir Búsqueda" data-tooltip="Abrir Búsqueda"><i className="fas fa-search"></i></button>
 
@@ -4023,9 +4060,9 @@
                                                     <span className="step-label font-bold text-[var(--color-text-muted)] self-start">{(language === 'en' ? 'Step' : t('stepLabel'))} {stepNumber + 1}</span>
                                                     <select value={step.actionType} onChange={e => updateStep(step.id, { actionType: e.target.value })} disabled={step.isLocked} className="tutorial-action-select bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-sm font-semibold text-[var(--color-accent)] w-full disabled:opacity-50 disabled:cursor-not-allowed">{YGO_ACTIONS.map(act => <option key={act.name} value={act.name}>{act.emoji} {act.name}</option>)}</select>
                                                     {step.actionType === 'Other' && ( <input type="text" value={step.customActionText || ''} onChange={e => updateStep(step.id, { customActionText: sanitizeHTML(e.target.value) })} disabled={step.isLocked} placeholder="Especificar acción..." className="w-full bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs text-center mt-1" /> )}
-                                                    <div className="step-main flex justify-center my-2 relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />{step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (<div className="absolute -right-4 -top-2 z-10 flex flex-col items-end gap-1">{step.vulnerability.cards.map((vCard) => (<CardDisplay key={vCard.instanceId} card={findCard(vCard.instanceId)} size="tiny" useCropped={true} onRemove={!step.isLocked ? () => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); } : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove}><span className="absolute top-0 right-0 text-xl z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span></CardDisplay>))}</div>)}</div>
+                                                    <div className="step-main flex justify-center my-2 relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />{step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (<div className="absolute -right-4 -top-2 z-10 flex flex-col items-end gap-1">{step.vulnerability.cards.map((vCard) => (<CardDisplay key={vCard.instanceId} card={vCard.card || findCard(vCard.instanceId)} size="tiny" useCropped={true} onRemove={!step.isLocked ? () => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); } : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove}><span className="absolute top-0 right-0 text-xl z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span></CardDisplay>))}</div>)}</div>
                                                     <button onClick={() => setZonePickerStepId(step.id)} className="btn text-xs py-1 px-2 bg-slate-600 hover:bg-slate-500 mb-2">{step.location ? ZONE_ABBREVIATIONS[step.location] : t('location')}</button>
-                                                    {isVulnerable && (<div className="flex items-center gap-2 w-full">{(!step.vulnerability.cards || step.vulnerability.cards.length === 0) && (<input type="text" value={step.vulnerability.text} onChange={e => updateStep(step.id, { vulnerability: {...step.vulnerability, text: sanitizeHTML(e.target.value)} })} disabled={step.isLocked} placeholder="Vulnerable a..." className="flex-grow bg-red-900/50 border border-red-500/50 text-red-300 placeholder-red-400 rounded p-1 text-xs text-center disabled:opacity-50"/>)}<CardSelector cardPool={cardPool} onCardSelected={card => { const newVCard = { instanceId: card.instanceId }; const currentVCards = step.vulnerability?.cards || []; if (!currentVCards.some(c => c.instanceId === newVCard.instanceId)) { updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: [...currentVCards, newVCard] } }); } }} displayAs="small-button" t={t} preferredDirection="side" /></div>)}
+                                                    {isVulnerable && (<div className="flex items-center gap-2 w-full">{(!step.vulnerability.cards || step.vulnerability.cards.length === 0) && (<input type="text" value={step.vulnerability.text} onChange={e => updateStep(step.id, { vulnerability: {...step.vulnerability, text: sanitizeHTML(e.target.value)} })} disabled={step.isLocked} placeholder="Vulnerable a..." className="flex-grow bg-red-900/50 border border-red-500/50 text-red-300 placeholder-red-400 rounded p-1 text-xs text-center disabled:opacity-50"/>)}<CardSelector cardPool={cardPool} mode="all" onCardSelected={card => { const currentVCards = step.vulnerability?.cards || []; const idOf = (vc) => (vc.card ? vc.card.ygoprodeck_id : (findCard(vc.instanceId) || {}).ygoprodeck_id); if (!currentVCards.some(vc => vc.instanceId === card.instanceId || (card.ygoprodeck_id && idOf(vc) === card.ygoprodeck_id))) { updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: [...currentVCards, { instanceId: card.instanceId, card }] } }); } }} displayAs="small-button" t={t} preferredDirection="side" /></div>)}
                                                     <div className="flex flex-wrap justify-center gap-1 border-t border-[var(--color-border)] pt-2 min-h-[4.5rem]">{step.targetCards.map(target => (<CardDisplay key={`target-${target.instanceId}`} card={findCard(target.instanceId)} size="tiny" isHighlighted={highlightedCardIds.includes(target.instanceId)} onRemove={!step.isLocked ? () => removeTargetCardFromStep(step.id, target.instanceId) : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />))}<CardSelector wrapperClassName="tutorial-add-target-btn" cardPool={cardPool} onCardSelected={card => updateStep(step.id, { targetCards: [...step.targetCards, {instanceId: card.instanceId, quantity: 1}]})} displayAs="small-button" t={t} preferredDirection="side" /></div>
                                                     <AutoResizeTextarea
                                                         value={step.actionDescription}
