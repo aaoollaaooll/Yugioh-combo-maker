@@ -675,6 +675,8 @@
         const { useState, useEffect, useRef, useCallback, memo, useMemo, useLayoutEffect } = window.React;
         const { createRoot, createPortal } = window.ReactDOM;
 
+        // Fondo animado o quieto (se recuerda; si el sistema pide menos movimiento, empieza quieto)
+        window.__ygoBgAnimated = (() => { try { const v = localStorage.getItem('ygo_bg_anim'); if (v !== null) return v === '1'; } catch (e) {} return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); })();
         const StarfieldBackground = () => {
             useEffect(() => {
                 const canvas = document.createElement('canvas');
@@ -731,15 +733,15 @@
 
                 function draw() {
                     const theme = document.documentElement.getAttribute('data-theme');
-                    const bgColor = theme === 'dark' ? 'rgba(2, 6, 23, 0.5)' : 'rgba(241, 245, 249, 0.5)';
+                    const animated = window.__ygoBgAnimated !== false;
+                    const bgColor = theme === 'dark' ? (animated ? 'rgba(2, 6, 23, 0.5)' : 'rgb(2, 6, 23)') : (animated ? 'rgba(241, 245, 249, 0.5)' : 'rgb(241, 245, 249)');
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
                     for (const star of stars) {
-                        star.update();
+                        if (animated) star.update();
                         star.show();
                     }
-                    animationFrameId = requestAnimationFrame(draw);
+                    if (animated) animationFrameId = requestAnimationFrame(draw);
                 }
 
                 function init() {
@@ -755,11 +757,13 @@
                 
                 init();
                 window.addEventListener('resize', handleResize);
+                const onBgChange = () => { cancelAnimationFrame(animationFrameId); draw(); };
+                window.addEventListener('ygo-bg-change', onBgChange);
                 
                 const observer = new MutationObserver((mutations) => {
                     mutations.forEach((mutation) => {
                         if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-                           // Theme changed, no need to redraw immediately, draw loop handles it
+                           if (window.__ygoBgAnimated === false) onBgChange(); // con el fondo quieto hay que repintarlo
                         }
                     });
                 });
@@ -768,6 +772,7 @@
 
                 return () => {
                     window.removeEventListener('resize', handleResize);
+                    window.removeEventListener('ygo-bg-change', onBgChange);
                     cancelAnimationFrame(animationFrameId);
                     observer.disconnect();
                     document.body.removeChild(canvas);
@@ -916,6 +921,9 @@
         // Tablero «Probar combo»: reproducción automática y velocidad
         const EXTRA_TRANSLATIONS_PLAY = {"es": {"playStartHint": "Pulsa ▶ para ver el combo solo, o usa las flechas ‹ › (o ← → del teclado) para ir paso a paso. Toca una carta para verla en grande.", "playPlay": "Reproducir", "playPause": "Pausar", "playSpeed": "Velocidad", "speedSlow": "Lento", "speedNormal": "Normal", "speedFast": "Rápido"}, "en": {"playStartHint": "Press ▶ to watch the combo play by itself, or use the ‹ › arrows (or ← → on the keyboard) to go step by step. Tap a card to see it larger.", "playPlay": "Play", "playPause": "Pause", "playSpeed": "Speed", "speedSlow": "Slow", "speedNormal": "Normal", "speedFast": "Fast"}, "pt": {"playStartHint": "Toque em ▶ para ver o combo sozinho, ou use as setas ‹ › (ou ← → do teclado) para ir passo a passo. Toque numa carta para vê-la maior.", "playPlay": "Reproduzir", "playPause": "Pausar", "playSpeed": "Velocidade", "speedSlow": "Lento", "speedNormal": "Normal", "speedFast": "Rápido"}, "fr": {"playStartHint": "Appuyez sur ▶ pour voir le combo défiler tout seul, ou utilisez les flèches ‹ › (ou ← → du clavier) pour avancer étape par étape. Touchez une carte pour l'agrandir.", "playPlay": "Lecture", "playPause": "Pause", "playSpeed": "Vitesse", "speedSlow": "Lent", "speedNormal": "Normal", "speedFast": "Rapide"}, "it": {"playStartHint": "Premi ▶ per vedere la combo da sola, oppure usa le frecce ‹ › (o ← → della tastiera) per andare passo dopo passo. Tocca una carta per ingrandirla.", "playPlay": "Riproduci", "playPause": "Pausa", "playSpeed": "Velocità", "speedSlow": "Lento", "speedNormal": "Normale", "speedFast": "Veloce"}, "de": {"playStartHint": "Drücke ▶, um die Combo automatisch abzuspielen, oder nutze die Pfeile ‹ › (oder ← → auf der Tastatur), um Schritt für Schritt zu gehen. Tippe auf eine Karte, um sie groß zu sehen.", "playPlay": "Abspielen", "playPause": "Pause", "playSpeed": "Geschwindigkeit", "speedSlow": "Langsam", "speedNormal": "Normal", "speedFast": "Schnell"}, "ru": {"playStartHint": "Нажмите ▶, чтобы комбо проигрывалось само, или используйте стрелки ‹ › (или ← → на клавиатуре), чтобы идти по шагам. Нажмите на карту, чтобы увеличить её.", "playPlay": "Воспроизвести", "playPause": "Пауза", "playSpeed": "Скорость", "speedSlow": "Медленно", "speedNormal": "Обычно", "speedFast": "Быстро"}, "ja": {"playStartHint": "▶ を押すとコンボが自動で進みます。‹ › の矢印(キーボードの ← →)で1ステップずつ進めます。カードをタップすると大きく表示します。", "playPlay": "再生", "playPause": "一時停止", "playSpeed": "速度", "speedSlow": "遅い", "speedNormal": "普通", "speedFast": "速い"}, "ko": {"playStartHint": "▶를 누르면 콤보가 자동으로 재생됩니다. ‹ › 화살표(키보드의 ← →)로 한 단계씩 이동할 수 있습니다. 카드를 탭하면 크게 볼 수 있습니다.", "playPlay": "재생", "playPause": "일시정지", "playSpeed": "속도", "speedSlow": "느리게", "speedNormal": "보통", "speedFast": "빠르게"}, "zh": {"playStartHint": "按 ▶ 自动播放 Combo,或用 ‹ › 箭头(键盘 ← →)逐步前进。点击卡片可放大查看。", "playPlay": "播放", "playPause": "暂停", "playSpeed": "速度", "speedSlow": "慢", "speedNormal": "正常", "speedFast": "快"}};
         Object.entries(EXTRA_TRANSLATIONS_PLAY).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        // Tanda 3: comodín, fichas, copiar texto, bienvenida, combo de ejemplo, fondo
+        const EXTRA_TRANSLATIONS_T3 = {"es": {"anyCard": "Cualquier carta", "tokenPickTitle": "Elige una ficha (Token)", "tokenSearch": "Buscar ficha…", "copyText": "Copiar como texto", "textCopied": "Combo copiado como texto. Pégalo en Discord, WhatsApp o donde quieras.", "vulnerableTo": "Vulnerable a", "overwriteConfirm": "Ya tienes un combo guardado como «{name}». ¿Reemplazarlo?", "welcomeTitle": "¿Primera vez aquí?", "welcomeText": "Abre un combo de ejemplo para ver cómo funciona todo, o sigue el tutorial paso a paso.", "welcomeExample": "Ver combo de ejemplo", "welcomeTutorial": "Ver tutorial", "exampleTitle": "Ejemplo: Linkuriboh + Monster Reborn", "exampleNotes": "Combo de demostración para conocer la app. Prueba el tablero (▶) y la exportación.", "ex1": "Invoca de forma Normal a Effect Veiler.", "ex2": "Usa a Effect Veiler (Nivel 1) como material para Invocar por Enlace a Linkuriboh.", "ex3": "Activa Monster Reborn eligiendo a Effect Veiler en el Cementerio.", "ex4": "Effect Veiler vuelve al campo con Monster Reborn.", "bgAnimation": "Animación del fondo", "closeLabel": "Cerrar"}, "en": {"anyCard": "Any card", "tokenPickTitle": "Choose a Token", "tokenSearch": "Search token…", "copyText": "Copy as text", "textCopied": "Combo copied as text. Paste it in Discord, WhatsApp or anywhere.", "vulnerableTo": "Vulnerable to", "overwriteConfirm": "You already have a combo saved as \"{name}\". Replace it?", "welcomeTitle": "First time here?", "welcomeText": "Open an example combo to see how everything works, or follow the step-by-step tutorial.", "welcomeExample": "See example combo", "welcomeTutorial": "Watch tutorial", "exampleTitle": "Example: Linkuriboh + Monster Reborn", "exampleNotes": "Demo combo to get to know the app. Try the board (▶) and the export.", "ex1": "Normal Summon Effect Veiler.", "ex2": "Use Effect Veiler (Level 1) as material to Link Summon Linkuriboh.", "ex3": "Activate Monster Reborn targeting Effect Veiler in the GY.", "ex4": "Effect Veiler returns to the field with Monster Reborn.", "bgAnimation": "Background animation", "closeLabel": "Close"}, "pt": {"anyCard": "Qualquer carta", "tokenPickTitle": "Escolha uma Ficha (Token)", "tokenSearch": "Buscar ficha…", "copyText": "Copiar como texto", "textCopied": "Combo copiado como texto. Cole no Discord, WhatsApp ou onde quiser.", "vulnerableTo": "Vulnerável a", "overwriteConfirm": "Você já tem um combo salvo como \"{name}\". Substituir?", "welcomeTitle": "Primeira vez aqui?", "welcomeText": "Abra um combo de exemplo para ver como tudo funciona, ou siga o tutorial passo a passo.", "welcomeExample": "Ver combo de exemplo", "welcomeTutorial": "Ver tutorial", "exampleTitle": "Exemplo: Linkuriboh + Monster Reborn", "exampleNotes": "Combo de demonstração para conhecer o app. Experimente o tabuleiro (▶) e a exportação.", "ex1": "Faça a Invocação-Normal de Effect Veiler.", "ex2": "Use Effect Veiler (Nível 1) como matéria para a Invocação-Link de Linkuriboh.", "ex3": "Ative Monster Reborn escolhendo Effect Veiler no Cemitério.", "ex4": "Effect Veiler volta ao campo com Monster Reborn.", "bgAnimation": "Animação do fundo", "closeLabel": "Fechar"}, "fr": {"anyCard": "N'importe quelle carte", "tokenPickTitle": "Choisissez un Jeton", "tokenSearch": "Chercher un jeton…", "copyText": "Copier en texte", "textCopied": "Combo copié en texte. Collez-le sur Discord, WhatsApp ou ailleurs.", "vulnerableTo": "Vulnérable à", "overwriteConfirm": "Vous avez déjà un combo enregistré sous « {name} ». Le remplacer ?", "welcomeTitle": "Première visite ?", "welcomeText": "Ouvrez un combo d'exemple pour voir comment tout fonctionne, ou suivez le tutoriel pas à pas.", "welcomeExample": "Voir un combo d'exemple", "welcomeTutorial": "Voir le tutoriel", "exampleTitle": "Exemple : Linkuriboh + Monster Reborn", "exampleNotes": "Combo de démonstration pour découvrir l'appli. Essayez le plateau (▶) et l'export.", "ex1": "Invoquez Normalement Effect Veiler.", "ex2": "Utilisez Effect Veiler (Niveau 1) comme matériel pour l'Invocation Lien de Linkuriboh.", "ex3": "Activez Monster Reborn en ciblant Effect Veiler dans le Cimetière.", "ex4": "Effect Veiler revient sur le terrain grâce à Monster Reborn.", "bgAnimation": "Animation du fond", "closeLabel": "Fermer"}, "it": {"anyCard": "Qualsiasi carta", "tokenPickTitle": "Scegli un Segna-Mostro", "tokenSearch": "Cerca segna-mostro…", "copyText": "Copia come testo", "textCopied": "Combo copiata come testo. Incollala su Discord, WhatsApp o dove vuoi.", "vulnerableTo": "Vulnerabile a", "overwriteConfirm": "Hai già una combo salvata come \"{name}\". Sostituirla?", "welcomeTitle": "Prima volta qui?", "welcomeText": "Apri una combo di esempio per vedere come funziona tutto, oppure segui il tutorial passo dopo passo.", "welcomeExample": "Vedi combo di esempio", "welcomeTutorial": "Vedi tutorial", "exampleTitle": "Esempio: Linkuriboh + Monster Reborn", "exampleNotes": "Combo dimostrativa per conoscere l'app. Prova il tabellone (▶) e l'esportazione.", "ex1": "Evoca Normalmente Effect Veiler.", "ex2": "Usa Effect Veiler (Livello 1) come materiale per l'Evocazione Link di Linkuriboh.", "ex3": "Attiva Monster Reborn scegliendo Effect Veiler nel Cimitero.", "ex4": "Effect Veiler torna sul terreno grazie a Monster Reborn.", "bgAnimation": "Animazione dello sfondo", "closeLabel": "Chiudi"}, "de": {"anyCard": "Beliebige Karte", "tokenPickTitle": "Spielmarke wählen", "tokenSearch": "Spielmarke suchen…", "copyText": "Als Text kopieren", "textCopied": "Combo als Text kopiert. Füge sie in Discord, WhatsApp oder anderswo ein.", "vulnerableTo": "Anfällig für", "overwriteConfirm": "Du hast schon eine Combo namens „{name}“ gespeichert. Ersetzen?", "welcomeTitle": "Zum ersten Mal hier?", "welcomeText": "Öffne eine Beispiel-Combo, um zu sehen, wie alles funktioniert, oder folge dem Tutorial Schritt für Schritt.", "welcomeExample": "Beispiel-Combo ansehen", "welcomeTutorial": "Tutorial ansehen", "exampleTitle": "Beispiel: Linkuriboh + Monster Reborn", "exampleNotes": "Demo-Combo zum Kennenlernen der App. Probiere das Spielfeld (▶) und den Export aus.", "ex1": "Beschwöre Effect Veiler als Normalbeschwörung.", "ex2": "Nutze Effect Veiler (Stufe 1) als Material für die Linkbeschwörung von Linkuriboh.", "ex3": "Aktiviere Monster Reborn und wähle Effect Veiler im Friedhof.", "ex4": "Effect Veiler kehrt durch Monster Reborn aufs Spielfeld zurück.", "bgAnimation": "Hintergrundanimation", "closeLabel": "Schließen"}, "ru": {"anyCard": "Любая карта", "tokenPickTitle": "Выберите жетон", "tokenSearch": "Найти жетон…", "copyText": "Копировать как текст", "textCopied": "Комбо скопировано как текст. Вставьте его в Discord, WhatsApp или куда угодно.", "vulnerableTo": "Уязвимо к", "overwriteConfirm": "У вас уже есть комбо с именем «{name}». Заменить?", "welcomeTitle": "Впервые здесь?", "welcomeText": "Откройте пример комбо, чтобы увидеть, как всё работает, или пройдите обучение шаг за шагом.", "welcomeExample": "Открыть пример комбо", "welcomeTutorial": "Пройти обучение", "exampleTitle": "Пример: Linkuriboh + Monster Reborn", "exampleNotes": "Демонстрационное комбо, чтобы познакомиться с приложением. Попробуйте поле (▶) и экспорт.", "ex1": "Обычный призыв Effect Veiler.", "ex2": "Используйте Effect Veiler (Уровень 1) как материал для призыва связью Linkuriboh.", "ex3": "Активируйте Monster Reborn, выбрав Effect Veiler на кладбище.", "ex4": "Effect Veiler возвращается на поле с помощью Monster Reborn.", "bgAnimation": "Анимация фона", "closeLabel": "Закрыть"}, "ja": {"anyCard": "任意のカード", "tokenPickTitle": "トークンを選ぶ", "tokenSearch": "トークンを検索…", "copyText": "テキストでコピー", "textCopied": "コンボをテキストでコピーしました。Discord や WhatsApp などに貼り付けてください。", "vulnerableTo": "妨害ポイント", "overwriteConfirm": "「{name}」という名前のコンボがすでに保存されています。置き換えますか?", "welcomeTitle": "はじめてですか?", "welcomeText": "サンプルのコンボを開いて使い方を確認するか、チュートリアルを順番に見てください。", "welcomeExample": "サンプルのコンボを見る", "welcomeTutorial": "チュートリアルを見る", "exampleTitle": "例: Linkuriboh + Monster Reborn", "exampleNotes": "アプリを知るためのデモ用コンボです。盤面(▶)とエクスポートを試してみてください。", "ex1": "Effect Veiler を通常召喚。", "ex2": "レベル1の Effect Veiler を素材に Linkuriboh をリンク召喚。", "ex3": "墓地の Effect Veiler を対象に Monster Reborn を発動。", "ex4": "Monster Reborn で Effect Veiler がフィールドに戻る。", "bgAnimation": "背景のアニメーション", "closeLabel": "閉じる"}, "ko": {"anyCard": "아무 카드", "tokenPickTitle": "토큰 선택", "tokenSearch": "토큰 검색…", "copyText": "텍스트로 복사", "textCopied": "콤보를 텍스트로 복사했습니다. Discord, WhatsApp 등에 붙여 넣으세요.", "vulnerableTo": "취약 지점", "overwriteConfirm": "'{name}'(으)로 저장된 콤보가 이미 있습니다. 바꿀까요?", "welcomeTitle": "처음 오셨나요?", "welcomeText": "예시 콤보를 열어 사용법을 확인하거나 단계별 튜토리얼을 따라 해 보세요.", "welcomeExample": "예시 콤보 보기", "welcomeTutorial": "튜토리얼 보기", "exampleTitle": "예시: Linkuriboh + Monster Reborn", "exampleNotes": "앱을 익히기 위한 데모 콤보입니다. 보드(▶)와 내보내기를 사용해 보세요.", "ex1": "Effect Veiler를 일반 소환합니다.", "ex2": "레벨 1인 Effect Veiler를 소재로 Linkuriboh를 링크 소환합니다.", "ex3": "묘지의 Effect Veiler를 대상으로 Monster Reborn을 발동합니다.", "ex4": "Monster Reborn으로 Effect Veiler가 필드로 돌아옵니다.", "bgAnimation": "배경 애니메이션", "closeLabel": "닫기"}, "zh": {"anyCard": "任意卡", "tokenPickTitle": "选择衍生物", "tokenSearch": "搜索衍生物…", "copyText": "复制为文本", "textCopied": "已将 Combo 复制为文本,可粘贴到 Discord、WhatsApp 等。", "vulnerableTo": "易被干扰", "overwriteConfirm": "已经有名为“{name}”的 Combo。要替换吗?", "welcomeTitle": "第一次来?", "welcomeText": "打开示例 Combo 看看一切如何运作,或按步骤观看教程。", "welcomeExample": "查看示例 Combo", "welcomeTutorial": "观看教程", "exampleTitle": "示例:Linkuriboh + Monster Reborn", "exampleNotes": "用于了解本应用的演示 Combo。试试棋盘(▶)和导出。", "ex1": "通常召唤 Effect Veiler。", "ex2": "以 1 星的 Effect Veiler 为素材连接召唤 Linkuriboh。", "ex3": "以墓地的 Effect Veiler 为对象发动 Monster Reborn。", "ex4": "Effect Veiler 通过 Monster Reborn 回到场上。", "bgAnimation": "背景动画", "closeLabel": "关闭"}};
+        Object.entries(EXTRA_TRANSLATIONS_T3).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
@@ -1009,6 +1017,10 @@
                 image_url: imageUrl, image_url_small: imageUrlSmall, image_url_cropped: imageUrlCropped, isCustom: false, notes: '',
             };
         };
+        // Nombres de acciones, zonas, tipos y atributos en cada idioma. Lo que se guarda sigue en inglés.
+        const YGO_TERMS = {"es": {"Normal Summon": "Invocación Normal", "Special Summon": "Invocación Especial", "Set": "Colocar", "Activate Spell/Trap": "Activar Mágica/Trampa", "Activate Effect": "Activar efecto", "Attack": "Atacar", "Send to GY": "Enviar al Cementerio", "Discard": "Descartar", "Banish": "Desterrar", "Add to Hand": "Añadir a la mano", "Search": "Buscar del Deck", "Fusion Summon": "Invocación por Fusión", "Synchro Summon": "Invocación por Sincronía", "Xyz Summon": "Invocación Xyz", "Pendulum Summon": "Invocación por Péndulo", "Link Summon": "Invocación por Enlace", "Other": "Otra", "Field Zone": "Zona de Campo", "Graveyard": "Cementerio", "Banish Pile": "Desterradas", "Effect Monster": "Monstruo de Efecto", "Flip Effect Monster": "Monstruo de Efecto de Volteo", "Fusion Monster": "Monstruo de Fusión", "Link Monster": "Monstruo de Enlace", "Normal Monster": "Monstruo Normal", "Pendulum Effect Monster": "Monstruo de Efecto de Péndulo", "Ritual Effect Monster": "Monstruo de Ritual de Efecto", "Spell Card": "Carta Mágica", "Synchro Monster": "Monstruo de Sincronía", "Token": "Ficha", "Trap Card": "Carta de Trampa", "Tuner Monster": "Monstruo Cantante", "Union Effect Monster": "Monstruo de Unión", "Xyz Monster": "Monstruo Xyz", "DARK": "OSCURIDAD", "DIVINE": "DIVINIDAD", "EARTH": "TIERRA", "FIRE": "FUEGO", "LIGHT": "LUZ", "WATER": "AGUA", "WIND": "VIENTO", "Extra Monster 1": "Zona de Monstruo Extra 1", "Extra Monster 2": "Zona de Monstruo Extra 2", "Main Monster 1": "Zona de Monstruo 1", "Main Monster 2": "Zona de Monstruo 2", "Main Monster 3": "Zona de Monstruo 3", "Main Monster 4": "Zona de Monstruo 4", "Main Monster 5": "Zona de Monstruo 5", "Spell/Trap 1": "Zona de Mágicas/Trampas 1", "Spell/Trap 2": "Zona de Mágicas/Trampas 2", "Spell/Trap 3": "Zona de Mágicas/Trampas 3", "Spell/Trap 4": "Zona de Mágicas/Trampas 4", "Spell/Trap 5": "Zona de Mágicas/Trampas 5"}, "pt": {"Normal Summon": "Invocação-Normal", "Special Summon": "Invocação-Especial", "Set": "Baixar", "Activate Spell/Trap": "Ativar Magia/Armadilha", "Activate Effect": "Ativar efeito", "Attack": "Atacar", "Send to GY": "Enviar ao Cemitério", "Discard": "Descartar", "Banish": "Banir", "Add to Hand": "Adicionar à mão", "Search": "Buscar no Deck", "Fusion Summon": "Invocação-Fusão", "Synchro Summon": "Invocação-Sincro", "Xyz Summon": "Invocação-Xyz", "Pendulum Summon": "Invocação-Pêndulo", "Link Summon": "Invocação-Link", "Other": "Outra", "Field Zone": "Zona de Campo", "Graveyard": "Cemitério", "Banish Pile": "Banidas", "Effect Monster": "Monstro de Efeito", "Flip Effect Monster": "Monstro de Efeito de Virar", "Fusion Monster": "Monstro de Fusão", "Link Monster": "Monstro Link", "Normal Monster": "Monstro Normal", "Pendulum Effect Monster": "Monstro de Efeito Pêndulo", "Ritual Effect Monster": "Monstro de Ritual de Efeito", "Spell Card": "Card de Magia", "Synchro Monster": "Monstro Sincro", "Token": "Ficha", "Trap Card": "Card de Armadilha", "Tuner Monster": "Monstro Regulador", "Union Effect Monster": "Monstro de União", "Xyz Monster": "Monstro Xyz", "DARK": "TREVAS", "DIVINE": "DIVINO", "EARTH": "TERRA", "FIRE": "FOGO", "LIGHT": "LUZ", "WATER": "ÁGUA", "WIND": "VENTO", "Extra Monster 1": "Zona de Monstro Adicional 1", "Extra Monster 2": "Zona de Monstro Adicional 2", "Main Monster 1": "Zona de Monstro 1", "Main Monster 2": "Zona de Monstro 2", "Main Monster 3": "Zona de Monstro 3", "Main Monster 4": "Zona de Monstro 4", "Main Monster 5": "Zona de Monstro 5", "Spell/Trap 1": "Zona de Magias e Armadilhas 1", "Spell/Trap 2": "Zona de Magias e Armadilhas 2", "Spell/Trap 3": "Zona de Magias e Armadilhas 3", "Spell/Trap 4": "Zona de Magias e Armadilhas 4", "Spell/Trap 5": "Zona de Magias e Armadilhas 5"}, "fr": {"Normal Summon": "Invocation Normale", "Special Summon": "Invocation Spéciale", "Set": "Poser", "Activate Spell/Trap": "Activer Magie/Piège", "Activate Effect": "Activer un effet", "Attack": "Attaquer", "Send to GY": "Envoyer au Cimetière", "Discard": "Défausser", "Banish": "Bannir", "Add to Hand": "Ajouter à la main", "Search": "Chercher dans le Deck", "Fusion Summon": "Invocation Fusion", "Synchro Summon": "Invocation Synchro", "Xyz Summon": "Invocation Xyz", "Pendulum Summon": "Invocation Pendule", "Link Summon": "Invocation Lien", "Other": "Autre", "Field Zone": "Zone Terrain", "Graveyard": "Cimetière", "Banish Pile": "Bannies", "Effect Monster": "Monstre à Effet", "Flip Effect Monster": "Monstre à Effet Flip", "Fusion Monster": "Monstre Fusion", "Link Monster": "Monstre Lien", "Normal Monster": "Monstre Normal", "Pendulum Effect Monster": "Monstre à Effet Pendule", "Ritual Effect Monster": "Monstre Rituel à Effet", "Spell Card": "Carte Magie", "Synchro Monster": "Monstre Synchro", "Token": "Jeton", "Trap Card": "Carte Piège", "Tuner Monster": "Monstre Syntoniseur", "Union Effect Monster": "Monstre Union", "Xyz Monster": "Monstre Xyz", "DARK": "TÉNÈBRES", "DIVINE": "DIVIN", "EARTH": "TERRE", "FIRE": "FEU", "LIGHT": "LUMIÈRE", "WATER": "EAU", "WIND": "VENT", "Extra Monster 1": "Zone Monstre Extra 1", "Extra Monster 2": "Zone Monstre Extra 2", "Main Monster 1": "Zone Monstre 1", "Main Monster 2": "Zone Monstre 2", "Main Monster 3": "Zone Monstre 3", "Main Monster 4": "Zone Monstre 4", "Main Monster 5": "Zone Monstre 5", "Spell/Trap 1": "Zone Magie/Piège 1", "Spell/Trap 2": "Zone Magie/Piège 2", "Spell/Trap 3": "Zone Magie/Piège 3", "Spell/Trap 4": "Zone Magie/Piège 4", "Spell/Trap 5": "Zone Magie/Piège 5"}, "it": {"Normal Summon": "Evocazione Normale", "Special Summon": "Evocazione Speciale", "Set": "Posizionare", "Activate Spell/Trap": "Attivare Magia/Trappola", "Activate Effect": "Attivare effetto", "Attack": "Attaccare", "Send to GY": "Mandare al Cimitero", "Discard": "Scartare", "Banish": "Bandire", "Add to Hand": "Aggiungere alla mano", "Search": "Cercare nel Deck", "Fusion Summon": "Evocazione Fusione", "Synchro Summon": "Evocazione Synchro", "Xyz Summon": "Evocazione Xyz", "Pendulum Summon": "Evocazione Pendulum", "Link Summon": "Evocazione Link", "Other": "Altro", "Field Zone": "Zona Terreno", "Graveyard": "Cimitero", "Banish Pile": "Bandite", "Effect Monster": "Mostro con Effetto", "Flip Effect Monster": "Mostro con Effetto Scoperta", "Fusion Monster": "Mostro Fusione", "Link Monster": "Mostro Link", "Normal Monster": "Mostro Normale", "Pendulum Effect Monster": "Mostro con Effetto Pendulum", "Ritual Effect Monster": "Mostro Rituale con Effetto", "Spell Card": "Carta Magia", "Synchro Monster": "Mostro Synchro", "Token": "Segna-Mostro", "Trap Card": "Carta Trappola", "Tuner Monster": "Mostro Tuner", "Union Effect Monster": "Mostro Unione", "Xyz Monster": "Mostro Xyz", "DARK": "OSCURITÀ", "DIVINE": "DIVINO", "EARTH": "TERRA", "FIRE": "FUOCO", "LIGHT": "LUCE", "WATER": "ACQUA", "WIND": "VENTO", "Extra Monster 1": "Zona Mostri Extra 1", "Extra Monster 2": "Zona Mostri Extra 2", "Main Monster 1": "Zona Mostri 1", "Main Monster 2": "Zona Mostri 2", "Main Monster 3": "Zona Mostri 3", "Main Monster 4": "Zona Mostri 4", "Main Monster 5": "Zona Mostri 5", "Spell/Trap 1": "Zona Magie/Trappole 1", "Spell/Trap 2": "Zona Magie/Trappole 2", "Spell/Trap 3": "Zona Magie/Trappole 3", "Spell/Trap 4": "Zona Magie/Trappole 4", "Spell/Trap 5": "Zona Magie/Trappole 5"}, "de": {"Normal Summon": "Normalbeschwörung", "Special Summon": "Spezialbeschwörung", "Set": "Setzen", "Activate Spell/Trap": "Zauber/Falle aktivieren", "Activate Effect": "Effekt aktivieren", "Attack": "Angreifen", "Send to GY": "Auf den Friedhof legen", "Discard": "Abwerfen", "Banish": "Verbannen", "Add to Hand": "Zur Hand hinzufügen", "Search": "Aus dem Deck suchen", "Fusion Summon": "Fusionsbeschwörung", "Synchro Summon": "Synchrobeschwörung", "Xyz Summon": "Xyz-Beschwörung", "Pendulum Summon": "Pendelbeschwörung", "Link Summon": "Linkbeschwörung", "Other": "Andere", "Field Zone": "Spielfeldzone", "Graveyard": "Friedhof", "Banish Pile": "Verbannt", "Effect Monster": "Effektmonster", "Flip Effect Monster": "Flipeffektmonster", "Fusion Monster": "Fusionsmonster", "Link Monster": "Linkmonster", "Normal Monster": "Normales Monster", "Pendulum Effect Monster": "Pendeleffektmonster", "Ritual Effect Monster": "Ritualeffektmonster", "Spell Card": "Zauberkarte", "Synchro Monster": "Synchromonster", "Token": "Spielmarke", "Trap Card": "Fallenkarte", "Tuner Monster": "Empfängermonster", "Union Effect Monster": "Unionmonster", "Xyz Monster": "Xyz-Monster", "DARK": "FINSTERNIS", "DIVINE": "GÖTTLICH", "EARTH": "ERDE", "FIRE": "FEUER", "LIGHT": "LICHT", "WATER": "WASSER", "WIND": "WIND", "Extra Monster 1": "Extra-Monsterzone 1", "Extra Monster 2": "Extra-Monsterzone 2", "Main Monster 1": "Monsterzone 1", "Main Monster 2": "Monsterzone 2", "Main Monster 3": "Monsterzone 3", "Main Monster 4": "Monsterzone 4", "Main Monster 5": "Monsterzone 5", "Spell/Trap 1": "Zauber-/Fallenzone 1", "Spell/Trap 2": "Zauber-/Fallenzone 2", "Spell/Trap 3": "Zauber-/Fallenzone 3", "Spell/Trap 4": "Zauber-/Fallenzone 4", "Spell/Trap 5": "Zauber-/Fallenzone 5"}, "ru": {"Normal Summon": "Обычный призыв", "Special Summon": "Особый призыв", "Set": "Выставить", "Activate Spell/Trap": "Активировать заклинание/ловушку", "Activate Effect": "Активировать эффект", "Attack": "Атака", "Send to GY": "Отправить на кладбище", "Discard": "Сбросить", "Banish": "Изгнать", "Add to Hand": "Добавить в руку", "Search": "Найти в колоде", "Fusion Summon": "Призыв слиянием", "Synchro Summon": "Синхро-призыв", "Xyz Summon": "Икс-призыв", "Pendulum Summon": "Призыв маятником", "Link Summon": "Призыв связью", "Other": "Другое", "Field Zone": "Зона поля", "Graveyard": "Кладбище", "Banish Pile": "Изгнанные", "Effect Monster": "Монстр с эффектом", "Flip Effect Monster": "Монстр с эффектом переворота", "Fusion Monster": "Монстр слияния", "Link Monster": "Монстр связи", "Normal Monster": "Обычный монстр", "Pendulum Effect Monster": "Маятниковый монстр с эффектом", "Ritual Effect Monster": "Ритуальный монстр с эффектом", "Spell Card": "Карта заклинания", "Synchro Monster": "Синхро-монстр", "Token": "Жетон", "Trap Card": "Карта ловушки", "Tuner Monster": "Монстр-тюнер", "Union Effect Monster": "Монстр-союз", "Xyz Monster": "Икс-монстр", "DARK": "ТЬМА", "DIVINE": "БОЖЕСТВЕННЫЙ", "EARTH": "ЗЕМЛЯ", "FIRE": "ОГОНЬ", "LIGHT": "СВЕТ", "WATER": "ВОДА", "WIND": "ВЕТЕР", "Extra Monster 1": "Доп. зона монстров 1", "Extra Monster 2": "Доп. зона монстров 2", "Main Monster 1": "Зона монстров 1", "Main Monster 2": "Зона монстров 2", "Main Monster 3": "Зона монстров 3", "Main Monster 4": "Зона монстров 4", "Main Monster 5": "Зона монстров 5", "Spell/Trap 1": "Зона заклинаний/ловушек 1", "Spell/Trap 2": "Зона заклинаний/ловушек 2", "Spell/Trap 3": "Зона заклинаний/ловушек 3", "Spell/Trap 4": "Зона заклинаний/ловушек 4", "Spell/Trap 5": "Зона заклинаний/ловушек 5"}, "ja": {"Normal Summon": "通常召喚", "Special Summon": "特殊召喚", "Set": "セット", "Activate Spell/Trap": "魔法・罠を発動", "Activate Effect": "効果を発動", "Attack": "攻撃", "Send to GY": "墓地へ送る", "Discard": "捨てる", "Banish": "除外", "Add to Hand": "手札に加える", "Search": "デッキからサーチ", "Fusion Summon": "融合召喚", "Synchro Summon": "シンクロ召喚", "Xyz Summon": "エクシーズ召喚", "Pendulum Summon": "ペンデュラム召喚", "Link Summon": "リンク召喚", "Other": "その他", "Field Zone": "フィールドゾーン", "Graveyard": "墓地", "Banish Pile": "除外ゾーン", "Effect Monster": "効果モンスター", "Flip Effect Monster": "リバース効果モンスター", "Fusion Monster": "融合モンスター", "Link Monster": "リンクモンスター", "Normal Monster": "通常モンスター", "Pendulum Effect Monster": "ペンデュラム効果モンスター", "Ritual Effect Monster": "儀式効果モンスター", "Spell Card": "魔法カード", "Synchro Monster": "シンクロモンスター", "Token": "トークン", "Trap Card": "罠カード", "Tuner Monster": "チューナーモンスター", "Union Effect Monster": "ユニオンモンスター", "Xyz Monster": "エクシーズモンスター", "DARK": "闇", "DIVINE": "神", "EARTH": "地", "FIRE": "炎", "LIGHT": "光", "WATER": "水", "WIND": "風", "Extra Monster 1": "エクストラモンスターゾーン1", "Extra Monster 2": "エクストラモンスターゾーン2", "Main Monster 1": "メインモンスターゾーン1", "Main Monster 2": "メインモンスターゾーン2", "Main Monster 3": "メインモンスターゾーン3", "Main Monster 4": "メインモンスターゾーン4", "Main Monster 5": "メインモンスターゾーン5", "Spell/Trap 1": "魔法・罠ゾーン1", "Spell/Trap 2": "魔法・罠ゾーン2", "Spell/Trap 3": "魔法・罠ゾーン3", "Spell/Trap 4": "魔法・罠ゾーン4", "Spell/Trap 5": "魔法・罠ゾーン5"}, "ko": {"Normal Summon": "일반 소환", "Special Summon": "특수 소환", "Set": "세트", "Activate Spell/Trap": "마법/함정 발동", "Activate Effect": "효과 발동", "Attack": "공격", "Send to GY": "묘지로 보내기", "Discard": "버리기", "Banish": "제외", "Add to Hand": "패에 넣기", "Search": "덱에서 서치", "Fusion Summon": "융합 소환", "Synchro Summon": "싱크로 소환", "Xyz Summon": "엑시즈 소환", "Pendulum Summon": "펜듈럼 소환", "Link Summon": "링크 소환", "Other": "기타", "Field Zone": "필드 존", "Graveyard": "묘지", "Banish Pile": "제외 존", "Effect Monster": "효과 몬스터", "Flip Effect Monster": "리버스 효과 몬스터", "Fusion Monster": "융합 몬스터", "Link Monster": "링크 몬스터", "Normal Monster": "일반 몬스터", "Pendulum Effect Monster": "펜듈럼 효과 몬스터", "Ritual Effect Monster": "의식 효과 몬스터", "Spell Card": "마법 카드", "Synchro Monster": "싱크로 몬스터", "Token": "토큰", "Trap Card": "함정 카드", "Tuner Monster": "튜너 몬스터", "Union Effect Monster": "유니온 몬스터", "Xyz Monster": "엑시즈 몬스터", "DARK": "어둠", "DIVINE": "신", "EARTH": "땅", "FIRE": "화염", "LIGHT": "빛", "WATER": "물", "WIND": "바람", "Extra Monster 1": "엑스트라 몬스터 존 1", "Extra Monster 2": "엑스트라 몬스터 존 2", "Main Monster 1": "메인 몬스터 존 1", "Main Monster 2": "메인 몬스터 존 2", "Main Monster 3": "메인 몬스터 존 3", "Main Monster 4": "메인 몬스터 존 4", "Main Monster 5": "메인 몬스터 존 5", "Spell/Trap 1": "마법 & 함정 존 1", "Spell/Trap 2": "마법 & 함정 존 2", "Spell/Trap 3": "마법 & 함정 존 3", "Spell/Trap 4": "마법 & 함정 존 4", "Spell/Trap 5": "마법 & 함정 존 5"}, "zh": {"Normal Summon": "通常召唤", "Special Summon": "特殊召唤", "Set": "盖放", "Activate Spell/Trap": "发动魔法/陷阱", "Activate Effect": "发动效果", "Attack": "攻击", "Send to GY": "送去墓地", "Discard": "丢弃", "Banish": "除外", "Add to Hand": "加入手卡", "Search": "从卡组检索", "Fusion Summon": "融合召唤", "Synchro Summon": "同调召唤", "Xyz Summon": "超量召唤", "Pendulum Summon": "灵摆召唤", "Link Summon": "连接召唤", "Other": "其他", "Field Zone": "场地区", "Graveyard": "墓地", "Banish Pile": "除外区", "Effect Monster": "效果怪兽", "Flip Effect Monster": "反转效果怪兽", "Fusion Monster": "融合怪兽", "Link Monster": "连接怪兽", "Normal Monster": "通常怪兽", "Pendulum Effect Monster": "灵摆效果怪兽", "Ritual Effect Monster": "仪式效果怪兽", "Spell Card": "魔法卡", "Synchro Monster": "同调怪兽", "Token": "衍生物", "Trap Card": "陷阱卡", "Tuner Monster": "调整怪兽", "Union Effect Monster": "同盟怪兽", "Xyz Monster": "超量怪兽", "DARK": "暗", "DIVINE": "神", "EARTH": "地", "FIRE": "炎", "LIGHT": "光", "WATER": "水", "WIND": "风", "Extra Monster 1": "额外怪兽区1", "Extra Monster 2": "额外怪兽区2", "Main Monster 1": "主要怪兽区1", "Main Monster 2": "主要怪兽区2", "Main Monster 3": "主要怪兽区3", "Main Monster 4": "主要怪兽区4", "Main Monster 5": "主要怪兽区5", "Spell/Trap 1": "魔法与陷阱区1", "Spell/Trap 2": "魔法与陷阱区2", "Spell/Trap 3": "魔法与陷阱区3", "Spell/Trap 4": "魔法与陷阱区4", "Spell/Trap 5": "魔法与陷阱区5"}};
+        let CURRENT_LANG = 'en';
+        const trTerm = (name) => (name && YGO_TERMS[CURRENT_LANG] && YGO_TERMS[CURRENT_LANG][name]) || name;
         const YGO_ACTIONS = [ { name: "Normal Summon", emoji: "⬆️" }, { name: "Special Summon", emoji: "⭐" }, { name: "Set", emoji: "⬇️" }, { name: "Activate Spell/Trap", emoji: "🌀" }, { name: "Activate Effect", emoji: "⚡" }, { name: "Attack", emoji: "⚔️" }, { name: "Send to GY", emoji: "🪦" }, { name: "Discard", emoji: "👋" }, { name: "Banish", emoji: "🌌" }, { name: "Add to Hand", emoji: "✋" }, { name: "Search", emoji: "🔍" }, { name: "Fusion Summon", emoji: "⚛️" }, { name: "Synchro Summon", emoji: "🟢" }, { name: "Xyz Summon", emoji: "💫" }, { name: "Pendulum Summon", emoji: "⚖️" }, { name: "Link Summon", emoji: "🔻" }, { name: "Other", emoji: "..." } ];
         
         const Spinner = () => <div className="spinner"></div>;
@@ -1248,7 +1260,7 @@
             );
         };
 
-        const CardSelector = ({ cardPool, onCardSelected, buttonText, displayAs = 'button', t, wrapperClassName = '', onMouseEnter, onMouseLeave, onMouseMove, preferredDirection = 'down', mode = 'pool' }) => {
+        const CardSelector = ({ cardPool, onCardSelected, buttonText, displayAs = 'button', t, wrapperClassName = '', onMouseEnter, onMouseLeave, onMouseMove, preferredDirection = 'down', mode = 'pool', allowNote = false }) => {
             const allMode = mode === 'all'; // «todas las cartas»: primero la base de datos, sin pool ni notas, y no agrega al pool
             const [isOpen, setIsOpen] = useState(false);
             const [quickPicks, setQuickPicks] = useState(handTrapCache.data);
@@ -1400,7 +1412,14 @@
                             autoFocus
                             className="p-2 bg-slate-900 text-white placeholder-gray-400 focus:ring-0 outline-none sticky top-0"
                         />
-                        {!allMode && (<div
+                        {!allMode && cardSourceRef.current && cardSourceRef.current.prepareWildcard && (<div
+                            onMouseDown={() => handleSelect(cardSourceRef.current.prepareWildcard())}
+                            className="flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm text-violet-300 font-semibold border-b border-slate-700"
+                        >
+                            <img src={WILDCARD_IMG} alt="" className="w-10 h-14 object-cover rounded-sm mr-2" />
+                            <span>{t('anyCard')}</span>
+                        </div>)}
+                        {!allMode && allowNote && (<div
                             onMouseDown={() => handleSelect({ isNote: true })}
                             className="flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm text-amber-300 font-semibold border-b border-slate-700"
                         >
@@ -1442,7 +1461,12 @@
                         />
                         <button onClick={() => setIsOpen(false)} aria-label="Cerrar" className="flex-shrink-0 p-3 bg-red-600 text-white rounded-full"><i className="fas fa-times"></i></button>
                     </div>
-                    {!allMode && (<div className="flex-shrink-0 mb-2">
+                    {!allMode && cardSourceRef.current && cardSourceRef.current.prepareWildcard && (<div className="flex-shrink-0 mb-2">
+                        <button onClick={() => handleSelect(cardSourceRef.current.prepareWildcard())} className="w-full p-3 bg-violet-700 text-white font-semibold rounded-lg hover:bg-violet-600 transition-colors flex items-center justify-center gap-2">
+                            <img src={WILDCARD_IMG} alt="" className="w-6 h-9 rounded-sm" />{t('anyCard')}
+                        </button>
+                    </div>)}
+                    {!allMode && allowNote && (<div className="flex-shrink-0 mb-2">
                         <button
                             onClick={() => handleSelect({ isNote: true })}
                             className="w-full p-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors"
@@ -1554,6 +1578,9 @@
         };
         // La app le presta a los selectores de cartas la forma de agregar cualquier carta de la base de datos
         const cardSourceRef = { current: null };
+        // Carta comodín («cualquier carta»): una carta propia con dibujo de «?»
+        const WILDCARD_IMG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 59 86'><rect width='59' height='86' rx='3' fill='#4c1d95'/><rect x='4' y='4' width='51' height='78' rx='2' fill='none' stroke='#c4b5fd' stroke-width='1.5' stroke-dasharray='3 2'/><text x='29.5' y='55' font-size='36' text-anchor='middle' fill='#ede9fe' font-family='Arial' font-weight='bold'>?</text></svg>");
+        const makeWildcardCard = (name) => ({ instanceId: generateId(), isCustom: true, isWildcard: true, name, type: 'Wildcard', desc: '', atk: '', def: '', image_url: WILDCARD_IMG, image_url_small: WILDCARD_IMG, image_url_cropped: WILDCARD_IMG, notes: '' });
 
         const ExportLayout = ({ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, isPreview = false }) => {
             const theme = exportOptions.theme || 'dark';
@@ -1632,7 +1659,7 @@
                             itemJsx = (
                                 <div key={step.id} className={`bg-slate-900/50 p-3 rounded-lg border ${isVulnerable ? 'border-red-500' : 'border-slate-700'} flex flex-col items-center gap-2 text-center h-full`}>
                                     <span className="font-bold text-lg text-slate-300">{nbsp(t('step'))} {stepNumber}</span>
-                                    <h3 className="font-semibold text-base text-yellow-300 h-12 flex items-center justify-center">{action.emoji} {nbsp(step.actionType === 'Other' ? step.customActionText : step.actionType)}</h3>
+                                    <h3 className="font-semibold text-base text-yellow-300 h-12 flex items-center justify-center">{action.emoji} {nbsp(step.actionType === 'Other' ? (step.customActionText || trTerm('Other')) : trTerm(step.actionType))}</h3>
                                     <div className="relative">
                                         <ExportCard card={mainCard} size="medium" location={step.location ? ZONE_ABBREVIATIONS[step.location] : null} />
                                         {step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (
@@ -1722,7 +1749,7 @@
                                             <div key={item.id} className="flex flex-col items-center gap-2">
                                                 <ExportCard card={item.card} size="normal" />
                                                 <div className="text-center">
-                                                    <p className="font-bold text-sm text-slate-300">{nbsp(item.zone)}</p>
+                                                    <p className="font-bold text-sm text-slate-300">{nbsp(trTerm(item.zone))}</p>
                                                     {item.isDisruption && <p className="text-xs text-red-400 font-bold">{nbsp(t('finalBoardDisruption'))}</p>}
                                                 </div>
                                             </div>
@@ -1869,7 +1896,7 @@
             );
         };
 
-        const ExportOptionsModal = ({ show, onClose, onConfirm, onPrint, exportOptions, setExportOptions, layoutProps, t }) => {
+        const ExportOptionsModal = ({ show, onClose, onConfirm, onPrint, onCopyText, exportOptions, setExportOptions, layoutProps, t }) => {
             if (!show) return null;
             const optionRow = (label, key, choices) => (
                 <div className="border-t border-slate-600 pt-4">
@@ -1904,7 +1931,8 @@
                             </div>
                             <div className="flex flex-wrap justify-end gap-3">
                                 <button onClick={onClose} className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-700">{t('cancel')}</button>
-                                <button onClick={onPrint} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i className="fas fa-print mr-2"></i>{t('printPdf')}</button>
+                                {onCopyText && <button onClick={onCopyText} className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-500"><i className="fas fa-copy mr-2"></i>{t('copyText')}</button>}
+                       <button onClick={onPrint} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i className="fas fa-print mr-2"></i>{t('printPdf')}</button>
                                 <button onClick={onConfirm} className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">{t('confirmAndExport')}</button>
                             </div>
                         </div>
@@ -2119,7 +2147,7 @@
                             <div className="flex-1 space-y-4">
                                 <input type="text" name="name" value={cardData.name} onChange={handleInputChange} placeholder={t('cardName')} className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:outline-none" />
                                 <select name="type" value={cardData.type} onChange={handleInputChange} className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg">
-                                    {CARD_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+                                    {CARD_TYPES.map(type => <option key={type} value={type}>{trTerm(type)}</option>)}
                                 </select>
                                 <textarea name="desc" value={cardData.desc} onChange={handleInputChange} placeholder={t('cardDescription')} rows="5" className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg"></textarea>
                                 <div className="flex gap-4">
@@ -2231,6 +2259,33 @@
                     <span>{message}</span>
                     <button onClick={onUndo} className="btn text-sm text-amber-300 hover:underline">{t('undo')}</button>
                     <button onClick={onClose} className="text-slate-400 hover:text-white">&times;</button>
+                </div>
+            );
+        };
+
+        // Selector de fichas (Token): antes se añadía una al azar
+        const TokenPickerModal = ({ show, tokens, onPick, onClose, t }) => {
+            const [q, setQ] = useState('');
+            if (!show) return null;
+            const list = tokens.filter(tk => !q || (tk.name || '').toLowerCase().includes(q.toLowerCase())).slice(0, 150);
+            const img = (tk) => { const u = tk.card_images && tk.card_images[0] && tk.card_images[0].image_url_small; return u ? 'https://images.weserv.nl/?url=' + u.replace(/^https?:\/\//, '') : ''; };
+            return (
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+                    <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-5 w-full max-w-3xl max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 mb-3">
+                            <h3 className="text-lg font-bold text-violet-300 flex-1">{t('tokenPickTitle')}</h3>
+                            <button onClick={onClose} aria-label={t('closeLabel')} className="w-10 h-10 rounded-full bg-black/30 text-gray-300 hover:text-white text-2xl">×</button>
+                        </div>
+                        <input value={q} onChange={e => setQ(e.target.value)} placeholder={t('tokenSearch')} autoFocus className="w-full p-2 mb-3 bg-slate-700 border border-slate-600 rounded-lg text-white" />
+                        <div className="overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">
+                            {list.map(tk => (
+                                <button key={tk.id} onClick={() => onPick(tk)} title={tk.name} className="flex flex-col items-center gap-1 p-1 rounded hover:bg-slate-700 text-xs text-slate-200">
+                                    <img src={img(tk)} alt={tk.name} loading="lazy" crossOrigin="anonymous" className="w-full rounded" />
+                                    <span className="text-center leading-tight">{tk.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             );
         };
@@ -2605,7 +2660,7 @@
             return out;
         };
         const playDestLabel = (dest, t) => !dest ? '' : dest === 'gy' ? ZONE_ABBREVIATIONS['Graveyard'] : dest === 'banish' ? ZONE_ABBREVIATIONS['Banish Pile'] : (ZONE_ABBREVIATIONS[dest] || t(PLAY_PILE_LABEL[dest]));
-        const playActionText = (step) => step.actionType === 'Other' ? (step.customActionText || 'Other') : (step.actionType || '');
+        const playActionText = (step) => step.actionType === 'Other' ? (step.customActionText || trTerm('Other')) : trTerm(step.actionType || '');
         const playActionEmoji = (step) => (YGO_ACTIONS.find(a => a.name === step.actionType) || {}).emoji || '';
 
         const PlayComboBoard = ({ comboState, onClose, t }) => {
@@ -2891,6 +2946,9 @@
             const [isCardPoolOpen, setIsCardPoolOpen] = useState(true);
             const [isStatsOpen, setIsStatsOpen] = useState(false);
             const [openStepMenuId, setOpenStepMenuId] = useState(null);
+            const [showTokenPicker, setShowTokenPicker] = useState(false);
+            const [showWelcome, setShowWelcome] = useState(false);
+            const [bgAnimated, setBgAnimated] = useState(window.__ygoBgAnimated !== false);
             const [stepsView, setStepsView] = useState(() => { try { return localStorage.getItem('ygo_steps_view') === 'grid' ? 'grid' : 'list'; } catch (e) { return 'list'; } });
             useEffect(() => { try { localStorage.setItem('ygo_steps_view', stepsView); } catch (e) {} }, [stepsView]);
             const [isStartingHandOpen, setIsStartingHandOpen] = useState(true);
@@ -2949,6 +3007,7 @@
             useEffect(() => { document.documentElement.lang = language; }, [language]);
             // Solo se recuerda el idioma cuando la persona lo elige; si no, se sigue el idioma de su sistema.
             const chooseLanguage = (lang) => { setLanguage(lang); try { localStorage.setItem('ygo_lang', lang); } catch (e) {} };
+            CURRENT_LANG = language;
             const t = useCallback((key, params = {}) => { let str = (translations[language] && translations[language][key]) || translations['en'][key] || key; for (const param in params) { str = str.replace(`{${param}}`, params[param]); } return str; }, [language]);
             const tutorialSteps = useMemo(() => ({ main: [ { targetSelector: '#search-panel', title: t('tutorialTitleSearch'), content: t('tutorialContentSearch') }, { targetSelector: '.popular-cards-carousel', title: t('tutorialTitlePopularCards'), content: t('tutorialContentPopularCards') }, { targetSelector: '.card-pool', title: t('tutorialTitlePool'), content: t('tutorialContentPool') }, { targetSelector: '.starting-hand', title: t('tutorialTitleHand'), content: t('tutorialContentHand') }, { targetSelector: '.combo-steps', title: t('tutorialTitleSteps'), content: t('tutorialContentSteps') }, { targetSelector: '.final-board', title: t('tutorialTitleFinalBoard'), content: t('tutorialContentFinalBoard') }, { targetSelector: '.notes-section', title: t('tutorialTitleNotes'), content: t('tutorialContentNotes') }, { targetSelector: '.main-actions', title: t('tutorialTitleActions'), content: t('tutorialContentActions') }, ], stepActions: [ { targetSelector: '.combo-step-card .tutorial-action-select', title: t('tutorialTitleStepActionSelect'), content: t('tutorialContentStepActionSelect') }, { targetSelector: '.combo-step-card .tutorial-vulnerability-btn', title: t('tutorialTitleStepVulnerability'), content: t('tutorialContentStepVulnerability') }, { targetSelector: '.combo-step-card .tutorial-add-target-btn', title: t('tutorialTitleStepAffectedCards'), content: t('tutorialContentStepAffectedCards') }, { targetSelector: '.combo-step-card .tutorial-description-input', title: t('tutorialTitleStepDescription'), content: t('tutorialContentStepDescription') }, ] }), [t]);
             const IMAGE_PROXY = 'https://images.weserv.nl/?url=';
@@ -3004,9 +3063,7 @@
                     const splashTimer = setTimeout(() => {
                         if (splashScreen) splashScreen.classList.add('hidden');
                         setIsLoading(false);
-                        if(firstVisit) {
-                           setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' });
-                        }
+                        if (firstVisit && !localStorage.getItem('ygo_welcome_done')) setShowWelcome(true);
                         const footer = document.getElementById('app-footer');
                         if (footer) footer.classList.add('visible');
                     }, 2000);
@@ -3228,7 +3285,14 @@
                 pendingPoolRef.current.push(inst);
                 return inst;
             };
-            cardSourceRef.current = { prepareApiCard, poolIds: new Set(cardPool.filter(c => !c.isCustom).map(c => c.ygoprodeck_id)) };
+            const prepareWildcard = () => {
+                const existing = cardPool.find(c => c.isWildcard) || pendingPoolRef.current.find(c => c.isWildcard);
+                if (existing) return existing;
+                const w = makeWildcardCard(t('anyCard'));
+                pendingPoolRef.current.push(w);
+                return w;
+            };
+            cardSourceRef.current = { prepareApiCard, prepareWildcard, poolIds: new Set(cardPool.filter(c => !c.isCustom).map(c => c.ygoprodeck_id)) };
 
             // Menú «¿Dónde la pongo?» al tocar una carta del buscador o del carrusel
             const [destMenu, setDestMenu] = useState(null);
@@ -3280,7 +3344,7 @@
                 setJustAddedCardId(customCard.instanceId);
             };
 
-            const handleAddToken = () => { if (allTokens.length === 0) { console.error("Token list not loaded yet."); return; } const randomToken = allTokens[Math.floor(Math.random() * allTokens.length)]; addCardToPool(randomToken); };
+            const handleAddToken = () => { if (allTokens.length === 0) { console.error("Token list not loaded yet."); return; } setShowTokenPicker(true); };
             
             const removeCardFromPool = (instanceId) => {
                 if (hoveredCard.card?.instanceId === instanceId) {
@@ -3589,7 +3653,7 @@
                         setNotification({ show: true, message: '¡Combo guardado en la nube!' });
                     } catch (e) { console.error("Error saving combo to Firestore:", e); alert(t('saveError')); }
                 } else {
-                    try { const serializedState = JSON.stringify(comboState); localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${name}`, serializedState); setShowSaveModal(false); localStorage.removeItem(AUTO_SAVE_KEY); } catch (e) { console.error("Error saving combo locally:", e); alert(t('saveError')); }
+                    if (localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${name}`) !== null && !window.confirm(t('overwriteConfirm', { name }))) return; try { const serializedState = JSON.stringify(comboState); localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${name}`, serializedState); setShowSaveModal(false); localStorage.removeItem(AUTO_SAVE_KEY); } catch (e) { console.error("Error saving combo locally:", e); alert(t('saveError')); }
                 }
             };
 
@@ -3656,6 +3720,87 @@
                 }
             };
             
+            // Combo en texto plano (para Discord, WhatsApp, Reddit…)
+            const htmlToText = (html) => {
+                if (!html) return '';
+                const withBreaks = String(html).replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li)>/gi, '\n');
+                const doc = new DOMParser().parseFromString(withBreaks, 'text/html');
+                return (doc.body.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+            };
+            const buildComboText = () => {
+                const nameOf = (id) => { const c = findCard(id); return c ? c.name : '?'; };
+                const lines = [comboTitle || t('untitledCombo')];
+                const hands = startingHand.filter(g => g && g.length);
+                if (hands.length) lines.push(`${t('startingHandTitle')}: ` + hands.map(g => g.map(it => (it.quantity > 1 ? `${it.quantity}x ` : '') + nameOf(it.instanceId)).join(' + ')).join(`  |  ${t('or')}  |  `));
+                lines.push('');
+                let n = 0;
+                comboSteps.forEach(s => {
+                    if (s.type === 'group') { lines.push(''); lines.push(`== ${s.title || ''} ==`); return; }
+                    if (s.type === 'note') { if (s.text) lines.push(`   📝 ${s.text}`); return; }
+                    n++;
+                    const act = s.actionType === 'Other' ? (s.customActionText || trTerm('Other')) : trTerm(s.actionType);
+                    let line = `${n}. ${act}: ${nameOf(s.mainCardInstanceId)}`;
+                    const targets = (s.targetCards || []).map(tc => nameOf(tc.instanceId));
+                    if (targets.length) line += ` → ${targets.join(', ')}`;
+                    if (s.location) line += ` [${ZONE_ABBREVIATIONS[s.location] || s.location}]`;
+                    lines.push(line);
+                    const desc = htmlToText(s.actionDescription);
+                    if (desc) lines.push(`   ${desc}`);
+                    const v = s.vulnerability;
+                    if (v && (v.text || (v.cards || []).length)) {
+                        const vNames = (v.cards || []).map(vc => (vc.card && vc.card.name) || nameOf(vc.instanceId));
+                        lines.push(`   ⚠ ${t('vulnerableTo')}: ${[...vNames, v.cards && v.cards.length ? '' : v.text].filter(Boolean).join(', ')}`);
+                    }
+                });
+                if (finalBoardCards.length) {
+                    lines.push('');
+                    lines.push(`${t('finalBoardTitle')}: ` + finalBoardCards.map(b => `${(b.card && b.card.name) || '?'} (${ZONE_ABBREVIATIONS[b.zone] || b.zone})${b.isDisruption ? ' ⛔' : ''}`).join(', '));
+                }
+                const notesText = htmlToText(notes);
+                if (notesText) { lines.push(''); lines.push(notesText); }
+                lines.push('');
+                lines.push(getShareUrl());
+                return lines.join('\n');
+            };
+            const dismissWelcome = () => {
+                setShowWelcome(false);
+                try { localStorage.setItem('ygo_welcome_done', '1'); localStorage.setItem('ygo_tutorial_main_completed', 'true'); localStorage.setItem('ygo_tutorial_stepActions_completed', 'true'); } catch (e) {}
+            };
+            const loadExampleCombo = async () => {
+                dismissWelcome();
+                const st = (id, card, actionType, desc, extra = {}) => ({ type: 'step', id, mainCardInstanceId: card, actionType, customActionText: '', actionDescription: desc, targetCards: [], vulnerability: { text: '', cards: [] }, isLocked: false, location: null, ...extra });
+                const example = {
+                    cardPool: [ { $c: 97268402, i: 'ex_veiler' }, { $c: 41999284, i: 'ex_linkuriboh' }, { $c: 83764718, i: 'ex_reborn' } ],
+                    startingHand: [[{ instanceId: 'ex_veiler', quantity: 1 }, { instanceId: 'ex_reborn', quantity: 1 }]],
+                    comboSteps: [
+                        st(generateId(), 'ex_veiler', 'Normal Summon', t('ex1'), { location: 'Main Monster 3' }),
+                        st(generateId(), 'ex_linkuriboh', 'Link Summon', t('ex2'), { targetCards: [{ instanceId: 'ex_veiler', quantity: 1 }], location: 'Extra Monster 1' }),
+                        st(generateId(), 'ex_reborn', 'Activate Spell/Trap', t('ex3'), { targetCards: [{ instanceId: 'ex_veiler', quantity: 1 }] }),
+                        st(generateId(), 'ex_veiler', 'Special Summon', t('ex4'), { location: 'Main Monster 3' }),
+                    ],
+                    finalBoardCards: [
+                        { id: generateId(), card: { $c: 41999284, i: 'ex_linkuriboh' }, zone: 'Extra Monster 1', isDisruption: false },
+                        { id: generateId(), card: { $c: 97268402, i: 'ex_veiler' }, zone: 'Main Monster 3', isDisruption: false },
+                    ],
+                    comboTitle: t('exampleTitle'),
+                    notes: t('exampleNotes'),
+                };
+                try { const loaded = await hydrateCombo(example, IMAGE_PROXY); loadState(loaded, 'Example combo'); }
+                catch (e) { console.error('No se pudo cargar el ejemplo', e); }
+            };
+            const toggleBgAnimation = () => {
+                const v = !bgAnimated;
+                setBgAnimated(v);
+                window.__ygoBgAnimated = v;
+                try { localStorage.setItem('ygo_bg_anim', v ? '1' : '0'); } catch (e) {}
+                window.dispatchEvent(new Event('ygo-bg-change'));
+            };
+            const handleCopyText = async () => {
+                const text = buildComboText();
+                try { await navigator.clipboard.writeText(text); }
+                catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (err) {} ta.remove(); }
+                setNotification({ show: true, message: t('textCopied') });
+            };
             const getShareUrl = () => {
                 try {
                     const encoded = encodeComboForUrl(comboState);
@@ -3827,9 +3972,10 @@
                         <ZonePickerModal show={zonePickerStepId !== null} onClose={() => setZonePickerStepId(null)} onSelect={(zone) => updateStep(zonePickerStepId, { location: zone })} t={t} />
 
                         <PngPreviewModal imageUrl={pngPreviewUrl} onDownload={downloadPng} onClose={() => setPngPreviewUrl(null)} t={t} shareUrl={getShareUrl()} comboTitle={comboTitle} />
-                        <ExportOptionsModal show={showExportOptionsModal} onClose={() => setShowExportOptionsModal(false)} onConfirm={() => handleConfirmExport('png')} onPrint={() => handleConfirmExport('print')} exportOptions={exportOptions} setExportOptions={setExportOptions} layoutProps={{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t }} t={t} />
+                        <ExportOptionsModal show={showExportOptionsModal} onClose={() => setShowExportOptionsModal(false)} onConfirm={() => handleConfirmExport('png')} onPrint={() => handleConfirmExport('print')} onCopyText={handleCopyText} exportOptions={exportOptions} setExportOptions={setExportOptions} layoutProps={{ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t }} t={t} />
                         <SaveComboModal show={showSaveModal} onClose={() => setShowSaveModal(false)} onSave={handleSaveCombo} onDownload={handleDownloadComboFile} t={t} isOnlineSaveEnabled={isOnlineSaveEnabled} />
                         <LoadComboModal show={showLoadModal} onClose={() => setShowLoadModal(false)} onSelect={handleLoadCombo} onDelete={handleDeleteCombo} onOpenFile={handleOpenComboFile} t={t} db={db} user={user} appId={appId} isOnlineSaveEnabled={isOnlineSaveEnabled}/>
+                        <TokenPickerModal show={showTokenPicker} tokens={allTokens} onPick={(tk) => { addCardToPool(tk); setShowTokenPicker(false); }} onClose={() => setShowTokenPicker(false)} t={t} />
                         <CustomCardModal show={showCustomCardModal} onClose={() => { setShowCustomCardModal(false); setEditingCustomCard(null); }} onSave={handleSaveCustomCard} t={t} existingCard={editingCustomCard} />
 
                         {isExportingPng && <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"><div className="bg-slate-800 rounded-lg shadow-xl p-8 text-center"><h3 className="text-xl font-bold mb-4 text-violet-300">{exportMessage}</h3><div className="w-full bg-slate-600 rounded-full h-4"><div className="bg-violet-500 h-4 rounded-full" style={{ width: `${exportProgress}%` }}></div></div><p className="text-white mt-2">{Math.round(exportProgress)}%</p></div></div>}
@@ -3896,7 +4042,7 @@
                                 )}
                                 <button onClick={() => setShowFilters(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><i className="fas fa-filter"></i></button>
                             </div>
-                            {showFilters && (<div className="mb-4 p-3 bg-black/20 rounded-lg grid grid-cols-2 gap-2"><select value={filters.archetype} onChange={e => setFilters({...filters, archetype: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterArchetype')}</option>{archetypes.map(a => <option key={a} value={a}>{a}</option>)}</select><select value={filters.type} onChange={e => setFilters({...filters, type: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterType')}</option>{CARD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select><select value={filters.attribute} onChange={e => setFilters({...filters, attribute: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterAttribute')}</option>{ATTRIBUTES.map(a => <option key={a} value={a}>{a}</option>)}</select><select value={filters.level} onChange={e => setFilters({...filters, level: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterLevel')}</option>{LEVELS.map(l => <option key={l} value={l}>{l}</option>)}</select><button onClick={() => { setFilters({ type: '', attribute: '', level: '', archetype: '' }); debouncedSearch(searchTerm, { type: '', attribute: '', level: '', archetype: '' }, false); }} className="btn col-span-2 mt-1 px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700">{t('clearFilters')}</button></div>)}
+                            {showFilters && (<div className="mb-4 p-3 bg-black/20 rounded-lg grid grid-cols-2 gap-2"><select value={filters.archetype} onChange={e => setFilters({...filters, archetype: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterArchetype')}</option>{archetypes.map(a => <option key={a} value={a}>{a}</option>)}</select><select value={filters.type} onChange={e => setFilters({...filters, type: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterType')}</option>{CARD_TYPES.map(ct => <option key={ct} value={ct}>{trTerm(ct)}</option>)}</select><select value={filters.attribute} onChange={e => setFilters({...filters, attribute: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterAttribute')}</option>{ATTRIBUTES.map(a => <option key={a} value={a}>{trTerm(a)}</option>)}</select><select value={filters.level} onChange={e => setFilters({...filters, level: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterLevel')}</option>{LEVELS.map(l => <option key={l} value={l}>{l}</option>)}</select><button onClick={() => { setFilters({ type: '', attribute: '', level: '', archetype: '' }); debouncedSearch(searchTerm, { type: '', attribute: '', level: '', archetype: '' }, false); }} className="btn col-span-2 mt-1 px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700">{t('clearFilters')}</button></div>)}
                             <PopularCardsCarousel onCardClick={openDestMenu} t={t} cardPool={cardPool} />
                             <div className="flex-grow overflow-y-auto bg-black/20 p-2 rounded-lg">
                                 {isLoadingSearch ? (
@@ -3922,6 +4068,7 @@
                                     <input type="text" value={comboTitle} onChange={(e) => setComboState({...comboState, comboTitle: sanitizeHTML(e.target.value)}, "Changed title")} className="w-full min-w-0 flex-grow basis-64 p-2 text-3xl font-bold bg-transparent text-[var(--color-secondary)] placeholder-[var(--color-text-muted)] focus:bg-[var(--color-surface)]/50 rounded-lg outline-none font-yugioh" placeholder={t('comboTitlePlaceholder')} />
                                     <div className="flex flex-wrap justify-center md:justify-end items-center gap-2 max-w-full mx-auto md:mr-0 main-actions">
                                         <button onClick={toggleTheme} data-tooltip={t('themeTooltip')} className="btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)]"><i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i></button>
+                                        <button onClick={toggleBgAnimation} data-tooltip={t('bgAnimation')} aria-label={t('bgAnimation')} aria-pressed={bgAnimated} className={`btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)] ${bgAnimated ? 'text-amber-300' : 'opacity-60'}`}><i className="fas fa-star"></i></button>
                                         <select value={language} onChange={(e) => chooseLanguage(e.target.value)} data-tooltip={t('languageTooltip')} aria-label={t('languageTooltip')} className="btn p-2 bg-[var(--color-surface)] text-[var(--color-text)] rounded-md hover:bg-[var(--color-surface-light)] text-sm font-semibold cursor-pointer">{LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>
                                         <button onClick={() => setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' })} data-tooltip="Ayuda" className="btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)]"><i className="fas fa-question-circle"></i></button>
                                         <button onClick={undo} disabled={!canUndo} data-tooltip={`${t('undo')} (Ctrl+Z)`} className="btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)] disabled:opacity-50"><i className="fas fa-undo"></i></button>
@@ -3938,6 +4085,19 @@
                                 <div className="w-full text-center text-xs text-slate-400 mb-4 h-4">
                                     {isOnlineSaveEnabled ? (user ? `${t('loggedInAs')} ${user.uid}` : t('connecting')) : 'Guardado local activado'}
                                 </div>
+                                {showWelcome && (
+                                    <div className="mb-4 p-4 rounded-lg border border-violet-500/40 bg-violet-900/20 flex flex-wrap items-center gap-3 justify-between">
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-[var(--color-text)]">{t('welcomeTitle')}</p>
+                                            <p className="text-sm text-[var(--color-text-muted)]">{t('welcomeText')}</p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            <button onClick={loadExampleCombo} className="btn px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700"><i className="fas fa-magic mr-2"></i>{t('welcomeExample')}</button>
+                                            <button onClick={() => { setShowWelcome(false); try { localStorage.setItem('ygo_welcome_done', '1'); } catch (e) {} setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' }); }} className="btn px-4 py-2 bg-[var(--color-surface-light)] text-[var(--color-text)] font-semibold rounded-lg">{t('welcomeTutorial')}</button>
+                                            <button onClick={dismissWelcome} aria-label={t('closeLabel')} className="btn w-10 h-10 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><i className="fas fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex-grow space-y-6">
                                     <section id="card-pool-section" ref={cardPoolSectionRef} className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30 card-pool">
                                         <h3 onClick={() => setIsCardPoolOpen(!isCardPoolOpen)} className="text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors">
@@ -4009,14 +4169,12 @@
                                                     return (
                                                         <div 
                                                             key={step.id} 
-                                                            className="col-span-full flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/50 cursor-move"
-                                                            draggable={true}
-                                                            onDragStart={e => { e.stopPropagation(); handleDragStart(e, 'step', step); }}
-                                                            onDragEnd={handleDragEnd}
+                                                            className="col-span-full flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/50"
+                                                            data-step-box="1"
                                                             onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'step') handleReorder('step', d.data, step); setDragOverIndex(null); }}
                                                             onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOverIndex(index); }}
                                                         >
-                                                            <i className="fas fa-grip-vertical text-slate-400"></i>
+                                                            <div className="cursor-move text-slate-400 step-icon-btn" draggable={true} onDragStart={e => { e.stopPropagation(); const box = e.currentTarget.closest('[data-step-box]'); if (box && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(box, 24, 24); handleDragStart(e, 'step', step); }} onDragEnd={handleDragEnd}><i className="fas fa-grip-vertical"></i></div>
                                                             <input type="text" value={step.title} onChange={e => updateStep(step.id, { title: e.target.value })} placeholder={t('groupTitlePlaceholder')} className="flex-grow p-1 text-lg font-bold bg-transparent text-amber-300 placeholder-amber-400/50 focus:bg-slate-700/50 rounded-lg outline-none" />
                                                             <button onClick={() => deleteStep(step.id)} className="step-icon-btn text-slate-400 hover:text-red-500" aria-label={t('delete')}><i className="fas fa-trash"></i></button>
                                                         </div>
@@ -4027,14 +4185,12 @@
                                                         <div 
                                                             key={step.id} 
                                                             className="w-full bg-yellow-900/20 rounded-lg p-3 flex flex-col gap-2 relative border border-yellow-700/50 h-full"
-                                                            draggable={true}
-                                                            onDragStart={e => { e.stopPropagation(); handleDragStart(e, 'step', step); }}
-                                                            onDragEnd={handleDragEnd}
+                                                            data-step-box="1"
                                                             onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'step') handleReorder('step', d.data, step); setDragOverIndex(null); }}
                                                             onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOverIndex(index); }}
                                                         >
                                                             <div className="absolute top-2 right-2 flex gap-1 z-20">
-                                                                <div className="cursor-move text-yellow-400 step-icon-btn step-grip" draggable={true}><i className="fas fa-grip-vertical"></i></div>
+                                                                <div className="cursor-move text-yellow-400 step-icon-btn step-grip" draggable={true} onDragStart={e => { e.stopPropagation(); const box = e.currentTarget.closest('[data-step-box]'); if (box && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(box, 24, 24); handleDragStart(e, 'step', step); }} onDragEnd={handleDragEnd}><i className="fas fa-grip-vertical"></i></div>
                                                                 <button onClick={() => deleteStep(step.id)} className="step-icon-btn text-slate-400 hover:text-red-500" aria-label={t('delete')}><i className="fas fa-trash"></i></button>
                                                             </div>
                                                             <div className="flex items-center gap-2 self-start">
@@ -4057,19 +4213,17 @@
                                                 return (
                                                 <div 
                                                     key={step.id}
-                                                    draggable={!step.isLocked}
-                                                    onDragStart={e => { e.stopPropagation(); handleDragStart(e, 'step', step); }}
-                                                    onDragEnd={handleDragEnd}
+                                                    data-step-box="1"
                                                     onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'step') handleReorder('step', d.data, step); setDragOverIndex(null); }}
                                                     onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOverIndex(index); }}
                                                     onDragLeave={e => { e.stopPropagation(); }}
-                                                    className={`combo-step-card w-full bg-[var(--color-surface)]/50 rounded-lg p-3 flex flex-col gap-2 relative border ${isVulnerable ? 'step-vulnerable border-red-500/50' : 'border-transparent'} ${!step.actionDescription ? 'step-incomplete' : ''} ${step.isLocked ? 'opacity-70' : ''}`} 
+                                                    className={`combo-step-card w-full bg-[var(--color-surface)]/50 rounded-lg p-3 flex flex-col gap-2 relative border ${isVulnerable ? 'step-vulnerable border-red-500/50' : 'border-transparent'} ${step.isLocked ? 'opacity-70' : ''}`} 
                                                     onMouseEnter={() => setHighlightedCardIds([step.mainCardInstanceId, ...step.targetCards.map(c => c.instanceId)])} 
                                                     onMouseLeave={() => setHighlightedCardIds([])}
                                                 >
                                                     <div className={`step-corner absolute top-2 right-2 flex items-center gap-1 ${openStepMenuId === step.id ? 'z-40' : 'z-20'}`}>
                                                         <button onClick={() => updateStep(step.id, { vulnerability: { text: isVulnerable ? '' : 'Disrupción', cards: [] } })} className={`tutorial-vulnerability-btn step-icon-btn rounded-full ${isVulnerable ? 'bg-red-500 text-white' : 'bg-slate-700 text-slate-400'} hover:bg-red-600`} data-tooltip={t('markVulnerable')} aria-label={t('markVulnerable')}><i className="fas fa-exclamation-triangle"></i></button>
-                                                        <div className="cursor-move text-slate-400 step-icon-btn step-grip" draggable={!step.isLocked}><i className="fas fa-grip-vertical"></i></div>
+                                                        <div className="cursor-move text-slate-400 step-icon-btn step-grip" draggable={!step.isLocked} onDragStart={e => { e.stopPropagation(); const box = e.currentTarget.closest('[data-step-box]'); if (box && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(box, 24, 24); handleDragStart(e, 'step', step); }} onDragEnd={handleDragEnd}><i className="fas fa-grip-vertical"></i></div>
                                                         <div className="relative" data-step-menu="1">
                                                             <button onClick={() => setOpenStepMenuId(id => id === step.id ? null : step.id)} className={`step-icon-btn rounded-full ${openStepMenuId === step.id ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'} hover:bg-violet-600 hover:text-white`} aria-label={t('stepMoreActions')} aria-haspopup="menu" aria-expanded={openStepMenuId === step.id} data-tooltip={t('stepMoreActions')}><i className="fas fa-ellipsis-h"></i></button>
                                                             {openStepMenuId === step.id && (
@@ -4077,7 +4231,7 @@
                                                                     <button onClick={() => { duplicateStep(step.id); setOpenStepMenuId(null); }} className="step-menu-item" role="menuitem"><i className="fas fa-clone w-5 text-center"></i>{t('duplicateStep')}</button>
                                                                     <button onClick={() => moveStep(step.id, -1)} disabled={index === 0} className="step-menu-item" role="menuitem"><i className="fas fa-arrow-up w-5 text-center"></i>{t('moveStepUp')}</button>
                                                                     <button onClick={() => moveStep(step.id, 1)} disabled={index === comboSteps.length - 1} className="step-menu-item" role="menuitem"><i className="fas fa-arrow-down w-5 text-center"></i>{t('moveStepDown')}</button>
-                                                                    <CardSelector cardPool={cardPool} onCardSelected={item => { handleAddStepOrNote(item, index + 1); setOpenStepMenuId(null); }} displayAs="menu-item" buttonText={t('insertStepBelow')} t={t} preferredDirection="side" />
+                                                                    <CardSelector cardPool={cardPool} onCardSelected={item => { handleAddStepOrNote(item, index + 1); setOpenStepMenuId(null); }} allowNote={true} displayAs="menu-item" buttonText={t('insertStepBelow')} t={t} preferredDirection="side" />
                                                                     <button onClick={() => toggleStepLock(step.id)} className="step-menu-item" role="menuitem">{step.isLocked ? <i className="fas fa-lock w-5 text-center"></i> : <i className="fas fa-unlock w-5 text-center"></i>}{step.isLocked ? t('unlockStep') : t('lockStep')}</button>
                                                                     <div className="border-t border-[var(--color-border)] my-1"></div>
                                                                     <button onClick={() => { setDeleteFromIndex(index); setOpenStepMenuId(null); }} className="step-menu-item danger" role="menuitem"><i className="fas fa-undo-alt w-5 text-center"></i>{t('undoFromHere')}</button>
@@ -4087,7 +4241,7 @@
                                                         </div>
                                                     </div>
                                                     <span className="step-label font-bold text-[var(--color-text-muted)] self-start">{(language === 'en' ? 'Step' : t('stepLabel'))} {stepNumber + 1}</span>
-                                                    <select value={step.actionType} onChange={e => updateStep(step.id, { actionType: e.target.value })} disabled={step.isLocked} className="tutorial-action-select bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-sm font-semibold text-[var(--color-accent)] w-full disabled:opacity-50 disabled:cursor-not-allowed">{YGO_ACTIONS.map(act => <option key={act.name} value={act.name}>{act.emoji} {act.name}</option>)}</select>
+                                                    <select value={step.actionType} onChange={e => updateStep(step.id, { actionType: e.target.value })} disabled={step.isLocked} className="tutorial-action-select bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-sm font-semibold text-[var(--color-accent)] w-full disabled:opacity-50 disabled:cursor-not-allowed">{YGO_ACTIONS.map(act => <option key={act.name} value={act.name}>{act.emoji} {trTerm(act.name)}</option>)}</select>
                                                     {step.actionType === 'Other' && ( <input type="text" value={step.customActionText || ''} onChange={e => updateStep(step.id, { customActionText: sanitizeHTML(e.target.value) })} disabled={step.isLocked} placeholder="Especificar acción..." className="w-full bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs text-center mt-1" /> )}
                                                     <div className="step-main flex justify-center my-2 relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />{step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (<div className="absolute -right-4 -top-2 z-10 flex flex-col items-end gap-1">{step.vulnerability.cards.map((vCard) => (<CardDisplay key={vCard.instanceId} card={vCard.card || findCard(vCard.instanceId)} size="tiny" useCropped={true} onRemove={!step.isLocked ? () => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); } : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove}><span className="absolute top-0 right-0 text-xl z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span></CardDisplay>))}</div>)}</div>
                                                     <button onClick={() => setZonePickerStepId(step.id)} className="btn text-xs py-1 px-2 bg-slate-600 hover:bg-slate-500 mb-2">{step.location ? ZONE_ABBREVIATIONS[step.location] : t('location')}</button>
@@ -4103,7 +4257,7 @@
                                                     />
                                                 </div>
                                             )})}
-                                            <div className="steps-add-slot flex items-center justify-center w-full min-h-[18rem]" onDragOver={(e) => {e.preventDefault(); setDragOverIndex(comboSteps.length);}}><CardSelector cardPool={cardPool} onCardSelected={handleAddStepOrNote} displayAs="card-placeholder" t={t} preferredDirection="side" /></div>
+                                            <div className="steps-add-slot flex items-center justify-center w-full min-h-[18rem]" onDragOver={(e) => {e.preventDefault(); setDragOverIndex(comboSteps.length);}}><CardSelector cardPool={cardPool} onCardSelected={handleAddStepOrNote} allowNote={true} displayAs="card-placeholder" t={t} preferredDirection="side" /></div>
                                         </div>
                                     </section>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -4123,7 +4277,7 @@
                                                     {finalBoardCards.map(item => (
                                                         <div key={item.id} className="flex flex-col items-center gap-1 w-28" draggable={true} onDragStart={e => handleDragStart(e, 'board-card', item)} onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'board-card') handleReorder('board', d.data, item); }}>
                                                             <CardDisplay card={item.card} size="small" onClick={c => setSelectedCardForZoom(c)} onRemove={() => removeCardFromFinalBoard(item.id)} isHighlighted={highlightedCardIds.includes(item.card.instanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />
-                                                            <select value={item.zone} onChange={e => updateFinalBoardCard(item.id, { zone: e.target.value })} className="bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs w-full">{YGO_ZONES.map(zone => <option key={zone} value={zone}>{zone}</option>)}</select>
+                                                            <select value={item.zone} onChange={e => updateFinalBoardCard(item.id, { zone: e.target.value })} className="bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs w-full">{YGO_ZONES.map(zone => <option key={zone} value={zone}>{trTerm(zone)}</option>)}</select>
                                                             <label className="flex items-center justify-center gap-1.5 text-xs mt-1 cursor-pointer text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
                                                                 <input type="checkbox" checked={item.isDisruption || false} onChange={() => updateFinalBoardCard(item.id, { isDisruption: !item.isDisruption })} className="h-4 w-4 bg-slate-600 border-slate-500 text-violet-500 focus:ring-violet-500 rounded" />
                                                                 {t('finalBoardDisruption')}
