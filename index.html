@@ -952,6 +952,8 @@
         // Ramas ante interrupciones
         const EXTRA_TRANSLATIONS_BRANCH = {"es": {"branchAdd": "Añadir rama (si te interrumpen)", "branchDefaultTitle": "Si me interrumpen aquí", "branchIf": "Si usan", "branchTitleLabel": "Nombre de la rama", "branchFromStep": "desde el paso {n}", "branchRemove": "Quitar rama", "branchAddStep": "+ Paso de la rama", "branchView": "Ver rama", "branchBack": "Volver a la línea principal", "branchLabel": "Rama"}, "en": {"branchAdd": "Add branch (if interrupted)", "branchDefaultTitle": "If I get interrupted here", "branchIf": "If they use", "branchTitleLabel": "Branch name", "branchFromStep": "from step {n}", "branchRemove": "Remove branch", "branchAddStep": "+ Branch step", "branchView": "View branch", "branchBack": "Back to the main line", "branchLabel": "Branch"}, "pt": {"branchAdd": "Adicionar ramo (se interromperem)", "branchDefaultTitle": "Se me interromperem aqui", "branchIf": "Se usarem", "branchTitleLabel": "Nome do ramo", "branchFromStep": "a partir do passo {n}", "branchRemove": "Remover ramo", "branchAddStep": "+ Passo do ramo", "branchView": "Ver ramo", "branchBack": "Voltar à linha principal", "branchLabel": "Ramo"}, "fr": {"branchAdd": "Ajouter une variante (si interrompu)", "branchDefaultTitle": "Si je suis interrompu ici", "branchIf": "S'ils utilisent", "branchTitleLabel": "Nom de la variante", "branchFromStep": "depuis l'étape {n}", "branchRemove": "Supprimer la variante", "branchAddStep": "+ Étape de la variante", "branchView": "Voir la variante", "branchBack": "Revenir à la ligne principale", "branchLabel": "Variante"}, "it": {"branchAdd": "Aggiungi ramo (se interrotto)", "branchDefaultTitle": "Se vengo interrotto qui", "branchIf": "Se usano", "branchTitleLabel": "Nome del ramo", "branchFromStep": "dal passo {n}", "branchRemove": "Rimuovi ramo", "branchAddStep": "+ Passo del ramo", "branchView": "Vedi ramo", "branchBack": "Torna alla linea principale", "branchLabel": "Ramo"}, "de": {"branchAdd": "Abzweigung hinzufügen (bei Unterbrechung)", "branchDefaultTitle": "Falls ich hier unterbrochen werde", "branchIf": "Falls sie nutzen", "branchTitleLabel": "Name der Abzweigung", "branchFromStep": "ab Schritt {n}", "branchRemove": "Abzweigung entfernen", "branchAddStep": "+ Schritt der Abzweigung", "branchView": "Abzweigung ansehen", "branchBack": "Zurück zur Hauptlinie", "branchLabel": "Abzweigung"}, "ru": {"branchAdd": "Добавить ветку (если прервут)", "branchDefaultTitle": "Если меня прервут здесь", "branchIf": "Если используют", "branchTitleLabel": "Название ветки", "branchFromStep": "с шага {n}", "branchRemove": "Удалить ветку", "branchAddStep": "+ Шаг ветки", "branchView": "Смотреть ветку", "branchBack": "Вернуться к основной линии", "branchLabel": "Ветка"}, "ja": {"branchAdd": "分岐を追加 (妨害された場合)", "branchDefaultTitle": "ここで妨害されたら", "branchIf": "相手が使ったら:", "branchTitleLabel": "分岐の名前", "branchFromStep": "ステップ {n} から", "branchRemove": "分岐を削除", "branchAddStep": "+ 分岐のステップ", "branchView": "分岐を見る", "branchBack": "メインのルートに戻る", "branchLabel": "分岐"}, "ko": {"branchAdd": "분기 추가 (방해받을 경우)", "branchDefaultTitle": "여기서 방해받으면", "branchIf": "상대가 사용하면", "branchTitleLabel": "분기 이름", "branchFromStep": "{n}단계부터", "branchRemove": "분기 삭제", "branchAddStep": "+ 분기 단계", "branchView": "분기 보기", "branchBack": "메인 루트로 돌아가기", "branchLabel": "분기"}, "zh": {"branchAdd": "添加分支(被干扰时)", "branchDefaultTitle": "如果在这里被干扰", "branchIf": "如果对方使用", "branchTitleLabel": "分支名称", "branchFromStep": "从第 {n} 步开始", "branchRemove": "删除分支", "branchAddStep": "+ 分支步骤", "branchView": "查看分支", "branchBack": "返回主线", "branchLabel": "分支"}};
         Object.entries(EXTRA_TRANSLATIONS_BRANCH).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        // Notas del combo de ejemplo real
+        Object.entries({"es": {"exampleNotes": "Combo real de ejemplo (Rikka con Predaplant, 1 carta). Pruébalo en el tablero (▶) o en modo práctica."}, "en": {"exampleNotes": "Real example combo (Rikka with Predaplant, 1 card). Try it on the board (▶) or in practice mode."}, "pt": {"exampleNotes": "Combo real de exemplo (Rikka com Predaplant, 1 carta). Teste no tabuleiro (▶) ou no modo prática."}, "fr": {"exampleNotes": "Vrai combo d'exemple (Rikka avec Predaplant, 1 carte). Essayez-le sur le plateau (▶) ou en mode entraînement."}, "it": {"exampleNotes": "Vera combo di esempio (Rikka con Predaplant, 1 carta). Provala sul tabellone (▶) o in modalità allenamento."}, "de": {"exampleNotes": "Echte Beispiel-Combo (Rikka mit Predaplant, 1 Karte). Probiere sie auf dem Spielfeld (▶) oder im Übungsmodus aus."}, "ru": {"exampleNotes": "Реальное комбо-пример (Rikka с Predaplant, 1 карта). Попробуйте его на поле (▶) или в режиме тренировки."}, "ja": {"exampleNotes": "実際のサンプルコンボ (六花 + 捕食植物、1枚初動)。盤面 (▶) や練習モードで試してみてください。"}, "ko": {"exampleNotes": "실제 예시 콤보 (리카 + 포식식물, 1장 전개). 보드(▶)나 연습 모드에서 사용해 보세요."}, "zh": {"exampleNotes": "真实的示例 Combo(六花 + 捕食植物,1 卡起手)。可在棋盘(▶)或练习模式中试试。"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
@@ -3995,20 +3997,83 @@
                 dismissWelcome();
                 const st = (id, card, actionType, desc, extra = {}) => ({ type: 'step', id, mainCardInstanceId: card, actionType, customActionText: '', actionDescription: desc, targetCards: [], vulnerability: { text: '', cards: [] }, isLocked: false, location: null, ...extra });
                 const example = {
-                    cardPool: [ { $c: 97268402, i: 'ex_veiler' }, { $c: 41999284, i: 'ex_linkuriboh' }, { $c: 83764718, i: 'ex_reborn' } ],
-                    startingHand: [[{ instanceId: 'ex_veiler', quantity: 1 }, { instanceId: 'ex_reborn', quantity: 1 }]],
+                    cardPool: [
+                        { $c: 89176044, i: 'ex_prim' },
+                        { $c: 1845204, i: 'ex_ifus' },
+                        { $c: 44932065, i: 'ex_bybl' },
+                        { $c: 18595008, i: 'ex_liliz' },
+                        { $c: 66309175, i: 'ex_ambu' },
+                        { $c: 44994712, i: 'ex_longi' },
+                        { $c: 66787942, i: 'ex_balt' },
+                        { $c: 21200905, i: 'ex_jasm' },
+                        { $c: 71734607, i: 'ex_petal' },
+                        { $c: 78646298, i: 'ex_bprin' },
+                        { $c: 71002019, i: 'ex_mudan' },
+                        { $c: 76869711, i: 'ex_konkon' },
+                        { $c: 69164989, i: 'ex_glam' },
+                        { $c: 20477370, i: 'ex_sacred' },
+                        { $c: 6284176, i: 'ex_kanz' },
+                        { $c: 42651293, i: 'ex_prim2' },
+                        { $c: 132308, i: 'ex_princ' },
+                        { $c: 31615285, i: 'ex_cactus' },
+                        { $c: 68941332, i: 'ex_sheet' },
+                        { $c: 3828844, i: 'ex_queen' },
+                        { $c: 48130397, i: 'ex_spoly' }
+                    ],
+                    startingHand: [[{ instanceId: 'ex_prim', quantity: 1 }], [{ instanceId: 'ex_ifus', quantity: 1 }]],
                     comboSteps: [
-                        st(generateId(), 'ex_veiler', 'Normal Summon', t('ex1'), { location: 'Main Monster 3' }),
-                        st(generateId(), 'ex_linkuriboh', 'Link Summon', t('ex2'), { targetCards: [{ instanceId: 'ex_veiler', quantity: 1 }], location: 'Extra Monster 1' }),
-                        st(generateId(), 'ex_reborn', 'Activate Spell/Trap', t('ex3'), { targetCards: [{ instanceId: 'ex_veiler', quantity: 1 }] }),
-                        st(generateId(), 'ex_veiler', 'Special Summon', t('ex4'), { location: 'Main Monster 3' }),
+                        { type: 'group', id: generateId(), title: "Starter: Predaprimitive" },
+                        st(generateId(), 'ex_prim', 'Activate Spell/Trap', "Starter. As cost, send Predaplant Byblisp from the Deck to the GY."),
+                        st(generateId(), 'ex_bybl', 'Send to GY', "Cost for Predaprimitive."),
+                        st(generateId(), 'ex_prim', 'Search', "Predaprimitive adds Instant Fusion to the hand.", { targetCards: [{ instanceId: 'ex_ifus', quantity: 1 }] }),
+                        st(generateId(), 'ex_bybl', 'Search', "Byblisp's effect adds Predaplant Lilizard.", { targetCards: [{ instanceId: 'ex_liliz', quantity: 1 }] }),
+                        st(generateId(), 'ex_ifus', 'Activate Spell/Trap', "Instant Fusion: Special Summon Predaplant Ambulomelides from the Extra Deck."),
+                        st(generateId(), 'ex_ambu', 'Special Summon', "Summoned with Instant Fusion."),
+                        st(generateId(), 'ex_ambu', 'Search', "Ambulomelides adds Predaplant Longinephila (can be any “Predap” card).", { targetCards: [{ instanceId: 'ex_longi', quantity: 1 }] }),
+                        { type: 'group', id: generateId(), title: "Predap → Rikka" },
+                        st(generateId(), 'ex_liliz', 'Special Summon', "Lilizard's effect: Special Summon it from the hand."),
+                        st(generateId(), 'ex_ambu', 'Send to GY', "Ambulomelides tributes itself for its effect."),
+                        st(generateId(), 'ex_longi', 'Special Summon', "Special Summoned with Ambulomelides' effect."),
+                        st(generateId(), 'ex_prim', 'Add to Hand', "Then add Predaprimitive to the hand (can be any “Predap” card)."),
+                        st(generateId(), 'ex_balt', 'Synchro Summon', "Longinephila (Tuner) + Lilizard.", { targetCards: [{ instanceId: 'ex_longi', quantity: 1 }, { instanceId: 'ex_liliz', quantity: 1 }] }),
+                        st(generateId(), 'ex_balt', 'Activate Effect', "Bal Teah's effect + Lilizard's effect: draw 1 card.", { targetCards: [{ instanceId: 'ex_liliz', quantity: 1 }] }),
+                        st(generateId(), 'ex_longi', 'Banish', "Banish Longinephila from the GY: place a counter on any card."),
+                        st(generateId(), 'ex_bybl', 'Special Summon', "Special Summon Byblisp from the GY into an odd-numbered zone."),
+                        st(generateId(), 'ex_jasm', 'Link Summon', "Bal Teah + Lilizard. Put Jasmine above Byblisp.", { targetCards: [{ instanceId: 'ex_balt', quantity: 1 }, { instanceId: 'ex_liliz', quantity: 1 }], location: 'Extra Monster 1' }),
+                        st(generateId(), 'ex_bybl', 'Banish', "Cost for Jasmine's effect."),
+                        st(generateId(), 'ex_petal', 'Special Summon', "Jasmine's effect: Special Summon Rikka Petal from the Deck."),
+                        { type: 'group', id: generateId(), title: "Rikka" },
+                        st(generateId(), 'ex_petal', 'Search', "Rikka Petal adds Rikka Black Princess.", { targetCards: [{ instanceId: 'ex_bprin', quantity: 1 }] }),
+                        st(generateId(), 'ex_bprin', 'Special Summon', "Special Summon Rikka Black Princess from the hand."),
+                        st(generateId(), 'ex_jasm', 'Send to GY', "Cost for Black Princess's effect."),
+                        st(generateId(), 'ex_mudan', 'Special Summon', "Black Princess's effect: Special Summon Mudan the Rikka Fairy."),
+                        st(generateId(), 'ex_mudan', 'Search', "Mudan adds Rikka Konkon.", { targetCards: [{ instanceId: 'ex_konkon', quantity: 1 }] }),
+                        st(generateId(), 'ex_konkon', 'Activate Spell/Trap', "Activate the Field Spell Rikka Konkon."),
+                        st(generateId(), 'ex_glam', 'Set', "Konkon's effect sets Rikka Glamour."),
+                        st(generateId(), 'ex_sacred', 'Xyz Summon', "Mudan + Black Princess (Level 6).", { targetCards: [{ instanceId: 'ex_mudan', quantity: 1 }, { instanceId: 'ex_bprin', quantity: 1 }] }),
+                        st(generateId(), 'ex_kanz', 'Special Summon', "Sacred Queen Strenna's effect: Special Summon Kanzashi the Rikka Queen and attach Primrose the Rikka Fairy Duo."),
+                        st(generateId(), 'ex_glam', 'Activate Spell/Trap', "Activate Rikka Glamour (the original guide notes: «Tribute Black Princess»)."),
+                        st(generateId(), 'ex_petal', 'Send to GY', "Rikka Petal leaves the field with Rikka Glamour."),
+                        st(generateId(), 'ex_glam', 'Add to Hand', "Glamour adds Rikka Princess and Cactus Bouncer.", { targetCards: [{ instanceId: 'ex_princ', quantity: 1 }, { instanceId: 'ex_cactus', quantity: 1 }] }),
+                        st(generateId(), 'ex_balt', 'Special Summon', "Chain Link 1 – Kanzashi's effect: Special Summon Predaplant Bal Teah."),
+                        st(generateId(), 'ex_sheet', 'Set', "Chain Link 2 – Sacred Queen Strenna's effect: set Rikka Sheet."),
+                        st(generateId(), 'ex_princ', 'Special Summon', "Special Summon Rikka Princess from the hand."),
+                        st(generateId(), 'ex_queen', 'Xyz Summon', "Rikka Princess + Bal Teah (Level 4).", { targetCards: [{ instanceId: 'ex_princ', quantity: 1 }, { instanceId: 'ex_balt', quantity: 1 }] }),
+                        st(generateId(), 'ex_queen', 'Add to Hand', "Detach Rikka Princess: add Primrose the Rikka Fairy Duo to the hand.", { targetCards: [{ instanceId: 'ex_prim2', quantity: 1 }] }),
+                        { type: 'group', id: generateId(), title: "End" },
+                        st(generateId(), 'ex_cactus', 'Special Summon', "Summon Cactus Bouncer.")
                     ],
                     finalBoardCards: [
-                        { id: generateId(), card: { $c: 41999284, i: 'ex_linkuriboh' }, zone: 'Extra Monster 1', isDisruption: false },
-                        { id: generateId(), card: { $c: 97268402, i: 'ex_veiler' }, zone: 'Main Monster 3', isDisruption: false },
+                        { id: generateId(), card: { $c: 3828844, i: 'ex_queen' }, zone: 'Main Monster 3', isDisruption: true },
+                        { id: generateId(), card: { $c: 31615285, i: 'ex_cactus' }, zone: 'Main Monster 4', isDisruption: true },
+                        { id: generateId(), card: { $c: 6284176, i: 'ex_kanz' }, zone: 'Main Monster 2', isDisruption: false },
+                        { id: generateId(), card: { $c: 20477370, i: 'ex_sacred' }, zone: 'Extra Monster 1', isDisruption: false },
+                        { id: generateId(), card: { $c: 76869711, i: 'ex_konkon' }, zone: 'Field Zone', isDisruption: false },
+                        { id: generateId(), card: { $c: 68941332, i: 'ex_sheet' }, zone: 'Spell/Trap 1', isDisruption: true },
+                        { id: generateId(), card: { $c: 132308, i: 'ex_princ' }, zone: 'Graveyard', isDisruption: true }
                     ],
-                    comboTitle: t('exampleTitle'),
-                    notes: t('exampleNotes'),
+                    comboTitle: 'Predarikka: 1c Primitive/Instant (Bouncer)',
+                    notes: `${t('exampleNotes')}<br><br>End board (from the original guide): Rikka Queen Strenna → Hyperyton or Teardrop8 · Cactus Bouncer → Special Summon floodgate · Rikka Princess (GY) → monster negate · Rikka Konkon → tribute for cost · Rikka Sheet → mind control · Rikka Sacred Queen Strenna → reset Sheet · Kanzashi → destruction protection · Primrose (hand) → quick Xyz for either Teardrop · +1 draw. If you start with Instant Fusion, you also end with Super Polymerization.<br><br>Combo «Predarikka: 1c Primitive/Instant (Bouncer)» by Yusodus on Master Duel Meta (masterduelmeta.com), adapted as the example of this app.`,
                 };
                 try { const loaded = await hydrateCombo(example, IMAGE_PROXY); loadState(loaded, 'Example combo'); }
                 catch (e) { console.error('No se pudo cargar el ejemplo', e); }
