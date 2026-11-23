@@ -1189,7 +1189,8 @@ const MOVES = {
 const MOVE_GROUPS = [['hand', 'groupHand'], ['gy', 'groupGy'], ['ban', 'groupBanish'], ['deck', 'groupDeck'], ['extra', 'groupExtra'], ['summon', 'groupSummon'], ['field', 'groupField'], ['other', 'groupOther']];
 const moveLabel = k => {
   const m = MOVES[k] || MOVES.effect;
-  return CURRENT_LANG === 'es' ? m.es : m.en;
+  const tr = window.MOVE_LABELS && window.MOVE_LABELS[CURRENT_LANG];
+  return tr && tr[MOVES[k] ? k : 'effect'] || (CURRENT_LANG === 'es' ? m.es : m.en);
 };
 const defaultMoveFor = action => ({
   'Search': 'search',
@@ -4173,14 +4174,19 @@ const applyStep = (boardState, step) => {
     ...step,
     location: null
   };
-  PLAY_SLOTS.forEach(z => {
-    const c = s.slots[z];
-    if (c && c.resolveToGy) {
-      s.slots[z] = null;
-      delete c.resolveToGy;
-      playPut(s, c, 'gy');
-    }
-  });
+  const chainRole = step.chainRole || null;
+  s.chain = s.chain || [];
+  if (!chainRole) {
+    PLAY_SLOTS.forEach(z => {
+      const c = s.slots[z];
+      if (c && c.resolveToGy) {
+        s.slots[z] = null;
+        delete c.resolveToGy;
+        playPut(s, c, 'gy');
+      }
+    });
+    s.chain = [];
+  }
   const known = id => !!(id && s.info[id]);
   const mainId = known(step.mainCardInstanceId) ? step.mainCardInstanceId : null;
   const mainInfo = mainId && s.info[mainId] || {};
@@ -4364,6 +4370,16 @@ const applyStep = (boardState, step) => {
           isMain: false
         });
       }
+    });
+  }
+  const NOT_ACTIVATION = ['Send to GY', 'Discard', 'Banish', 'Normal Summon', 'Pendulum Summon', 'Fusion Summon', 'Synchro Summon', 'Xyz Summon', 'Link Summon', 'Attack'];
+  const activates = !NOT_ACTIVATION.includes(step.actionType) || /Summon/.test(step.actionType || '') && playIsSpellTrap(mainInfo);
+  if (chainRole !== 'resolve' && mainId && activates) {
+    const c = playFind(s, mainId);
+    s.chain.push({
+      id: mainId,
+      uid: c ? c.uid : null,
+      n: s.chain.length + 1
     });
   }
   return s;
@@ -4737,6 +4753,13 @@ const PlayComboBoard = ({
   }, [p]);
   const hl = new Set(board.last && board.last.uids || []);
   const mainUid = board.last && board.last.mainUid;
+  const chainList = board.chain || [];
+  const chainOn = chainList.length > 0 && !!(steps[p - 1] && steps[p - 1].chainRole || steps[p] && steps[p].chainRole);
+  const chainResolving = !!(steps[p - 1] && steps[p - 1].chainRole === 'resolve');
+  const chainN = uid => {
+    const l = chainOn && uid && chainList.find(x => x.uid === uid);
+    return l ? l.n : 0;
+  };
   const cardButton = card => {
     const c = cardById[card.id];
     const isHl = hl.has(card.uid),
@@ -4762,7 +4785,9 @@ const PlayComboBoard = ({
       className: "play-badge"
     }, React.createElement("i", {
       className: "fas fa-eye-slash"
-    })), mats.length > 0 && React.createElement("span", {
+    })), chainN(card.uid) > 0 && React.createElement("span", {
+      className: "play-chain"
+    }, "C", chainN(card.uid)), mats.length > 0 && React.createElement("span", {
       className: "play-count"
     }, React.createElement("i", {
       className: "fas fa-layer-group"
@@ -4991,7 +5016,20 @@ const PlayComboBoard = ({
     className: "text-sm mt-2 p-2 rounded border-l-4 border-yellow-500 bg-yellow-500/15 whitespace-pre-wrap break-words"
   }, React.createElement("i", {
     className: "fas fa-sticky-note mr-1 text-yellow-500"
-  }), n))), React.createElement("div", {
+  }), n))), chainOn && React.createElement("div", {
+    className: "w-full max-w-[42rem] rounded-lg px-3 py-2 bg-sky-900/40 border border-sky-500/50 text-sm flex flex-wrap items-center gap-2"
+  }, React.createElement("span", {
+    className: "font-bold text-sky-300"
+  }, React.createElement("i", {
+    className: "fas fa-link mr-1"
+  }), t('chainTitle')), [...chainList].reverse().map(l => React.createElement("span", {
+    key: l.n,
+    className: "px-2 py-0.5 rounded bg-black/30"
+  }, React.createElement("b", {
+    className: "text-sky-300"
+  }, "C", l.n), " ", shortNames[l.id] || '?')), React.createElement("span", {
+    className: "text-xs text-[var(--color-text-muted)] w-full"
+  }, chainResolving ? t('chainResolving') : t('chainActivating'), " \xB7 ", t('chainHint'))), React.createElement("div", {
     className: "w-full max-w-[42rem] play-field"
   }, slot('Extra Monster 1', 'emz', {
     gridColumn: 3,
@@ -5079,7 +5117,11 @@ const PlayComboBoard = ({
       className: "w-7 shrink-0 text-right font-bold opacity-70"
     }, r.pos, "."), React.createElement("span", {
       className: "min-w-0 break-words"
-    }, React.createElement("b", null, shortNames[st.mainCardInstanceId] || '?'), " ", playActionEmoji(st), " ", playActionText(st), dest ? ` → ${playDestLabel(dest, t)}` : ''));
+    }, st.chainRole === 'link' ? React.createElement("span", {
+      className: "text-sky-400"
+    }, "\u26D3 ") : st.chainRole === 'resolve' ? React.createElement("span", {
+      className: "text-sky-400"
+    }, "\u21B3 ") : null, React.createElement("b", null, shortNames[st.mainCardInstanceId] || '?'), " ", playActionEmoji(st), " ", playActionText(st), dest ? ` → ${playDestLabel(dest, t)}` : ''));
   })))), React.createElement("footer", {
     className: "shrink-0 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-3 pt-2 border-t border-[var(--color-border)] bg-[var(--color-surface)]",
     style: {
@@ -6978,17 +7020,22 @@ const App = () => {
         type: 'group',
         id: generateId(),
         title: "Starter: Predaprimitive"
-      }, st(generateId(), 'ex_prim', 'Activate Spell/Trap', "Starter. As cost, send Predaplant Byblisp from the Deck to the GY."), st(generateId(), 'ex_bybl', 'Send to GY', "Cost for Predaprimitive."), st(generateId(), 'ex_prim', 'Search', "Predaprimitive adds Instant Fusion to the hand.", {
+      }, st(generateId(), 'ex_prim', 'Activate Spell/Trap', "Starter. As cost, send Predaplant Byblisp from the Deck to the GY."), st(generateId(), 'ex_bybl', 'Send to GY', "Cost for Predaprimitive.", {
+        chainRole: 'resolve'
+      }), st(generateId(), 'ex_prim', 'Search', "Predaprimitive adds Instant Fusion to the hand.", {
         targetCards: [{
           instanceId: 'ex_ifus',
           quantity: 1
-        }]
+        }],
+        chainRole: 'resolve'
       }), st(generateId(), 'ex_bybl', 'Search', "Byblisp's effect adds Predaplant Lilizard.", {
         targetCards: [{
           instanceId: 'ex_liliz',
           quantity: 1
         }]
-      }), st(generateId(), 'ex_ifus', 'Activate Spell/Trap', "Instant Fusion: Special Summon Predaplant Ambulomelides from the Extra Deck."), st(generateId(), 'ex_ambu', 'Special Summon', "Summoned with Instant Fusion."), st(generateId(), 'ex_ambu', 'Search', "Ambulomelides adds Predaplant Longinephila (can be any “Predap” card).", {
+      }), st(generateId(), 'ex_ifus', 'Activate Spell/Trap', "Instant Fusion: Special Summon Predaplant Ambulomelides from the Extra Deck."), st(generateId(), 'ex_ambu', 'Special Summon', "Summoned with Instant Fusion.", {
+        chainRole: 'resolve'
+      }), st(generateId(), 'ex_ambu', 'Search', "Ambulomelides adds Predaplant Longinephila (can be any “Predap” card).", {
         targetCards: [{
           instanceId: 'ex_longi',
           quantity: 1
@@ -7033,7 +7080,9 @@ const App = () => {
           instanceId: 'ex_konkon',
           quantity: 1
         }]
-      }), st(generateId(), 'ex_konkon', 'Activate Spell/Trap', "Activate the Field Spell Rikka Konkon."), st(generateId(), 'ex_glam', 'Set', "Konkon's effect sets Rikka Glamour."), st(generateId(), 'ex_sacred', 'Xyz Summon', "Mudan + Black Princess (Level 6).", {
+      }), st(generateId(), 'ex_konkon', 'Activate Spell/Trap', "Activate the Field Spell Rikka Konkon."), st(generateId(), 'ex_glam', 'Set', "Konkon's effect sets Rikka Glamour.", {
+        chainRole: 'resolve'
+      }), st(generateId(), 'ex_sacred', 'Xyz Summon', "Mudan + Black Princess (Level 6).", {
         targetCards: [{
           instanceId: 'ex_mudan',
           quantity: 1
@@ -7041,14 +7090,17 @@ const App = () => {
           instanceId: 'ex_bprin',
           quantity: 1
         }]
-      }), st(generateId(), 'ex_kanz', 'Special Summon', "Sacred Queen Strenna's effect: Special Summon Kanzashi the Rikka Queen and attach Primrose the Rikka Fairy Duo."), st(generateId(), 'ex_glam', 'Activate Spell/Trap', "Activate Rikka Glamour (the original guide notes: «Tribute Black Princess»)."), st(generateId(), 'ex_petal', 'Send to GY', "Rikka Petal leaves the field with Rikka Glamour."), st(generateId(), 'ex_glam', 'Add to Hand', "Glamour adds Rikka Princess and Cactus Bouncer.", {
+      }), st(generateId(), 'ex_kanz', 'Special Summon', "Sacred Queen Strenna's effect: Special Summon Kanzashi the Rikka Queen and attach Primrose the Rikka Fairy Duo."), st(generateId(), 'ex_glam', 'Activate Spell/Trap', "Activate Rikka Glamour (the original guide notes: «Tribute Black Princess»)."), st(generateId(), 'ex_petal', 'Send to GY', "Rikka Petal leaves the field with Rikka Glamour.", {
+        chainRole: 'resolve'
+      }), st(generateId(), 'ex_glam', 'Add to Hand', "Glamour adds Rikka Princess and Cactus Bouncer.", {
         targetCards: [{
           instanceId: 'ex_princ',
           quantity: 1
         }, {
           instanceId: 'ex_cactus',
           quantity: 1
-        }]
+        }],
+        chainRole: 'resolve'
       }), st(generateId(), 'ex_balt', 'Special Summon', "Chain Link 1 – Kanzashi's effect: Special Summon Predaplant Bal Teah."), st(generateId(), 'ex_sheet', 'Set', "Chain Link 2 – Sacred Queen Strenna's effect: set Rikka Sheet."), st(generateId(), 'ex_princ', 'Special Summon', "Special Summon Rikka Princess from the hand."), st(generateId(), 'ex_queen', 'Xyz Summon', "Rikka Princess + Bal Teah (Level 4).", {
         targetCards: [{
           instanceId: 'ex_princ',
@@ -8830,6 +8882,27 @@ const App = () => {
       className: "fas fa-unlock w-5 text-center"
     }), step.isLocked ? t('unlockStep') : t('lockStep')), React.createElement("div", {
       className: "border-t border-[var(--color-border)] my-1"
+    }), React.createElement("div", {
+      className: "px-3 pt-1 pb-0.5 text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]"
+    }, t('chainTitle')), [[null, 'fa-play', 'chainNone'], ['link', 'fa-link', 'chainLink'], ['resolve', 'fa-arrow-turn-down', 'chainResolve']].map(([v, ic, lb]) => React.createElement("button", {
+      key: lb,
+      onClick: () => {
+        updateStep(step.id, {
+          chainRole: v || undefined
+        });
+        setOpenStepMenuId(null);
+      },
+      className: "step-menu-item",
+      role: "menuitemradio",
+      "aria-checked": (step.chainRole || null) === v
+    }, React.createElement("i", {
+      className: `fas ${ic} w-5 text-center`
+    }), React.createElement("span", {
+      className: "flex-1 text-left"
+    }, t(lb)), (step.chainRole || null) === v && React.createElement("i", {
+      className: "fas fa-check text-green-400"
+    }))), React.createElement("div", {
+      className: "border-t border-[var(--color-border)] my-1"
     }), React.createElement("button", {
       onClick: () => {
         setDeleteFromIndex(index);
@@ -8851,7 +8924,9 @@ const App = () => {
       className: "fas fa-trash w-5 text-center"
     }), t('deleteStepLabel'))))), React.createElement("span", {
       className: "step-label font-bold text-[var(--color-text-muted)] self-start"
-    }, language === 'en' ? 'Step' : t('stepLabel'), " ", stepNumber + 1), React.createElement("select", {
+    }, language === 'en' ? 'Step' : t('stepLabel'), " ", stepNumber + 1, step.chainRole && React.createElement("span", {
+      className: `ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold align-middle whitespace-nowrap ${step.chainRole === 'link' ? 'bg-sky-700 text-white' : 'bg-slate-600 text-slate-100'}`
+    }, step.chainRole === 'link' ? '⛓ ' + t('chainBadgeLink') : '↳ ' + t('chainBadgeResolve'))), React.createElement("select", {
       value: step.actionType,
       onChange: e => updateStep(step.id, {
         actionType: e.target.value

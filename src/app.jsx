@@ -255,7 +255,7 @@
         // Íconos de movimiento de las cartas afectadas: ícono del lugar + flecha/modificador (origen → destino)
         const MOVES = {draw: { base: 'fa-hand', mod: 'fa-arrow-down', group: 'hand', es: "Robar (del Deck, robo normal)", en: "Draw (from the Deck)" }, search: { base: 'fa-hand', mod: 'fa-magnifying-glass', group: 'hand', es: "Buscar (del Deck a la mano)", en: "Search (Deck to hand)" }, recover: { base: 'fa-hand', mod: 'fa-recycle', group: 'hand', es: "Recuperar (del Cementerio o desterradas a la mano)", en: "Add back (from GY or banished to hand)" }, bounce: { base: 'fa-hand', mod: 'fa-arrow-rotate-left', group: 'hand', es: "Devolver (del campo a la mano)", en: "Return (from the field to hand)" }, toGy: { base: 'fa-skull', mod: 'fa-arrow-down', group: 'gy', es: "Mandar al Cementerio (cualquier lugar)", en: "Send to the GY" }, mill: { base: 'fa-skull', mod: 'fa-layer-group', group: 'gy', es: "Del Deck al Cementerio (mill)", en: "Mill (Deck to GY)" }, discard: { base: 'fa-skull', mod: 'fa-hand', group: 'gy', es: "Descartar (de la mano)", en: "Discard" }, destroy: { base: 'fa-skull', mod: 'fa-burst', group: 'gy', es: "Destruir (del campo)", en: "Destroy" }, tribute: { base: 'fa-skull', mod: 'fa-hand-holding', group: 'gy', es: "Sacrificar", en: "Tribute" }, material: { base: 'fa-skull', mod: 'fa-plus', group: 'gy', es: "Usar como material", en: "Use as material" }, detach: { base: 'fa-skull', mod: 'fa-link-slash', group: 'gy', es: "Desacoplar material", en: "Detach material" }, banish: { base: 'fa-ban', mod: 'fa-arrow-down', group: 'ban', es: "Desterrar", en: "Banish" }, banishFd: { base: 'fa-ban', mod: 'fa-eye-slash', group: 'ban', es: "Desterrar boca abajo", en: "Banish face-down" }, shuffle: { base: 'fa-layer-group', mod: 'fa-shuffle', group: 'deck', es: "Barajar en el Deck", en: "Shuffle into the Deck" }, deckTop: { base: 'fa-layer-group', mod: 'fa-arrows-up-to-line', group: 'deck', es: "Al tope del Deck", en: "Top of the Deck" }, deckBottom: { base: 'fa-layer-group', mod: 'fa-arrows-down-to-line', group: 'deck', es: "Al fondo del Deck", en: "Bottom of the Deck" }, excavate: { base: 'fa-layer-group', mod: 'fa-eye', group: 'deck', es: "Excavar", en: "Excavate" }, toExtra: { base: 'fa-box-archive', mod: 'fa-arrow-down', group: 'extra', es: "Devolver al Deck Extra (boca abajo)", en: "Return to the Extra Deck" }, pendExtra: { base: 'fa-box-archive', mod: 'fa-eye', group: 'extra', es: "Al Deck Extra boca arriba", en: "To the Extra Deck face-up" }, ssHand: { base: 'fa-hand', mod: 'fa-arrow-up', group: 'summon', es: "Invocar de la mano", en: "Summon from the hand" }, ssDeck: { base: 'fa-layer-group', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Deck", en: "Summon from the Deck" }, revive: { base: 'fa-skull', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Cementerio", en: "Summon from the GY" }, ssBanish: { base: 'fa-ban', mod: 'fa-arrow-up', group: 'summon', es: "Invocar de desterradas", en: "Summon from banished" }, ssExtra: { base: 'fa-box-archive', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Deck Extra", en: "Summon from the Extra Deck" }, set: { base: 'fa-hand', mod: 'fa-eye-slash', group: 'field', es: "Colocar", en: "Set" }, attach: { base: 'fa-link', mod: 'fa-arrow-down', group: 'field', es: "Acoplar como material Xyz", en: "Attach as Xyz material" }, equip: { base: 'fa-shield-halved', mod: 'fa-link', group: 'field', es: "Equipar", en: "Equip" }, control: { base: 'fa-hand-holding', mod: 'fa-rotate', group: 'field', es: "Tomar el control", en: "Take control" }, effect: { base: 'fa-wand-sparkles', mod: null, group: 'other', es: "Afectada por el efecto", en: "Affected by the effect" }, negate: { base: 'fa-wand-sparkles', mod: 'fa-xmark', group: 'other', es: "Negar", en: "Negate" }, reveal: { base: 'fa-eye', mod: null, group: 'other', es: "Revelar", en: "Reveal" }};
         const MOVE_GROUPS = [['hand', 'groupHand'], ['gy', 'groupGy'], ['ban', 'groupBanish'], ['deck', 'groupDeck'], ['extra', 'groupExtra'], ['summon', 'groupSummon'], ['field', 'groupField'], ['other', 'groupOther']];
-        const moveLabel = (k) => { const m = MOVES[k] || MOVES.effect; return CURRENT_LANG === 'es' ? m.es : m.en; };
+        const moveLabel = (k) => { const m = MOVES[k] || MOVES.effect; const tr = window.MOVE_LABELS && window.MOVE_LABELS[CURRENT_LANG]; return (tr && tr[MOVES[k] ? k : 'effect']) || (CURRENT_LANG === 'es' ? m.es : m.en); };
         const defaultMoveFor = (action) => ({ 'Search': 'search', 'Add to Hand': 'search', 'Send to GY': 'toGy', 'Discard': 'discard', 'Banish': 'banish', 'Fusion Summon': 'material', 'Synchro Summon': 'material', 'Link Summon': 'material', 'Xyz Summon': 'attach', 'Pendulum Summon': 'ssHand', 'Set': 'set' }[action] || 'effect');
         const targetMove = (step, target) => (target && target.move) || defaultMoveFor(step && step.actionType);
         const MoveBadge = ({ k, className = '', onClick, title, wiggle }) => {
@@ -2014,8 +2014,15 @@
             if (step.location === 'Pendulum Left') step = { ...step, location: 'Spell/Trap 1' };
             else if (step.location === 'Pendulum Right') step = { ...step, location: 'Spell/Trap 5' };
             else if (['Hand', 'Deck', 'Extra Deck'].includes(step.location)) step = { ...step, location: null };
-            // Las Magias/Trampas Normales, Rápidas, de Ritual o Contraataque activadas en el paso anterior ya resolvieron: van al Cementerio.
-            PLAY_SLOTS.forEach(z => { const c = s.slots[z]; if (c && c.resolveToGy) { s.slots[z] = null; delete c.resolveToGy; playPut(s, c, 'gy'); } });
+            // Cadenas: step.chainRole = 'link' (responde en cadena: nuevo eslabón) | 'resolve' (misma cadena: costo o resolución) | vacío (acción nueva).
+            // Mientras la cadena sigue abierta, las Magias/Trampas activadas se quedan en el campo. Solo cuando empieza una acción nueva
+            // la cadena terminó de resolverse y las Normales, Rápidas, de Ritual o Contraataque van al Cementerio.
+            const chainRole = step.chainRole || null;
+            s.chain = s.chain || [];
+            if (!chainRole) {
+                PLAY_SLOTS.forEach(z => { const c = s.slots[z]; if (c && c.resolveToGy) { s.slots[z] = null; delete c.resolveToGy; playPut(s, c, 'gy'); } });
+                s.chain = [];
+            }
             const known = (id) => !!(id && s.info[id]);
             const mainId = known(step.mainCardInstanceId) ? step.mainCardInstanceId : null;
             const mainInfo = (mainId && s.info[mainId]) || {};
@@ -2123,6 +2130,13 @@
                         summon(tc.instanceId, [MOVE_SUMMON[tc.move], 'hand', 'deck', 'gy', 'banish', 'extra'], tc.move === 'ssExtra' ? 'extra' : 'monster', { isMain: false });
                     }
                 });
+            }
+            // Nuevo eslabón: la carta que activa (no cuenta cuando la principal es solo la carta que se mueve o se invoca por procedimiento)
+            const NOT_ACTIVATION = ['Send to GY', 'Discard', 'Banish', 'Normal Summon', 'Pendulum Summon', 'Fusion Summon', 'Synchro Summon', 'Xyz Summon', 'Link Summon', 'Attack'];
+            const activates = !NOT_ACTIVATION.includes(step.actionType) || (/Summon/.test(step.actionType || '') && playIsSpellTrap(mainInfo));
+            if (chainRole !== 'resolve' && mainId && activates) {
+                const c = playFind(s, mainId);
+                s.chain.push({ id: mainId, uid: c ? c.uid : null, n: s.chain.length + 1 });
             }
             return s;
         };
@@ -2327,6 +2341,11 @@
 
             const hl = new Set((board.last && board.last.uids) || []);
             const mainUid = board.last && board.last.mainUid;
+            // La cadena se muestra mientras sigue abierta (este paso o el siguiente forman parte de ella)
+            const chainList = board.chain || [];
+            const chainOn = chainList.length > 0 && !!((steps[p - 1] && steps[p - 1].chainRole) || (steps[p] && steps[p].chainRole));
+            const chainResolving = !!(steps[p - 1] && steps[p - 1].chainRole === 'resolve');
+            const chainN = (uid) => { const l = chainOn && uid && chainList.find(x => x.uid === uid); return l ? l.n : 0; };
             const cardButton = (card) => {
                 const c = cardById[card.id];
                 const isHl = hl.has(card.uid), isMain = card.uid === mainUid;
@@ -2336,6 +2355,7 @@
                         className={`play-card ${card.faceDown ? 'play-down' : ''} ${isMain ? 'play-main' : isHl ? 'play-hl' : ''}`}>
                         {c && c.image_url_small ? <img src={c.image_url_small} alt="" draggable={false} /> : <span className="play-noimg">{c ? c.name : '?'}</span>}
                         {card.faceDown && <span className="play-badge"><i className="fas fa-eye-slash"></i></span>}
+                        {chainN(card.uid) > 0 && <span className="play-chain">C{chainN(card.uid)}</span>}
                         {mats.length > 0 && <span className="play-count"><i className="fas fa-layer-group"></i> {mats.length}</span>}
                     </button>
                 );
@@ -2461,6 +2481,13 @@
                                 {notesAt[p].map((n, i) => <p key={i} className="text-sm mt-2 p-2 rounded border-l-4 border-yellow-500 bg-yellow-500/15 whitespace-pre-wrap break-words"><i className="fas fa-sticky-note mr-1 text-yellow-500"></i>{n}</p>)}
                             </div>
                             )}
+                            {chainOn && (
+                                <div className="w-full max-w-[42rem] rounded-lg px-3 py-2 bg-sky-900/40 border border-sky-500/50 text-sm flex flex-wrap items-center gap-2">
+                                    <span className="font-bold text-sky-300"><i className="fas fa-link mr-1"></i>{t('chainTitle')}</span>
+                                    {[...chainList].reverse().map(l => <span key={l.n} className="px-2 py-0.5 rounded bg-black/30"><b className="text-sky-300">C{l.n}</b> {shortNames[l.id] || '?'}</span>)}
+                                    <span className="text-xs text-[var(--color-text-muted)] w-full">{chainResolving ? t('chainResolving') : t('chainActivating')} · {t('chainHint')}</span>
+                                </div>
+                            )}
                             <div className="w-full max-w-[42rem] play-field">
                                 {slot('Extra Monster 1', 'emz', { gridColumn: 3, gridRow: 1 })}
                                 {slot('Extra Monster 2', 'emz', { gridColumn: 5, gridRow: 1 })}
@@ -2500,7 +2527,7 @@
                                     return (
                                         <button key={r.key} type="button" data-active={p === r.pos} onClick={() => { if (!practice) manualGo(r.pos); }} className={rowClass(p === r.pos)} title={card ? card.name : ''}>
                                             <span className="w-7 shrink-0 text-right font-bold opacity-70">{r.pos}.</span>
-                                            <span className="min-w-0 break-words"><b>{shortNames[st.mainCardInstanceId] || '?'}</b> {playActionEmoji(st)} {playActionText(st)}{dest ? ` → ${playDestLabel(dest, t)}` : ''}</span>
+                                            <span className="min-w-0 break-words">{st.chainRole === 'link' ? <span className="text-sky-400">⛓ </span> : st.chainRole === 'resolve' ? <span className="text-sky-400">↳ </span> : null}<b>{shortNames[st.mainCardInstanceId] || '?'}</b> {playActionEmoji(st)} {playActionText(st)}{dest ? ` → ${playDestLabel(dest, t)}` : ''}</span>
                                         </button>
                                     );
                                 })}
@@ -3587,11 +3614,11 @@
                     comboSteps: [
                         { type: 'group', id: generateId(), title: "Starter: Predaprimitive" },
                         st(generateId(), 'ex_prim', 'Activate Spell/Trap', "Starter. As cost, send Predaplant Byblisp from the Deck to the GY."),
-                        st(generateId(), 'ex_bybl', 'Send to GY', "Cost for Predaprimitive."),
-                        st(generateId(), 'ex_prim', 'Search', "Predaprimitive adds Instant Fusion to the hand.", { targetCards: [{ instanceId: 'ex_ifus', quantity: 1 }] }),
+                        st(generateId(), 'ex_bybl', 'Send to GY', "Cost for Predaprimitive.", { chainRole: 'resolve' }),
+                        st(generateId(), 'ex_prim', 'Search', "Predaprimitive adds Instant Fusion to the hand.", { targetCards: [{ instanceId: 'ex_ifus', quantity: 1 }], chainRole: 'resolve' }),
                         st(generateId(), 'ex_bybl', 'Search', "Byblisp's effect adds Predaplant Lilizard.", { targetCards: [{ instanceId: 'ex_liliz', quantity: 1 }] }),
                         st(generateId(), 'ex_ifus', 'Activate Spell/Trap', "Instant Fusion: Special Summon Predaplant Ambulomelides from the Extra Deck."),
-                        st(generateId(), 'ex_ambu', 'Special Summon', "Summoned with Instant Fusion."),
+                        st(generateId(), 'ex_ambu', 'Special Summon', "Summoned with Instant Fusion.", { chainRole: 'resolve' }),
                         st(generateId(), 'ex_ambu', 'Search', "Ambulomelides adds Predaplant Longinephila (can be any “Predap” card).", { targetCards: [{ instanceId: 'ex_longi', quantity: 1 }] }),
                         { type: 'group', id: generateId(), title: "Predap → Rikka" },
                         st(generateId(), 'ex_liliz', 'Special Summon', "Lilizard's effect: Special Summon it from the hand."),
@@ -3612,12 +3639,12 @@
                         st(generateId(), 'ex_mudan', 'Special Summon', "Black Princess's effect: Special Summon Mudan the Rikka Fairy."),
                         st(generateId(), 'ex_mudan', 'Search', "Mudan adds Rikka Konkon.", { targetCards: [{ instanceId: 'ex_konkon', quantity: 1 }] }),
                         st(generateId(), 'ex_konkon', 'Activate Spell/Trap', "Activate the Field Spell Rikka Konkon."),
-                        st(generateId(), 'ex_glam', 'Set', "Konkon's effect sets Rikka Glamour."),
+                        st(generateId(), 'ex_glam', 'Set', "Konkon's effect sets Rikka Glamour.", { chainRole: 'resolve' }),
                         st(generateId(), 'ex_sacred', 'Xyz Summon', "Mudan + Black Princess (Level 6).", { targetCards: [{ instanceId: 'ex_mudan', quantity: 1 }, { instanceId: 'ex_bprin', quantity: 1 }] }),
                         st(generateId(), 'ex_kanz', 'Special Summon', "Sacred Queen Strenna's effect: Special Summon Kanzashi the Rikka Queen and attach Primrose the Rikka Fairy Duo."),
                         st(generateId(), 'ex_glam', 'Activate Spell/Trap', "Activate Rikka Glamour (the original guide notes: «Tribute Black Princess»)."),
-                        st(generateId(), 'ex_petal', 'Send to GY', "Rikka Petal leaves the field with Rikka Glamour."),
-                        st(generateId(), 'ex_glam', 'Add to Hand', "Glamour adds Rikka Princess and Cactus Bouncer.", { targetCards: [{ instanceId: 'ex_princ', quantity: 1 }, { instanceId: 'ex_cactus', quantity: 1 }] }),
+                        st(generateId(), 'ex_petal', 'Send to GY', "Rikka Petal leaves the field with Rikka Glamour.", { chainRole: 'resolve' }),
+                        st(generateId(), 'ex_glam', 'Add to Hand', "Glamour adds Rikka Princess and Cactus Bouncer.", { targetCards: [{ instanceId: 'ex_princ', quantity: 1 }, { instanceId: 'ex_cactus', quantity: 1 }], chainRole: 'resolve' }),
                         st(generateId(), 'ex_balt', 'Special Summon', "Chain Link 1 – Kanzashi's effect: Special Summon Predaplant Bal Teah."),
                         st(generateId(), 'ex_sheet', 'Set', "Chain Link 2 – Sacred Queen Strenna's effect: set Rikka Sheet."),
                         st(generateId(), 'ex_princ', 'Special Summon', "Special Summon Rikka Princess from the hand."),
@@ -4254,13 +4281,16 @@
                                                                     <CardSelector cardPool={cardPool} onCardSelected={item => { handleAddStepOrNote(item, index + 1); setOpenStepMenuId(null); }} allowNote={true} displayAs="menu-item" buttonText={t('insertStepBelow')} t={t} preferredDirection="side" />
                                                                     <button onClick={() => toggleStepLock(step.id)} className="step-menu-item" role="menuitem">{step.isLocked ? <i className="fas fa-lock w-5 text-center"></i> : <i className="fas fa-unlock w-5 text-center"></i>}{step.isLocked ? t('unlockStep') : t('lockStep')}</button>
                                                                     <div className="border-t border-[var(--color-border)] my-1"></div>
+                                                                    <div className="px-3 pt-1 pb-0.5 text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">{t('chainTitle')}</div>
+                                                                    {[[null, 'fa-play', 'chainNone'], ['link', 'fa-link', 'chainLink'], ['resolve', 'fa-arrow-turn-down', 'chainResolve']].map(([v, ic, lb]) => <button key={lb} onClick={() => { updateStep(step.id, { chainRole: v || undefined }); setOpenStepMenuId(null); }} className="step-menu-item" role="menuitemradio" aria-checked={(step.chainRole || null) === v}><i className={`fas ${ic} w-5 text-center`}></i><span className="flex-1 text-left">{t(lb)}</span>{(step.chainRole || null) === v && <i className="fas fa-check text-green-400"></i>}</button>)}
+                                                                    <div className="border-t border-[var(--color-border)] my-1"></div>
                                                                     <button onClick={() => { setDeleteFromIndex(index); setOpenStepMenuId(null); }} className="step-menu-item danger" role="menuitem"><i className="fas fa-undo-alt w-5 text-center"></i>{t('undoFromHere')}</button>
                                                                     <button onClick={() => { deleteStep(step.id); setOpenStepMenuId(null); }} disabled={step.isLocked} className="step-menu-item danger" role="menuitem"><i className="fas fa-trash w-5 text-center"></i>{t('deleteStepLabel')}</button>
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <span className="step-label font-bold text-[var(--color-text-muted)] self-start">{(language === 'en' ? 'Step' : t('stepLabel'))} {stepNumber + 1}</span>
+                                                    <span className="step-label font-bold text-[var(--color-text-muted)] self-start">{(language === 'en' ? 'Step' : t('stepLabel'))} {stepNumber + 1}{step.chainRole && <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold align-middle whitespace-nowrap ${step.chainRole === 'link' ? 'bg-sky-700 text-white' : 'bg-slate-600 text-slate-100'}`}>{step.chainRole === 'link' ? '⛓ ' + t('chainBadgeLink') : '↳ ' + t('chainBadgeResolve')}</span>}</span>
                                                     <select value={step.actionType} onChange={e => updateStep(step.id, { actionType: e.target.value })} disabled={step.isLocked} className="tutorial-action-select bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-sm font-semibold text-[var(--color-accent)] w-full disabled:opacity-50 disabled:cursor-not-allowed">{YGO_ACTIONS.map(act => <option key={act.name} value={act.name}>{act.emoji} {trTerm(act.name)}</option>)}</select>
                                                     {step.actionType === 'Other' && ( <input type="text" value={step.customActionText || ''} onChange={e => updateStep(step.id, { customActionText: sanitizeHTML(e.target.value) })} disabled={step.isLocked} placeholder="Especificar acción..." className="w-full bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs text-center mt-1" /> )}
                                                     <div className="step-body">
