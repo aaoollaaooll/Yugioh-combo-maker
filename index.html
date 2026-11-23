@@ -460,6 +460,37 @@
             .touch-hit { position: relative; }
             .touch-hit::after { content: ''; position: absolute; inset: -10px; }
         }
+        /* === Pasos en lista numerada === */
+        .steps-list { grid-template-columns: minmax(0, 1fr) !important; max-width: 46rem; margin-left: auto; margin-right: auto; row-gap: 1.6rem !important; }
+        .steps-list > .combo-step-card { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); column-gap: 1rem; row-gap: .45rem; align-items: start; }
+        .steps-list > .combo-step-card > *:not(.step-main):not(.step-corner) { grid-column: 2; }
+        .steps-list > .combo-step-card > .step-main { grid-column: 1; grid-row: 1 / span 9; margin: 0; align-self: start; }
+        .steps-list > .combo-step-card > .step-label { font-size: 1.3rem; color: var(--color-accent); padding-right: 7.5rem; }
+        .steps-list .step-main .card-display { width: 100%; max-width: 8.5rem; }
+        .steps-list > .combo-step-card::after { content: '↓'; position: absolute; left: 50%; bottom: -1.45rem; transform: translateX(-50%); font-size: 1.1rem; line-height: 1; color: var(--color-accent); opacity: .85; pointer-events: none; }
+        .steps-list > .steps-add-slot { min-height: 7rem !important; }
+        @media (max-width: 480px) {
+            .steps-list > .combo-step-card { grid-template-columns: 6rem minmax(0, 1fr); column-gap: .6rem; }
+            .steps-list > .combo-step-card > .step-label { padding-right: 6.2rem; font-size: 1.1rem; }
+        }
+        /* === Campo final dibujado como tablero === */
+        .final-board-mini { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .35rem; max-width: 30rem; margin-left: auto; margin-right: auto; }
+        .final-board-mini.fbm-export { max-width: 36rem; width: 100%; }
+        .fbm-slot { position: relative; aspect-ratio: 59 / 86; border: 1px dashed rgba(148, 163, 184, .5); border-radius: .3rem; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0, 0, 0, .18); }
+        .fbm-slot.filled { border-style: solid; border-color: rgba(148, 163, 184, .75); }
+        .fbm-slot.clickable { cursor: pointer; }
+        .fbm-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .fbm-label { font-size: .55rem; color: #94a3b8; text-align: center; line-height: 1.1; padding: 0 1px; }
+        .fbm-slot.disruption { border-color: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
+        .fbm-count { position: absolute; right: 2px; bottom: 2px; background: rgba(0, 0, 0, .78); color: #fff; font-size: .6rem; font-weight: 700; padding: 0 .25rem; border-radius: .25rem; }
+        .fbm-shield { position: absolute; left: 2px; top: 2px; width: 1rem; height: 1rem; border-radius: 9999px; background: #dc2626; color: #fff; font-size: .5rem; display: flex; align-items: center; justify-content: center; }
+        :is(.export-theme-light, .export-theme-white) .fbm-slot { background: #f3f4f6; border-color: #9ca3af; }
+        :is(.export-theme-light, .export-theme-white) .fbm-label { color: #4b5563; }
+        /* === Elegir destino al tocar una carta buscada === */
+        .dest-pop { position: fixed; width: 14rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: .6rem; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); padding: .35rem 0; }
+        .dest-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--color-surface); border-top: 1px solid var(--color-border); border-radius: 1rem 1rem 0 0; padding: .75rem 0 calc(.75rem + env(safe-area-inset-bottom)); box-shadow: 0 -10px 30px rgba(0, 0, 0, .45); }
+        .dest-title { padding: .35rem .9rem 0; font-weight: 700; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dest-sub { padding: 0 .9rem .35rem; font-size: .75rem; color: var(--color-text-muted); }
     </style>
 </head>
 <body
@@ -875,6 +906,9 @@
         // Textos añadidos después (menú de cada paso y copia de seguridad al abrir enlaces)
         const EXTRA_TRANSLATIONS = {"es": {"stepMoreActions": "Más opciones", "duplicateStep": "Duplicar paso", "moveStepUp": "Subir", "moveStepDown": "Bajar", "insertStepBelow": "Insertar paso debajo", "deleteStepLabel": "Eliminar paso", "autoBackupPrefix": "Copia automática", "linkBackupNotice": "Tu combo anterior quedó guardado: búscalo en Abrir.", "markVulnerable": "Marcar como vulnerable"}, "en": {"stepMoreActions": "More options", "duplicateStep": "Duplicate step", "moveStepUp": "Move up", "moveStepDown": "Move down", "insertStepBelow": "Insert step below", "deleteStepLabel": "Delete step", "autoBackupPrefix": "Auto backup", "linkBackupNotice": "Your previous combo was saved: find it under Open.", "markVulnerable": "Mark as vulnerable"}, "pt": {"stepMoreActions": "Mais opções", "duplicateStep": "Duplicar passo", "moveStepUp": "Subir", "moveStepDown": "Descer", "insertStepBelow": "Inserir passo abaixo", "deleteStepLabel": "Excluir passo", "autoBackupPrefix": "Cópia automática", "linkBackupNotice": "Seu combo anterior foi salvo: procure em Abrir.", "markVulnerable": "Marcar como vulnerável"}, "fr": {"stepMoreActions": "Plus d'options", "duplicateStep": "Dupliquer l'étape", "moveStepUp": "Monter", "moveStepDown": "Descendre", "insertStepBelow": "Insérer une étape en dessous", "deleteStepLabel": "Supprimer l'étape", "autoBackupPrefix": "Copie automatique", "linkBackupNotice": "Votre combo précédent a été enregistré : retrouvez-le dans Ouvrir.", "markVulnerable": "Marquer comme vulnérable"}, "it": {"stepMoreActions": "Altre opzioni", "duplicateStep": "Duplica passo", "moveStepUp": "Sposta su", "moveStepDown": "Sposta giù", "insertStepBelow": "Inserisci passo sotto", "deleteStepLabel": "Elimina passo", "autoBackupPrefix": "Copia automatica", "linkBackupNotice": "La tua combo precedente è stata salvata: la trovi in Apri.", "markVulnerable": "Segna come vulnerabile"}, "de": {"stepMoreActions": "Weitere Optionen", "duplicateStep": "Schritt duplizieren", "moveStepUp": "Nach oben", "moveStepDown": "Nach unten", "insertStepBelow": "Schritt darunter einfügen", "deleteStepLabel": "Schritt löschen", "autoBackupPrefix": "Automatische Sicherung", "linkBackupNotice": "Deine vorherige Combo wurde gespeichert: du findest sie unter Öffnen.", "markVulnerable": "Als verwundbar markieren"}, "ru": {"stepMoreActions": "Ещё", "duplicateStep": "Дублировать шаг", "moveStepUp": "Вверх", "moveStepDown": "Вниз", "insertStepBelow": "Вставить шаг ниже", "deleteStepLabel": "Удалить шаг", "autoBackupPrefix": "Автокопия", "linkBackupNotice": "Ваше предыдущее комбо сохранено: найдите его в «Открыть».", "markVulnerable": "Отметить как уязвимый"}, "ja": {"stepMoreActions": "その他", "duplicateStep": "ステップを複製", "moveStepUp": "上へ", "moveStepDown": "下へ", "insertStepBelow": "下にステップを挿入", "deleteStepLabel": "ステップを削除", "autoBackupPrefix": "自動バックアップ", "linkBackupNotice": "前のコンボは保存されました。「開く」から見つけられます。", "markVulnerable": "妨害ポイントとしてマーク"}, "ko": {"stepMoreActions": "더보기", "duplicateStep": "단계 복제", "moveStepUp": "위로", "moveStepDown": "아래로", "insertStepBelow": "아래에 단계 삽입", "deleteStepLabel": "단계 삭제", "autoBackupPrefix": "자동 백업", "linkBackupNotice": "이전 콤보가 저장되었습니다. '열기'에서 찾을 수 있습니다.", "markVulnerable": "취약 지점으로 표시"}, "zh": {"stepMoreActions": "更多选项", "duplicateStep": "复制步骤", "moveStepUp": "上移", "moveStepDown": "下移", "insertStepBelow": "在下方插入步骤", "deleteStepLabel": "删除步骤", "autoBackupPrefix": "自动备份", "linkBackupNotice": "你之前的 Combo 已保存，可在“打开”中找到。", "markVulnerable": "标记为易被干扰"}};
         Object.entries(EXTRA_TRANSLATIONS).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        // Tanda 2: carta directo a su lugar, pasos en lista, tablero final y hoja rápida
+        const EXTRA_TRANSLATIONS_2 = {"es": {"stepsViewList": "Lista", "stepsViewGrid": "Cuadrícula", "destTitle": "¿Dónde la pongo?", "destPool": "Solo al pool", "destStep": "Nuevo paso", "destHand": "Mano inicial", "destBoard": "Campo final", "allCardsSection": "Todas las cartas", "typeToSearchAll": "Escribe 3 letras para buscar entre todas las cartas", "searchingCards": "Buscando…", "exportContent": "Contenido", "exportContentFull": "Completo", "exportContentQuick": "Hoja rápida"}, "en": {"stepsViewList": "List", "stepsViewGrid": "Grid", "destTitle": "Where should it go?", "destPool": "Pool only", "destStep": "New step", "destHand": "Starting hand", "destBoard": "Final board", "allCardsSection": "All cards", "typeToSearchAll": "Type 3 letters to search all cards", "searchingCards": "Searching…", "exportContent": "Content", "exportContentFull": "Full", "exportContentQuick": "Quick sheet"}, "pt": {"stepsViewList": "Lista", "stepsViewGrid": "Grade", "destTitle": "Onde colocar?", "destPool": "Só no pool", "destStep": "Novo passo", "destHand": "Mão inicial", "destBoard": "Campo final", "allCardsSection": "Todas as cartas", "typeToSearchAll": "Digite 3 letras para buscar em todas as cartas", "searchingCards": "Buscando…", "exportContent": "Conteúdo", "exportContentFull": "Completo", "exportContentQuick": "Folha rápida"}, "fr": {"stepsViewList": "Liste", "stepsViewGrid": "Grille", "destTitle": "Où la placer ?", "destPool": "Pool uniquement", "destStep": "Nouvelle étape", "destHand": "Main de départ", "destBoard": "Terrain final", "allCardsSection": "Toutes les cartes", "typeToSearchAll": "Tapez 3 lettres pour chercher parmi toutes les cartes", "searchingCards": "Recherche…", "exportContent": "Contenu", "exportContentFull": "Complet", "exportContentQuick": "Fiche rapide"}, "it": {"stepsViewList": "Elenco", "stepsViewGrid": "Griglia", "destTitle": "Dove la metto?", "destPool": "Solo nel pool", "destStep": "Nuovo passo", "destHand": "Mano iniziale", "destBoard": "Campo finale", "allCardsSection": "Tutte le carte", "typeToSearchAll": "Scrivi 3 lettere per cercare tra tutte le carte", "searchingCards": "Ricerca…", "exportContent": "Contenuto", "exportContentFull": "Completo", "exportContentQuick": "Scheda rapida"}, "de": {"stepsViewList": "Liste", "stepsViewGrid": "Raster", "destTitle": "Wohin damit?", "destPool": "Nur in den Pool", "destStep": "Neuer Schritt", "destHand": "Starthand", "destBoard": "Endfeld", "allCardsSection": "Alle Karten", "typeToSearchAll": "Tippe 3 Buchstaben, um alle Karten zu durchsuchen", "searchingCards": "Suche…", "exportContent": "Inhalt", "exportContentFull": "Vollständig", "exportContentQuick": "Kurzübersicht"}, "ru": {"stepsViewList": "Список", "stepsViewGrid": "Сетка", "destTitle": "Куда положить?", "destPool": "Только в пул", "destStep": "Новый шаг", "destHand": "Стартовая рука", "destBoard": "Итоговое поле", "allCardsSection": "Все карты", "typeToSearchAll": "Введите 3 буквы для поиска по всем картам", "searchingCards": "Поиск…", "exportContent": "Содержание", "exportContentFull": "Полностью", "exportContentQuick": "Краткий лист"}, "ja": {"stepsViewList": "リスト", "stepsViewGrid": "グリッド", "destTitle": "どこに置きますか？", "destPool": "プールのみ", "destStep": "新しいステップ", "destHand": "初手", "destBoard": "最終盤面", "allCardsSection": "すべてのカード", "typeToSearchAll": "3文字入力すると全カードから検索します", "searchingCards": "検索中…", "exportContent": "内容", "exportContentFull": "完全版", "exportContentQuick": "クイックシート"}, "ko": {"stepsViewList": "목록", "stepsViewGrid": "격자", "destTitle": "어디에 둘까요?", "destPool": "풀에만", "destStep": "새 단계", "destHand": "초기 패", "destBoard": "최종 필드", "allCardsSection": "모든 카드", "typeToSearchAll": "3글자를 입력하면 모든 카드에서 검색합니다", "searchingCards": "검색 중…", "exportContent": "내용", "exportContentFull": "전체", "exportContentQuick": "요약 시트"}, "zh": {"stepsViewList": "列表", "stepsViewGrid": "网格", "destTitle": "放到哪里？", "destPool": "仅加入卡池", "destStep": "新步骤", "destHand": "起手", "destBoard": "最终场面", "allCardsSection": "所有卡片", "typeToSearchAll": "输入 3 个字母即可搜索所有卡片", "searchingCards": "搜索中…", "exportContent": "内容", "exportContentFull": "完整", "exportContentQuick": "速查表"}};
+        Object.entries(EXTRA_TRANSLATIONS_2).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
@@ -1212,6 +1246,22 @@
             const containerRef = useRef(null);
             const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
             const [positionClasses, setPositionClasses] = useState('');
+            const [apiResults, setApiResults] = useState([]);
+            const [apiLoading, setApiLoading] = useState(false);
+            useEffect(() => {
+                const q = filter.trim();
+                if (!isOpen || !cardSourceRef.current || q.length < 3) { setApiResults([]); setApiLoading(false); return; }
+                let cancelled = false;
+                setApiLoading(true);
+                const timer = setTimeout(() => {
+                    fetch(`${YGOPRODECK_API_BASE_URL}?fname=${encodeURIComponent(q)}&num=12&offset=0`)
+                        .then(r => r.ok ? r.json() : { data: [] })
+                        .then(j => { if (!cancelled) setApiResults(Array.isArray(j.data) ? j.data : []); })
+                        .catch(() => { if (!cancelled) setApiResults([]); })
+                        .finally(() => { if (!cancelled) setApiLoading(false); });
+                }, 350);
+                return () => { cancelled = true; clearTimeout(timer); };
+            }, [filter, isOpen]);
 
             useEffect(() => {
                 const checkMobile = () => setIsMobile(window.innerWidth <= 1024);
@@ -1268,9 +1318,44 @@
             const buttonContent = { 'menu-item': <><i className="fas fa-plus w-5 text-center"></i>{buttonText}</>, 'button': buttonText || t('addStep'), 'small-button': <i className="fas fa-plus"></i>, 'card-placeholder': <i className="fas fa-plus"></i> };
             
             const handleSelect = (card) => {
+                if (!card) return;
                 onCardSelected(card);
                 setIsOpen(false);
                 setFilter('');
+            };
+            const poolIdSet = (cardSourceRef.current && cardSourceRef.current.poolIds) || new Set(cardPool.map(c => c.ygoprodeck_id));
+            const apiVisible = apiResults.filter(c => !poolIdSet.has(c.id));
+            const pickApiCard = (apiCard) => handleSelect(cardSourceRef.current ? cardSourceRef.current.prepareApiCard(apiCard) : null);
+            const apiThumb = (c) => { const u = c.card_images?.[0]?.image_url_small; return u ? 'https://images.weserv.nl/?url=' + u.replace(/^https?:\/\//, '') : ''; };
+            const renderApiSection = (mobile) => {
+                if (!cardSourceRef.current) return null;
+                const q = filter.trim();
+                const msgCls = mobile ? 'text-slate-400 p-3 text-center text-sm' : 'p-2 text-gray-400 text-xs';
+                let body;
+                if (q.length < 3) body = <div className={msgCls}>{t('typeToSearchAll')}</div>;
+                else if (apiLoading) body = <div className={msgCls}>{t('searchingCards')}</div>;
+                else if (apiVisible.length === 0) body = <div className={msgCls}>{t('cardSelectorNoMatch')}</div>;
+                else if (mobile) body = (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
+                        {apiVisible.map(c => <CardDisplay key={`api-${c.id}`} card={createComboCardInstance(c, 'https://images.weserv.nl/?url=')} size="small" onClick={() => pickApiCard(c)} />)}
+                    </div>
+                );
+                else body = (
+                    <div>
+                        {apiVisible.map(c => (
+                            <div key={`api-${c.id}`} onMouseDown={() => pickApiCard(c)} className="flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm">
+                                <img src={apiThumb(c)} alt={c.name} className="w-10 h-14 object-cover rounded-sm mr-2" />
+                                <span className="truncate">{c.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                );
+                return (
+                    <div className={mobile ? 'mt-3' : 'border-t border-slate-700'}>
+                        <div className={`${mobile ? 'text-sm px-1 mb-2' : 'px-2 pt-2 text-xs'} font-semibold text-violet-300 uppercase tracking-wide`}>{t('allCardsSection')}</div>
+                        {body}
+                    </div>
+                );
             };
 
             const DesktopMenu = () => {
@@ -1284,7 +1369,7 @@
                             placeholder={t('cardSelectorSearch')}
                             value={filter}
                             onChange={e => { setFilter(e.target.value); }}
-                            onKeyDown={e => { if (e.key === 'Enter' && filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } }}
+                            onKeyDown={e => { if (e.key === 'Enter') { if (filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } else if (apiVisible.length > 0) { e.preventDefault(); pickApiCard(apiVisible[0]); } } }}
                             ref={inputRef}
                             autoFocus
                             className="p-2 bg-slate-900 text-white placeholder-gray-400 focus:ring-0 outline-none sticky top-0"
@@ -1296,7 +1381,7 @@
                             <i className="fas fa-sticky-note w-10 text-center mr-2"></i>
                             <span>{t('addNote')}</span>
                         </div>
-                        <div className={`overflow-y-auto ${isTwoColumn ? 'grid grid-cols-2 gap-1 p-1' : ''}`}> 
+                        <div className="overflow-y-auto"><div className={isTwoColumn ? 'grid grid-cols-2 gap-1 p-1' : ''}>
                             {filteredPool.length > 0 ? filteredPool.map(card => (
                                 <div
                                     key={card.instanceId}
@@ -1309,8 +1394,8 @@
                                     <img src={card.image_url_small || card.image_url} alt={card.name} className="w-10 h-14 object-cover rounded-sm mr-2" crossOrigin="anonymous" />
                                     <span className="truncate">{card.name}</span>
                                 </div>
-                            )) : <div className="p-2 text-gray-400">{t('cardSelectorNoMatch')}</div>}
-                        </div>
+                            )) : (cardSourceRef.current ? null : <div className="p-2 text-gray-400">{t('cardSelectorNoMatch')}</div>)}
+                        </div>{renderApiSection(false)}</div>
                     </div>
                 );
             };
@@ -1326,7 +1411,7 @@
                             onChange={e => { setFilter(e.target.value); }}
                             ref={inputRef}
                             autoFocus
-                            onKeyDown={e => { if (e.key === 'Enter' && filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } }}
+                            onKeyDown={e => { if (e.key === 'Enter') { if (filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } else if (apiVisible.length > 0) { e.preventDefault(); pickApiCard(apiVisible[0]); } } }}
                             className="w-full min-w-0 flex-1 p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:outline-none"
                         />
                         <button onClick={() => setIsOpen(false)} aria-label="Cerrar" className="flex-shrink-0 p-3 bg-red-600 text-white rounded-full"><i className="fas fa-times"></i></button>
@@ -1344,18 +1429,19 @@
                         <div className="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
                             {filteredPool.length > 0 ? filteredPool.map(card => (
                                 <CardDisplay key={card.instanceId} card={card} size="small" onClick={() => handleSelect(card)} />
-                            )) : <p className="text-slate-400 p-4 text-center w-full col-span-full">{t('cardSelectorNoMatch')}</p>}
+                            )) : (cardSourceRef.current ? null : <p className="text-slate-400 p-4 text-center w-full col-span-full">{t('cardSelectorNoMatch')}</p>)}
                         </div>
+                        {renderApiSection(true)}
                     </div>
                 </div>
             );
 
             return (
                 <div ref={containerRef} className={`relative ${wrapperClassName}`}>
-                    <button onClick={() => setIsOpen(prev => !prev)} className={buttonClasses[displayAs]} disabled={cardPool.length === 0}>
+                    <button onClick={() => setIsOpen(prev => !prev)} className={buttonClasses[displayAs]} disabled={cardPool.length === 0 && !cardSourceRef.current}>
                         {buttonContent[displayAs]}
                     </button>
-                    {isOpen && (isMobile ? <MobileOverlay /> : <DesktopMenu />)}
+                    {isOpen && (isMobile ? MobileOverlay() : DesktopMenu())}
                 </div>
             );
         };
@@ -1389,6 +1475,47 @@
                 </div>
             );
         };
+        // Campo final dibujado como tablero (en la app y en la exportación)
+        const FINAL_BOARD_LAYOUT = [
+            ["Extra Monster 1", 1, 3], ["Extra Monster 2", 1, 5],
+            ["Main Monster 1", 2, 2], ["Main Monster 2", 2, 3], ["Main Monster 3", 2, 4], ["Main Monster 4", 2, 5], ["Main Monster 5", 2, 6], ["Graveyard", 2, 7],
+            ["Field Zone", 3, 1], ["Spell/Trap 1", 3, 2], ["Spell/Trap 2", 3, 3], ["Spell/Trap 3", 3, 4], ["Spell/Trap 4", 3, 5], ["Spell/Trap 5", 3, 6], ["Banish Pile", 3, 7],
+        ];
+        const FinalBoardMini = ({ items, imgSrc, className = '', onCardClick }) => {
+            const byZone = {};
+            (items || []).forEach(it => { if (it && it.card) (byZone[it.zone] = byZone[it.zone] || []).push(it); });
+            const src = imgSrc || ((card) => card.image_url_small || card.image_url);
+            return (
+                <div className={`final-board-mini ${className}`}>
+                    {FINAL_BOARD_LAYOUT.map(([zone, row, col]) => {
+                        const list = byZone[zone] || [];
+                        const top = list[list.length - 1];
+                        const disrupt = list.some(i => i.isDisruption);
+                        const abbr = ZONE_ABBREVIATIONS[zone] || zone;
+                        return (
+                            <div key={zone} className={`fbm-slot${top ? ' filled' : ''}${disrupt ? ' disruption' : ''}${top && onCardClick ? ' clickable' : ''}`} style={{ gridRow: row, gridColumn: col }} title={top ? `${abbr}: ${list.map(i => i.card.name).join(', ')}` : abbr} onClick={top && onCardClick ? () => onCardClick(top.card) : undefined}>
+                                {top ? <img src={src(top.card)} alt={top.card.name} crossOrigin="anonymous" /> : <span className="fbm-label">{abbr}</span>}
+                                {list.length > 1 && <span className="fbm-count">{list.length}</span>}
+                                {disrupt && <span className="fbm-shield"><i className="fas fa-shield-alt"></i></span>}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        };
+        // Zona inicial de una carta nueva en el campo final, según su tipo
+        const pickFinalBoardZone = (card, board) => {
+            const used = new Set((board || []).map(i => i.zone));
+            const firstFree = (zones) => zones.find(z => !used.has(z));
+            const type = (card && card.type) || '';
+            const EMZ = YGO_ZONES.slice(0, 2), MMZ = YGO_ZONES.slice(2, 7), STZ = YGO_ZONES.slice(7, 12);
+            if (/Spell|Trap/.test(type)) return card.race === 'Field' ? 'Field Zone' : (firstFree(STZ) || STZ[0]);
+            if (/Link/.test(type)) return firstFree(EMZ) || firstFree(MMZ) || MMZ[0];
+            return firstFree(MMZ) || MMZ[0];
+        };
+        // La app le presta a los selectores de cartas la forma de agregar cualquier carta de la base de datos
+        const cardSourceRef = { current: null };
+
         const ExportLayout = ({ comboTitle, startingHand, comboSteps, finalBoardCards, notes, findCard, t, exportOptions, imageMap, isPreview = false }) => {
             const theme = exportOptions.theme || 'dark';
             const cardFilter = exportOptions.cardFilter || 'color';
@@ -1412,6 +1539,11 @@
                 ); 
             }; 
             const stepsPerRow = exportOptions.stepsPerRow || 4;
+            const quick = exportOptions.layout === 'quick';
+            const hasHandX = exportOptions.include.startingHand && startingHand.length > 0 && startingHand.some(g => g.length > 0);
+            const showNotesX = !quick && exportOptions.include.notes && notes;
+            const showBoardTopX = quick && exportOptions.include.finalBoard && finalBoardCards.length > 0;
+            const boardImg = (c) => imageMap[c.image_url_small] || c.image_url_small;
             
             const renderStepRows = () => {
                 const elements = [];
@@ -1503,10 +1635,10 @@
                     <div className="relative z-10">
                         <h1 className="text-5xl font-bold text-center text-violet-300 mb-8 font-yugioh">{nbsp(comboTitle || t('untitledCombo'))}</h1> 
                         <div className="flex flex-col gap-6"> 
-                            {( (exportOptions.include.startingHand && startingHand.length > 0 && startingHand.some(g => g.length > 0)) || (exportOptions.include.notes && notes) ) && (
+                            {(hasHandX || showNotesX || showBoardTopX) && (
                                 <div className="flex flex-row gap-6 items-stretch">
-                                    {exportOptions.include.startingHand && startingHand.length > 0 && startingHand.some(g => g.length > 0) && (
-                                        <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex flex-col" style={{ width: (exportOptions.include.notes && notes) ? '33.33%' : '100%' }}>
+                                    {hasHandX && (
+                                        <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex flex-col" style={{ width: showNotesX ? '33.33%' : (showBoardTopX ? '50%' : '100%') }}>
                                             <h2 className="text-2xl font-semibold mb-4 text-violet-400 font-yugioh">{nbsp(t('startingHandTitle'))}</h2>
                                             <div className="flex-grow flex flex-row flex-wrap items-center justify-center gap-3">
                                                 {startingHand.map((group, groupIndex) => (
@@ -1520,10 +1652,16 @@
                                             </div>
                                         </div>
                                     )}
-                                    {exportOptions.include.notes && notes && (
+                                    {showNotesX && (
                                         <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex-grow min-w-0">
                                             <h2 className="text-2xl font-semibold mb-4 text-violet-400 font-yugioh">{nbsp(t('notesTitle'))}</h2>
                                             <div className="text-sm whitespace-pre-wrap break-words" style={{ direction: 'ltr', textAlign: 'left' }} dangerouslySetInnerHTML={{ __html: nbspHtml(notes) }} />
+                                        </div>
+                                    )}
+                                    {showBoardTopX && (
+                                        <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex-grow min-w-0 flex flex-col">
+                                            <h2 className="text-2xl font-semibold mb-4 text-violet-400 font-yugioh">{nbsp(t('finalBoardTitle'))}</h2>
+                                            <div className="flex-grow flex items-center"><FinalBoardMini items={finalBoardCards} imgSrc={boardImg} className="fbm-export" /></div>
                                         </div>
                                     )}
                                 </div>
@@ -1536,9 +1674,10 @@
                                     </div>
                                 </div>
                             )}
-                            {exportOptions.include.finalBoard && finalBoardCards.length > 0 && (
+                            {!quick && exportOptions.include.finalBoard && finalBoardCards.length > 0 && (
                                 <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                                     <h2 className="text-2xl font-semibold mb-4 text-violet-400 font-yugioh">{nbsp(t('finalBoardTitle'))}</h2>
+                                    <FinalBoardMini items={finalBoardCards} imgSrc={boardImg} className="fbm-export mb-6" />
                                     <div className="flex flex-wrap justify-center gap-4">
                                         {finalBoardCards.map(item => (
                                             <div key={item.id} className="flex flex-col items-center gap-2">
@@ -1718,6 +1857,7 @@
                                         <span className="text-slate-200">{t(key + 'Title')}</span>
                                     </label>
                                 ))}
+                                {optionRow(t('exportContent'), 'layout', [['full', t('exportContentFull')], ['quick', t('exportContentQuick')]])}
                                 {optionRow(t('exportStyle'), 'theme', [['dark', t('styleDark')], ['light', t('styleLight')], ['white', t('styleWhite')]])}
                                 {optionRow(t('exportCardColor'), 'cardFilter', [['color', t('filterColor')], ['gray', t('filterGray')], ['ink', t('filterInk')]])}
                                 {optionRow(t('exportLayout'), 'stepsPerRow', [3, 4, 5, 6].map(n => [n, `${n}xN`]))}
@@ -2686,6 +2826,8 @@
             const [isCardPoolOpen, setIsCardPoolOpen] = useState(true);
             const [isStatsOpen, setIsStatsOpen] = useState(false);
             const [openStepMenuId, setOpenStepMenuId] = useState(null);
+            const [stepsView, setStepsView] = useState(() => { try { return localStorage.getItem('ygo_steps_view') === 'grid' ? 'grid' : 'list'; } catch (e) { return 'list'; } });
+            useEffect(() => { try { localStorage.setItem('ygo_steps_view', stepsView); } catch (e) {} }, [stepsView]);
             const [isStartingHandOpen, setIsStartingHandOpen] = useState(true);
             const [isFinalBoardOpen, setIsFinalBoardOpen] = useState(true);
             const [showSaveModal, setShowSaveModal] = useState(false);
@@ -2716,12 +2858,24 @@
             const [exportOptions, setExportOptions] = useState(() => {
                 let savedStyle = {};
                 try { savedStyle = JSON.parse(localStorage.getItem('ygo_export_style') || '{}') || {}; } catch (e) {}
-                return { include: { startingHand: true, comboSteps: true, finalBoard: true, notes: true, comboStats: true }, scale: 2, stepsPerRow: 4, theme: savedStyle.theme || 'dark', cardFilter: savedStyle.cardFilter || 'color' };
+                return { include: { startingHand: true, comboSteps: true, finalBoard: true, notes: true, comboStats: true }, scale: 2, stepsPerRow: 4, theme: savedStyle.theme || 'dark', cardFilter: savedStyle.cardFilter || 'color', layout: savedStyle.layout === 'quick' ? 'quick' : 'full' };
             });
             // Se recuerda el estilo de exportación (fondo y color de cartas) para la próxima vez.
-            useEffect(() => { try { localStorage.setItem('ygo_export_style', JSON.stringify({ theme: exportOptions.theme, cardFilter: exportOptions.cardFilter })); } catch (e) {} }, [exportOptions.theme, exportOptions.cardFilter]);
+            useEffect(() => { try { localStorage.setItem('ygo_export_style', JSON.stringify({ theme: exportOptions.theme, cardFilter: exportOptions.cardFilter, layout: exportOptions.layout })); } catch (e) {} }, [exportOptions.theme, exportOptions.cardFilter, exportOptions.layout]);
             const initialComboState = { cardPool: [], startingHand: [[]], comboSteps: [], finalBoardCards: [], comboTitle: '', notes: '', };
-            const { state: comboState, setState: setComboState, loadState, undo, redo, canUndo, canRedo } = useHistoryState(initialComboState);
+            const { state: comboState, setState: setComboStateRaw, loadState, undo, redo, canUndo, canRedo } = useHistoryState(initialComboState);
+            // Cartas elegidas de la base de datos que todavía no están en el pool: entran con el siguiente cambio
+            const pendingPoolRef = useRef([]);
+            const setComboState = (newState, description) => {
+                const pending = pendingPoolRef.current;
+                if (pending.length) {
+                    pendingPoolRef.current = [];
+                    const pool = newState.cardPool || [];
+                    const extra = pending.filter(p => !pool.some(c => c.instanceId === p.instanceId));
+                    if (extra.length) newState = { ...newState, cardPool: [...pool, ...extra] };
+                }
+                setComboStateRaw(newState, description);
+            };
             const { cardPool, startingHand, comboSteps, finalBoardCards, comboTitle, notes } = comboState;
             const searchAbortController = useRef(null);
             const langMenuRef = useRef(null);
@@ -3001,6 +3155,43 @@
             }, []);
             const handleCardMouseMove = () => { if (window.__YGO_DRAGGING__ === true || window.innerWidth <= 1024) return; };
 
+            const prepareApiCard = (apiCard) => {
+                if (!apiCard) return null;
+                const existing = cardPool.find(c => !c.isCustom && c.ygoprodeck_id === apiCard.id) || pendingPoolRef.current.find(c => c.ygoprodeck_id === apiCard.id);
+                if (existing) return existing;
+                const inst = createComboCardInstance(apiCard, IMAGE_PROXY);
+                pendingPoolRef.current.push(inst);
+                return inst;
+            };
+            cardSourceRef.current = { prepareApiCard, poolIds: new Set(cardPool.filter(c => !c.isCustom).map(c => c.ygoprodeck_id)) };
+
+            // Menú «¿Dónde la pongo?» al tocar una carta del buscador o del carrusel
+            const [destMenu, setDestMenu] = useState(null);
+            const openDestMenu = (apiCard) => {
+                const m = window.__YGO_MOUSE__ || {};
+                setDestMenu({ apiCard, x: m.x || window.innerWidth / 2, y: m.y || window.innerHeight / 2 });
+            };
+            useEffect(() => {
+                if (!destMenu) return;
+                const onKey = (e) => { if (e.key === 'Escape') setDestMenu(null); };
+                window.addEventListener('keydown', onKey);
+                return () => window.removeEventListener('keydown', onKey);
+            }, [destMenu]);
+            const sendCardTo = (dest) => {
+                const apiCard = destMenu && destMenu.apiCard;
+                setDestMenu(null);
+                if (!apiCard) return;
+                if (dest === 'pool') { addCardToPool(apiCard); return; }
+                const inst = prepareApiCard(apiCard);
+                if (dest === 'step') handleAddStepOrNote(inst);
+                else if (dest === 'hand') {
+                    const hands = startingHand.length ? startingHand.map(g => [...g]) : [[]];
+                    if (!hands[0].some(i => i.instanceId === inst.instanceId)) hands[0].push({ instanceId: inst.instanceId, quantity: 1 });
+                    setComboState({ ...comboState, startingHand: hands }, `Added '${inst.name}' to hand`);
+                } else if (dest === 'board') addCardToFinalBoard(inst);
+                setNotification({ show: true, message: t('notificationAdded') });
+            };
+
             const addCardToPool = (apiCard) => {
                 const newCard = createComboCardInstance(apiCard, IMAGE_PROXY);
                 setComboState({ ...comboState, cardPool: [...cardPool, newCard] }, `Added '${newCard.name}'`);
@@ -3034,9 +3225,10 @@
                 if (!cardToRemove) return;
                 const newPool = cardPool.filter(c => c.instanceId !== instanceId);
                 const newHand = startingHand.map(group => group.filter(item => item.instanceId !== instanceId)).filter(group => group.length > 0);
-                const newSteps = comboSteps.map(step => ({...step, targetCards: step.targetCards.filter(c => c.instanceId !== instanceId)})).filter(step => step.mainCardInstanceId !== instanceId);
+                // Las notas y los grupos no tienen cartas: antes esto fallaba y la carta no se podía quitar
+                const newSteps = comboSteps.map(step => step.type === 'step' ? ({ ...step, targetCards: (step.targetCards || []).filter(c => c.instanceId !== instanceId), vulnerability: step.vulnerability ? { ...step.vulnerability, cards: (step.vulnerability.cards || []).filter(c => c.instanceId !== instanceId) } : step.vulnerability }) : step).filter(step => step.mainCardInstanceId !== instanceId);
                 const newBoard = finalBoardCards.filter(item => item.card.instanceId !== instanceId);
-                setComboState({ cardPool: newPool, startingHand: newHand.length > 0 ? newHand : [[]], comboSteps: newSteps, finalBoardCards: newBoard }, `Removed '${cardToRemove.name}'`);
+                setComboState({ ...comboState, cardPool: newPool, startingHand: newHand.length > 0 ? newHand : [[]], comboSteps: newSteps, finalBoardCards: newBoard }, `Removed '${cardToRemove.name}'`);
                 setToast({ show: true, message: t('toastRemoved'), onUndo: () => undo() });
             };
 
@@ -3081,7 +3273,7 @@
             const deleteStep = (stepId) => { const newSteps = comboSteps.filter(step => step.id !== stepId); setComboState({ ...comboState, comboSteps: newSteps }, `Deleted step`); };
             const removeTargetCardFromStep = (stepId, targetInstanceId) => { const newSteps = comboSteps.map(step => { if (step.id === stepId) { return { ...step, targetCards: step.targetCards.filter(card => card.instanceId !== targetInstanceId) }; } return step; }); setComboState({ ...comboState, comboSteps: newSteps }, `Removed target card from step`); };
             
-            const addCardToFinalBoard = (card) => { if (finalBoardCards.some(item => item.card.instanceId === card.instanceId)) return; const newBoardItem = { id: generateId(), card: card, zone: YGO_ZONES[2], isDisruption: false }; setComboState({ ...comboState, finalBoardCards: [...finalBoardCards, newBoardItem] }, `Added '${card.name}' to board`); };
+            const addCardToFinalBoard = (card) => { if (finalBoardCards.some(item => item.card.instanceId === card.instanceId)) return; const newBoardItem = { id: generateId(), card: card, zone: pickFinalBoardZone(card, finalBoardCards), isDisruption: false }; setComboState({ ...comboState, finalBoardCards: [...finalBoardCards, newBoardItem] }, `Added '${card.name}' to board`); };
             
             const updateFinalBoardCard = (itemId, updatedData) => { const newBoard = finalBoardCards.map(item => item.id === itemId ? { ...item, ...updatedData } : item); setComboState({ ...comboState, finalBoardCards: newBoard }, `Updated board card`); };
             
@@ -3576,6 +3768,21 @@
                         <CustomCardModal show={showCustomCardModal} onClose={() => { setShowCustomCardModal(false); setEditingCustomCard(null); }} onSave={handleSaveCustomCard} t={t} existingCard={editingCustomCard} />
 
                         {isExportingPng && <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"><div className="bg-slate-800 rounded-lg shadow-xl p-8 text-center"><h3 className="text-xl font-bold mb-4 text-violet-300">{exportMessage}</h3><div className="w-full bg-slate-600 rounded-full h-4"><div className="bg-violet-500 h-4 rounded-full" style={{ width: `${exportProgress}%` }}></div></div><p className="text-white mt-2">{Math.round(exportProgress)}%</p></div></div>}
+                        {destMenu && (() => {
+                            const sheet = window.innerWidth <= 768;
+                            const pos = sheet ? {} : { left: Math.max(8, Math.min(destMenu.x + 8, window.innerWidth - 232)), top: Math.max(8, Math.min(destMenu.y + 8, window.innerHeight - 250)) };
+                            return (
+                                <div className="fixed inset-0 z-[60]" onClick={() => setDestMenu(null)} onContextMenu={e => { e.preventDefault(); setDestMenu(null); }}>
+                                    <div className={sheet ? 'dest-sheet' : 'dest-pop'} style={pos} role="menu" onClick={e => e.stopPropagation()}>
+                                        <div className="dest-title">{destMenu.apiCard.name}</div>
+                                        <div className="dest-sub">{t('destTitle')}</div>
+                                        {[['pool', 'fa-layer-group', t('destPool')], ['step', 'fa-plus-circle', t('destStep')], ['hand', 'fa-hand-paper', t('destHand')], ['board', 'fa-chess-board', t('destBoard')]].map(([key, icon, label]) => (
+                                            <button key={key} onClick={() => sendCardTo(key)} className="step-menu-item" role="menuitem"><i className={`fas ${icon} w-5 text-center`}></i>{label}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                         {contextMenu.card && <div className="fixed inset-0 z-50" onClick={closeContextMenu} onContextMenu={e => { e.preventDefault(); closeContextMenu(); }}><div style={{ position: 'fixed', top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }} className="bg-slate-800 border border-slate-600 rounded-md shadow-lg py-2 w-48">{contextMenu.options.map(option => (<button key={option.label} onClick={() => { option.action(); closeContextMenu(); }} className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-violet-600">{option.label}</button>))}</div></div>}
 
                         <button onClick={() => setIsSearchPanelOpen(true)} className={`fixed top-1/2 -translate-y-1/2 left-0 z-30 bg-violet-700/80 backdrop-blur-sm text-white p-2 rounded-r-lg shadow-lg transition-all duration-300 hover:bg-violet-600 ${isSearchPanelOpen ? 'opacity-0 -translate-x-full' : 'opacity-100 translate-x-0'}`} aria-label="Abrir Búsqueda" data-tooltip="Abrir Búsqueda"><i className="fas fa-search"></i></button>
@@ -3624,7 +3831,7 @@
                                 <button onClick={() => setShowFilters(prev => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><i className="fas fa-filter"></i></button>
                             </div>
                             {showFilters && (<div className="mb-4 p-3 bg-black/20 rounded-lg grid grid-cols-2 gap-2"><select value={filters.archetype} onChange={e => setFilters({...filters, archetype: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterArchetype')}</option>{archetypes.map(a => <option key={a} value={a}>{a}</option>)}</select><select value={filters.type} onChange={e => setFilters({...filters, type: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterType')}</option>{CARD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select><select value={filters.attribute} onChange={e => setFilters({...filters, attribute: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterAttribute')}</option>{ATTRIBUTES.map(a => <option key={a} value={a}>{a}</option>)}</select><select value={filters.level} onChange={e => setFilters({...filters, level: e.target.value})} className="w-full p-1 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-md text-xs"><option value="">{t('filterLevel')}</option>{LEVELS.map(l => <option key={l} value={l}>{l}</option>)}</select><button onClick={() => { setFilters({ type: '', attribute: '', level: '', archetype: '' }); debouncedSearch(searchTerm, { type: '', attribute: '', level: '', archetype: '' }, false); }} className="btn col-span-2 mt-1 px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700">{t('clearFilters')}</button></div>)}
-                            <PopularCardsCarousel onCardClick={addCardToPool} t={t} cardPool={cardPool} />
+                            <PopularCardsCarousel onCardClick={openDestMenu} t={t} cardPool={cardPool} />
                             <div className="flex-grow overflow-y-auto bg-black/20 p-2 rounded-lg">
                                 {isLoadingSearch ? (
                                     <div className="grid grid-cols-3 gap-3">
@@ -3634,7 +3841,7 @@
                                     <div className="grid grid-cols-3 gap-3">
                                         {paginatedResults.map((apiCard, index) => {
                                             const cardInstance = createComboCardInstance(apiCard, IMAGE_PROXY);
-                                            return <div key={apiCard.id} className="animate-fadeInUp" style={{animationDelay: `${index * 50}ms`}}><CardDisplay card={cardInstance} onClick={() => addCardToPool(apiCard)} draggable={true} onDragStart={(e) => handleDragStart(e, 'search-card', apiCard)} onTouchStart={(e) => handleTouchStart(e, 'search-card', apiCard)} onDragEnd={handleDragEnd} size="small" t={t} onContextMenu={(c, e) => handleContextMenu(cardInstance, e, 'search')} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} /></div>
+                                            return <div key={apiCard.id} className="animate-fadeInUp" style={{animationDelay: `${index * 50}ms`}}><CardDisplay card={cardInstance} onClick={() => openDestMenu(apiCard)} draggable={true} onDragStart={(e) => handleDragStart(e, 'search-card', apiCard)} onTouchStart={(e) => handleTouchStart(e, 'search-card', apiCard)} onDragEnd={handleDragEnd} size="small" t={t} onContextMenu={(c, e) => handleContextMenu(cardInstance, e, 'search')} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} /></div>
                                         })}
                                     </div>
                                 ) : (searchTerm || Object.values(filters).some(v => v)) && <div className="p-4 text-center text-[var(--color-text-muted)]">{t('noCardsFound')}</div>
@@ -3724,13 +3931,13 @@
                                         </div>
                                     </section>
                                     <section id="combo-steps-section" className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 combo-steps">
-                                        <div className="flex justify-between items-center mb-4">
+                                        <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
                                             <h3 className="text-xl font-semibold text-[var(--color-secondary)]">{t('comboStepsTitle')}</h3>
-                                            <div>
+                                            <div className="flex items-center"><div className="inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2" role="group"><button onClick={() => setStepsView('list')} aria-pressed={stepsView === 'list'} aria-label={t('stepsViewList')} data-tooltip={t('stepsViewList')} className={`px-3 py-1 text-sm ${stepsView === 'list' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-list-ol"></i></button><button onClick={() => setStepsView('grid')} aria-pressed={stepsView === 'grid'} aria-label={t('stepsViewGrid')} data-tooltip={t('stepsViewGrid')} className={`px-3 py-1 text-sm ${stepsView === 'grid' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-th-large"></i></button></div>
                                                 <button onClick={() => setComboState({...comboState, comboSteps: [...comboSteps, { type: 'group', id: generateId(), title: 'New Group' }]}, 'Added group')} className="btn px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 mr-2">{t('addGroup')}</button>
                                             </div>
                                         </div>
-                                        <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(18rem,1fr))]" data-drop-area="comboSteps" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, 'comboSteps')}>
+                                        <div className={`grid gap-4 grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] ${stepsView === 'list' ? 'steps-list' : ''}`} data-drop-area="comboSteps" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, 'comboSteps')}>
                                             {comboSteps.map((step, index) => { 
                                                 if (step.type === 'group') {
                                                     return (
@@ -3794,7 +4001,7 @@
                                                     onMouseEnter={() => setHighlightedCardIds([step.mainCardInstanceId, ...step.targetCards.map(c => c.instanceId)])} 
                                                     onMouseLeave={() => setHighlightedCardIds([])}
                                                 >
-                                                    <div className={`absolute top-2 right-2 flex items-center gap-1 ${openStepMenuId === step.id ? 'z-40' : 'z-20'}`}>
+                                                    <div className={`step-corner absolute top-2 right-2 flex items-center gap-1 ${openStepMenuId === step.id ? 'z-40' : 'z-20'}`}>
                                                         <button onClick={() => updateStep(step.id, { vulnerability: { text: isVulnerable ? '' : 'Disrupción', cards: [] } })} className={`tutorial-vulnerability-btn step-icon-btn rounded-full ${isVulnerable ? 'bg-red-500 text-white' : 'bg-slate-700 text-slate-400'} hover:bg-red-600`} data-tooltip={t('markVulnerable')} aria-label={t('markVulnerable')}><i className="fas fa-exclamation-triangle"></i></button>
                                                         <div className="cursor-move text-slate-400 step-icon-btn step-grip" draggable={!step.isLocked}><i className="fas fa-grip-vertical"></i></div>
                                                         <div className="relative" data-step-menu="1">
@@ -3816,7 +4023,7 @@
                                                     <span className="step-label font-bold text-[var(--color-text-muted)] self-start">{(language === 'en' ? 'Step' : t('stepLabel'))} {stepNumber + 1}</span>
                                                     <select value={step.actionType} onChange={e => updateStep(step.id, { actionType: e.target.value })} disabled={step.isLocked} className="tutorial-action-select bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-sm font-semibold text-[var(--color-accent)] w-full disabled:opacity-50 disabled:cursor-not-allowed">{YGO_ACTIONS.map(act => <option key={act.name} value={act.name}>{act.emoji} {act.name}</option>)}</select>
                                                     {step.actionType === 'Other' && ( <input type="text" value={step.customActionText || ''} onChange={e => updateStep(step.id, { customActionText: sanitizeHTML(e.target.value) })} disabled={step.isLocked} placeholder="Especificar acción..." className="w-full bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs text-center mt-1" /> )}
-                                                    <div className="flex justify-center my-2 relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />{step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (<div className="absolute -right-4 -top-2 z-10 flex flex-col items-end gap-1">{step.vulnerability.cards.map((vCard) => (<CardDisplay key={vCard.instanceId} card={findCard(vCard.instanceId)} size="tiny" useCropped={true} onRemove={!step.isLocked ? () => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); } : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove}><span className="absolute top-0 right-0 text-xl z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span></CardDisplay>))}</div>)}</div>
+                                                    <div className="step-main flex justify-center my-2 relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />{step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (<div className="absolute -right-4 -top-2 z-10 flex flex-col items-end gap-1">{step.vulnerability.cards.map((vCard) => (<CardDisplay key={vCard.instanceId} card={findCard(vCard.instanceId)} size="tiny" useCropped={true} onRemove={!step.isLocked ? () => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); } : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove}><span className="absolute top-0 right-0 text-xl z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span></CardDisplay>))}</div>)}</div>
                                                     <button onClick={() => setZonePickerStepId(step.id)} className="btn text-xs py-1 px-2 bg-slate-600 hover:bg-slate-500 mb-2">{step.location ? ZONE_ABBREVIATIONS[step.location] : t('location')}</button>
                                                     {isVulnerable && (<div className="flex items-center gap-2 w-full">{(!step.vulnerability.cards || step.vulnerability.cards.length === 0) && (<input type="text" value={step.vulnerability.text} onChange={e => updateStep(step.id, { vulnerability: {...step.vulnerability, text: sanitizeHTML(e.target.value)} })} disabled={step.isLocked} placeholder="Vulnerable a..." className="flex-grow bg-red-900/50 border border-red-500/50 text-red-300 placeholder-red-400 rounded p-1 text-xs text-center disabled:opacity-50"/>)}<CardSelector cardPool={cardPool} onCardSelected={card => { const newVCard = { instanceId: card.instanceId }; const currentVCards = step.vulnerability?.cards || []; if (!currentVCards.some(c => c.instanceId === newVCard.instanceId)) { updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: [...currentVCards, newVCard] } }); } }} displayAs="small-button" t={t} preferredDirection="side" /></div>)}
                                                     <div className="flex flex-wrap justify-center gap-1 border-t border-[var(--color-border)] pt-2 min-h-[4.5rem]">{step.targetCards.map(target => (<CardDisplay key={`target-${target.instanceId}`} card={findCard(target.instanceId)} size="tiny" isHighlighted={highlightedCardIds.includes(target.instanceId)} onRemove={!step.isLocked ? () => removeTargetCardFromStep(step.id, target.instanceId) : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />))}<CardSelector wrapperClassName="tutorial-add-target-btn" cardPool={cardPool} onCardSelected={card => updateStep(step.id, { targetCards: [...step.targetCards, {instanceId: card.instanceId, quantity: 1}]})} displayAs="small-button" t={t} preferredDirection="side" /></div>
@@ -3830,7 +4037,7 @@
                                                     />
                                                 </div>
                                             )})}
-                                            <div className="flex items-center justify-center w-full min-h-[18rem]" onDragOver={(e) => {e.preventDefault(); setDragOverIndex(comboSteps.length);}}><CardSelector cardPool={cardPool} onCardSelected={handleAddStepOrNote} displayAs="card-placeholder" t={t} preferredDirection="side" /></div>
+                                            <div className="steps-add-slot flex items-center justify-center w-full min-h-[18rem]" onDragOver={(e) => {e.preventDefault(); setDragOverIndex(comboSteps.length);}}><CardSelector cardPool={cardPool} onCardSelected={handleAddStepOrNote} displayAs="card-placeholder" t={t} preferredDirection="side" /></div>
                                         </div>
                                     </section>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -3844,7 +4051,8 @@
                                                 </span>
                                                 <i className={`fas fa-chevron-down transition-transform duration-300 ${isFinalBoardOpen ? '' : '-rotate-90'}`}></i>
                                             </h3>
-                                             <div className={`transition-[max-height] duration-500 ease-in-out ${isFinalBoardOpen ? 'max-h-[40rem] overflow-visible' : 'max-h-0 overflow-hidden'}`}>
+                                             <div className={`transition-[max-height] duration-500 ease-in-out ${isFinalBoardOpen ? 'max-h-[90rem] overflow-visible' : 'max-h-0 overflow-hidden'}`}>
+                                                {finalBoardCards.length > 0 && <FinalBoardMini items={finalBoardCards} className="mb-4" onCardClick={c => setSelectedCardForZoom(c)} />}
                                                 <div data-drop-area="finalBoard" onDragOver={(e) => {e.preventDefault(); e.currentTarget.classList.add('drag-over')}} onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')} onDrop={(e) => handleDrop(e, 'finalBoard')} className={`drop-zone p-4 bg-black/20 rounded-lg min-h-[11rem] flex flex-wrap gap-4 border-2 border-dashed border-[var(--color-border)] ${finalBoardCards.length === 0 ? 'justify-center items-center' : 'justify-start items-start'}`}>
                                                     {finalBoardCards.map(item => (
                                                         <div key={item.id} className="flex flex-col items-center gap-1 w-28" draggable={true} onDragStart={e => handleDragStart(e, 'board-card', item)} onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'board-card') handleReorder('board', d.data, item); }}>
