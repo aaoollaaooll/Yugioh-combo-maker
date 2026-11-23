@@ -6,7 +6,6 @@
     <title>Yu-Gi-Oh! Combo maker</title>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
@@ -66,13 +65,12 @@
             transition: background-color 0.3s ease;
             zoom: 0.9; /* Adjusts the default zoom of the entire page */
         }
-        .font-yugioh {
-            font-family: 'Cinzel Decorative', 'Times New Roman', serif;
-            text-shadow: 0 0 5px var(--color-secondary), 0 0 10px var(--color-secondary);
-        }
-        .font-yugi-title {
-            font-family: 'Cinzel Decorative', 'Times New Roman', serif;
-            text-shadow: 0 0 8px var(--color-accent), 0 0 12px var(--color-accent);
+        /* Títulos: letra neutra (Inter, la misma de la app) en negritas, sin brillo */
+        .font-yugioh, .font-yugi-title {
+            font-family: 'Inter', Arial, sans-serif;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            text-shadow: none;
         }
         
         #splash-screen {
@@ -273,7 +271,7 @@
           justify-content: center;
         }
         #export-wm > div {
-          font-family: 'Cinzel Decorative', 'Times New Roman', serif;
+          font-family: 'Inter', Arial, sans-serif;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.2em;
@@ -296,7 +294,7 @@
 
         [data-exporting="1"] .font-yugioh, 
         [data-exporting="1"] .font-yugi-title {
-            font-family: 'Cinzel Decorative', 'Times New Roman', serif !important;
+            font-family: 'Inter', Arial, sans-serif !important;
             text-shadow: none !important;
         }
 
@@ -350,6 +348,18 @@
         /* Solo en la vista previa: en el PNG el filtro se aplica a los pixeles de cada carta */
         .export-filter-gray img { filter: grayscale(1); }
         .export-filter-ink img { filter: grayscale(1) contrast(0.5) brightness(1.4); }
+        /* === Títulos y acentos según la tinta elegida (Color / Blanco y negro / Ahorro de tinta) === */
+        .export-theme-dark.export-ink-gray :is(.text-violet-300,.text-violet-400,.text-yellow-300,.text-yellow-200,.text-amber-300,.text-red-400,.export-arrow) { color: #e5e7eb !important; }
+        .export-theme-dark.export-ink-ink :is(.text-violet-300,.text-violet-400,.text-yellow-300,.text-yellow-200,.text-amber-300,.text-red-400,.export-arrow) { color: #d1d5db !important; }
+        :is(.export-theme-light,.export-theme-white).export-ink-gray :is(.text-violet-300,.text-violet-400,.text-yellow-300,.text-yellow-200,.text-amber-300,.text-red-400,.export-arrow) { color: #111827 !important; }
+        :is(.export-theme-light,.export-theme-white).export-ink-gray :is(.border-red-500,.border-yellow-700\/50) { border-color: #6b7280 !important; }
+        :is(.export-theme-light,.export-theme-white).export-ink-gray :is(.bg-amber-700\/50) { background-color: #9ca3af !important; }
+        :is(.export-theme-light,.export-theme-white).export-ink-gray :is(.bg-black\/50,.bg-yellow-900\/30) { background-color: #f3f4f6 !important; }
+        :is(.export-theme-light,.export-theme-white).export-ink-ink.text-white,
+        :is(.export-theme-light,.export-theme-white).export-ink-ink :is(.text-slate-300,.text-violet-300,.text-violet-400,.text-yellow-300,.text-yellow-200,.text-amber-300,.text-red-400,.export-arrow) { color: #4b5563 !important; }
+        :is(.export-theme-light,.export-theme-white).export-ink-ink :is(.border-slate-700,.border-slate-600,.border-red-500,.border-yellow-700\/50) { border-color: #e5e7eb !important; }
+        :is(.export-theme-light,.export-theme-white).export-ink-ink :is(.bg-amber-700\/50) { background-color: #d1d5db !important; }
+        :is(.export-theme-light,.export-theme-white).export-ink-ink :is(.bg-black\/50,.bg-yellow-900\/30,.bg-slate-800\/50,.bg-slate-900\/50) { background-color: transparent !important; }
 
         .ygo-field-grid {
             display: grid;
@@ -1507,7 +1517,7 @@
             };
 
             return ( 
-                <div className={`p-8 text-white export-onewm export-theme-${theme} ${isPreview && cardFilter !== 'color' ? `export-filter-${cardFilter}` : ''}`} data-watermark={'YGOH-ComboMaker'} style={backgroundStyle}>
+                <div className={`p-8 text-white export-onewm export-theme-${theme} export-ink-${cardFilter} ${isPreview && cardFilter !== 'color' ? `export-filter-${cardFilter}` : ''}`} data-watermark={'YGOH-ComboMaker'} style={backgroundStyle}>
                     <div className="relative z-10">
                         <h1 className="text-5xl font-bold text-center text-violet-300 mb-8 font-yugioh">{nbsp(comboTitle || t('untitledCombo'))}</h1> 
                         <div className="flex flex-col gap-6"> 
