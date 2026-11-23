@@ -46,7 +46,7 @@
         const { useState, useEffect, useRef, useCallback, memo, useMemo, useLayoutEffect } = window.React;
         const { createRoot, createPortal } = window.ReactDOM;
 
-        // Fondo animado o quieto (se recuerda; si el sistema pide menos movimiento, empieza quieto)
+        // Fondo animado o quieto. Se guarda; si el sistema pide menos movimiento, arranca quieto
         window.__ygoBgAnimated = (() => { try { const v = localStorage.getItem('ygo_bg_anim'); if (v !== null) return v === '1'; } catch (e) {} return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); })();
         if (window.__ygoBgAnimated === false) document.documentElement.classList.add('bg-static');
         const StarfieldBackground = () => {
@@ -135,7 +135,7 @@
                 const observer = new MutationObserver((mutations) => {
                     mutations.forEach((mutation) => {
                         if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-                           if (window.__ygoBgAnimated === false) onBgChange(); // con el fondo quieto hay que repintarlo
+                           if (window.__ygoBgAnimated === false) onBgChange(); // ojo: con el fondo quieto hay que repintarlo
                         }
                     });
                 });
@@ -154,12 +154,12 @@
             return null; // The canvas is managed directly in the DOM
         };
 
-        // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
+        // Ya se puede llamar a YGOPRODeck directo, el proxy de Vercel ya no hace falta
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
-        // Enlaces de compartir: JSON -> comprimido (pako) -> base64 apto para URL (sin + / =).
-        // Formato v2: las cartas de YGOPRODeck viajan solo como {número, instanceId, notas, nombre};
-        // al abrir el enlace se piden sus datos a la API. Las cartas personalizadas viajan completas.
+        // Enlaces para compartir: JSON → pako → base64 para URL (sin + / =)
+        // v2: de las cartas de la API solo mando {id, instanceId, notas, nombre} y al abrir pido lo demás.
+        // Las personalizadas sí van completas (no están en la API).
         const SHARE_FORMAT_VERSION = 2;
         const isApiCardObject = (o) => o && typeof o === 'object' && !Array.isArray(o) && o.instanceId && o.ygoprodeck_id && !o.isCustom;
         const mapComboTree = (node, fn) => {
@@ -205,7 +205,7 @@
             const bytes = new Uint8Array(bin.length);
             for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
             const parsed = JSON.parse(pako.inflate(bytes, { to: 'string' }));
-            // Enlaces v1 (noviembre 2026) traían el combo completo, sin envoltorio.
+            // Por si alguien tiene enlaces viejos (v1): ahí venía el combo entero sin envoltorio
             if (parsed && parsed.v === SHARE_FORMAT_VERSION) return hydrateCombo(parsed.s, imageProxy);
             return parsed;
         };
@@ -224,7 +224,7 @@
         const AUTO_SAVE_KEY = 'ygo_combo_autosave';
         const debounce = (func, delay) => { let timeout; return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); }; };
         const generateId = () => crypto.randomUUID();
-        // La página usa body { zoom: 0.9 }: las coordenadas del mouse hay que dividirlas por esto para posicionar cosas fijas
+        // Recuerda: body tiene zoom 0.9, así que el mouse hay que dividirlo entre esto para lo que va fijo
         const getBodyZoom = () => { const z = parseFloat(getComputedStyle(document.body).zoom); return z && !isNaN(z) ? z : 1; };
         const sanitizeHTML = (str) => window.DOMPurify ? window.DOMPurify.sanitize(str, {ALLOWED_TAGS: ['b', 'i', 'u', 'br', 'ul', 'ol', 'li', 'p', 'div', 'span'], ALLOWED_ATTR: ['style']}) : str;
         const createComboCardInstance = (apiCard, imageProxy) => {
@@ -247,12 +247,12 @@
                 image_url: imageUrl, image_url_small: imageUrlSmall, image_url_cropped: imageUrlCropped, isCustom: false, notes: '',
             };
         };
-        // Nombres de acciones, zonas, tipos y atributos en cada idioma. Lo que se guarda sigue en inglés.
+        // Nombres de acciones, zonas, tipos y atributos por idioma. Lo guardado sigue en inglés, no tocar
         const YGO_TERMS = {"es": {"Normal Summon": "Invocación Normal", "Special Summon": "Invocación Especial", "Set": "Colocar", "Activate Spell/Trap": "Activar Mágica/Trampa", "Activate Effect": "Activar efecto", "Attack": "Atacar", "Send to GY": "Enviar al Cementerio", "Discard": "Descartar", "Banish": "Desterrar", "Add to Hand": "Añadir a la mano", "Search": "Buscar del Deck", "Fusion Summon": "Invocación por Fusión", "Synchro Summon": "Invocación por Sincronía", "Xyz Summon": "Invocación Xyz", "Pendulum Summon": "Invocación por Péndulo", "Link Summon": "Invocación por Enlace", "Other": "Otra", "Field Zone": "Zona de Campo", "Graveyard": "Cementerio", "Banish Pile": "Desterradas", "Effect Monster": "Monstruo de Efecto", "Flip Effect Monster": "Monstruo de Efecto de Volteo", "Fusion Monster": "Monstruo de Fusión", "Link Monster": "Monstruo de Enlace", "Normal Monster": "Monstruo Normal", "Pendulum Effect Monster": "Monstruo de Efecto de Péndulo", "Ritual Effect Monster": "Monstruo de Ritual de Efecto", "Spell Card": "Carta Mágica", "Synchro Monster": "Monstruo de Sincronía", "Token": "Ficha", "Trap Card": "Carta de Trampa", "Tuner Monster": "Monstruo Cantante", "Union Effect Monster": "Monstruo de Unión", "Xyz Monster": "Monstruo Xyz", "DARK": "OSCURIDAD", "DIVINE": "DIVINIDAD", "EARTH": "TIERRA", "FIRE": "FUEGO", "LIGHT": "LUZ", "WATER": "AGUA", "WIND": "VIENTO", "Extra Monster 1": "Zona de Monstruo Extra 1", "Extra Monster 2": "Zona de Monstruo Extra 2", "Main Monster 1": "Zona de Monstruo 1", "Main Monster 2": "Zona de Monstruo 2", "Main Monster 3": "Zona de Monstruo 3", "Main Monster 4": "Zona de Monstruo 4", "Main Monster 5": "Zona de Monstruo 5", "Spell/Trap 1": "Zona de Mágicas/Trampas 1", "Spell/Trap 2": "Zona de Mágicas/Trampas 2", "Spell/Trap 3": "Zona de Mágicas/Trampas 3", "Spell/Trap 4": "Zona de Mágicas/Trampas 4", "Spell/Trap 5": "Zona de Mágicas/Trampas 5"}, "pt": {"Normal Summon": "Invocação-Normal", "Special Summon": "Invocação-Especial", "Set": "Baixar", "Activate Spell/Trap": "Ativar Magia/Armadilha", "Activate Effect": "Ativar efeito", "Attack": "Atacar", "Send to GY": "Enviar ao Cemitério", "Discard": "Descartar", "Banish": "Banir", "Add to Hand": "Adicionar à mão", "Search": "Buscar no Deck", "Fusion Summon": "Invocação-Fusão", "Synchro Summon": "Invocação-Sincro", "Xyz Summon": "Invocação-Xyz", "Pendulum Summon": "Invocação-Pêndulo", "Link Summon": "Invocação-Link", "Other": "Outra", "Field Zone": "Zona de Campo", "Graveyard": "Cemitério", "Banish Pile": "Banidas", "Effect Monster": "Monstro de Efeito", "Flip Effect Monster": "Monstro de Efeito de Virar", "Fusion Monster": "Monstro de Fusão", "Link Monster": "Monstro Link", "Normal Monster": "Monstro Normal", "Pendulum Effect Monster": "Monstro de Efeito Pêndulo", "Ritual Effect Monster": "Monstro de Ritual de Efeito", "Spell Card": "Card de Magia", "Synchro Monster": "Monstro Sincro", "Token": "Ficha", "Trap Card": "Card de Armadilha", "Tuner Monster": "Monstro Regulador", "Union Effect Monster": "Monstro de União", "Xyz Monster": "Monstro Xyz", "DARK": "TREVAS", "DIVINE": "DIVINO", "EARTH": "TERRA", "FIRE": "FOGO", "LIGHT": "LUZ", "WATER": "ÁGUA", "WIND": "VENTO", "Extra Monster 1": "Zona de Monstro Adicional 1", "Extra Monster 2": "Zona de Monstro Adicional 2", "Main Monster 1": "Zona de Monstro 1", "Main Monster 2": "Zona de Monstro 2", "Main Monster 3": "Zona de Monstro 3", "Main Monster 4": "Zona de Monstro 4", "Main Monster 5": "Zona de Monstro 5", "Spell/Trap 1": "Zona de Magias e Armadilhas 1", "Spell/Trap 2": "Zona de Magias e Armadilhas 2", "Spell/Trap 3": "Zona de Magias e Armadilhas 3", "Spell/Trap 4": "Zona de Magias e Armadilhas 4", "Spell/Trap 5": "Zona de Magias e Armadilhas 5"}, "fr": {"Normal Summon": "Invocation Normale", "Special Summon": "Invocation Spéciale", "Set": "Poser", "Activate Spell/Trap": "Activer Magie/Piège", "Activate Effect": "Activer un effet", "Attack": "Attaquer", "Send to GY": "Envoyer au Cimetière", "Discard": "Défausser", "Banish": "Bannir", "Add to Hand": "Ajouter à la main", "Search": "Chercher dans le Deck", "Fusion Summon": "Invocation Fusion", "Synchro Summon": "Invocation Synchro", "Xyz Summon": "Invocation Xyz", "Pendulum Summon": "Invocation Pendule", "Link Summon": "Invocation Lien", "Other": "Autre", "Field Zone": "Zone Terrain", "Graveyard": "Cimetière", "Banish Pile": "Bannies", "Effect Monster": "Monstre à Effet", "Flip Effect Monster": "Monstre à Effet Flip", "Fusion Monster": "Monstre Fusion", "Link Monster": "Monstre Lien", "Normal Monster": "Monstre Normal", "Pendulum Effect Monster": "Monstre à Effet Pendule", "Ritual Effect Monster": "Monstre Rituel à Effet", "Spell Card": "Carte Magie", "Synchro Monster": "Monstre Synchro", "Token": "Jeton", "Trap Card": "Carte Piège", "Tuner Monster": "Monstre Syntoniseur", "Union Effect Monster": "Monstre Union", "Xyz Monster": "Monstre Xyz", "DARK": "TÉNÈBRES", "DIVINE": "DIVIN", "EARTH": "TERRE", "FIRE": "FEU", "LIGHT": "LUMIÈRE", "WATER": "EAU", "WIND": "VENT", "Extra Monster 1": "Zone Monstre Extra 1", "Extra Monster 2": "Zone Monstre Extra 2", "Main Monster 1": "Zone Monstre 1", "Main Monster 2": "Zone Monstre 2", "Main Monster 3": "Zone Monstre 3", "Main Monster 4": "Zone Monstre 4", "Main Monster 5": "Zone Monstre 5", "Spell/Trap 1": "Zone Magie/Piège 1", "Spell/Trap 2": "Zone Magie/Piège 2", "Spell/Trap 3": "Zone Magie/Piège 3", "Spell/Trap 4": "Zone Magie/Piège 4", "Spell/Trap 5": "Zone Magie/Piège 5"}, "it": {"Normal Summon": "Evocazione Normale", "Special Summon": "Evocazione Speciale", "Set": "Posizionare", "Activate Spell/Trap": "Attivare Magia/Trappola", "Activate Effect": "Attivare effetto", "Attack": "Attaccare", "Send to GY": "Mandare al Cimitero", "Discard": "Scartare", "Banish": "Bandire", "Add to Hand": "Aggiungere alla mano", "Search": "Cercare nel Deck", "Fusion Summon": "Evocazione Fusione", "Synchro Summon": "Evocazione Synchro", "Xyz Summon": "Evocazione Xyz", "Pendulum Summon": "Evocazione Pendulum", "Link Summon": "Evocazione Link", "Other": "Altro", "Field Zone": "Zona Terreno", "Graveyard": "Cimitero", "Banish Pile": "Bandite", "Effect Monster": "Mostro con Effetto", "Flip Effect Monster": "Mostro con Effetto Scoperta", "Fusion Monster": "Mostro Fusione", "Link Monster": "Mostro Link", "Normal Monster": "Mostro Normale", "Pendulum Effect Monster": "Mostro con Effetto Pendulum", "Ritual Effect Monster": "Mostro Rituale con Effetto", "Spell Card": "Carta Magia", "Synchro Monster": "Mostro Synchro", "Token": "Segna-Mostro", "Trap Card": "Carta Trappola", "Tuner Monster": "Mostro Tuner", "Union Effect Monster": "Mostro Unione", "Xyz Monster": "Mostro Xyz", "DARK": "OSCURITÀ", "DIVINE": "DIVINO", "EARTH": "TERRA", "FIRE": "FUOCO", "LIGHT": "LUCE", "WATER": "ACQUA", "WIND": "VENTO", "Extra Monster 1": "Zona Mostri Extra 1", "Extra Monster 2": "Zona Mostri Extra 2", "Main Monster 1": "Zona Mostri 1", "Main Monster 2": "Zona Mostri 2", "Main Monster 3": "Zona Mostri 3", "Main Monster 4": "Zona Mostri 4", "Main Monster 5": "Zona Mostri 5", "Spell/Trap 1": "Zona Magie/Trappole 1", "Spell/Trap 2": "Zona Magie/Trappole 2", "Spell/Trap 3": "Zona Magie/Trappole 3", "Spell/Trap 4": "Zona Magie/Trappole 4", "Spell/Trap 5": "Zona Magie/Trappole 5"}, "de": {"Normal Summon": "Normalbeschwörung", "Special Summon": "Spezialbeschwörung", "Set": "Setzen", "Activate Spell/Trap": "Zauber/Falle aktivieren", "Activate Effect": "Effekt aktivieren", "Attack": "Angreifen", "Send to GY": "Auf den Friedhof legen", "Discard": "Abwerfen", "Banish": "Verbannen", "Add to Hand": "Zur Hand hinzufügen", "Search": "Aus dem Deck suchen", "Fusion Summon": "Fusionsbeschwörung", "Synchro Summon": "Synchrobeschwörung", "Xyz Summon": "Xyz-Beschwörung", "Pendulum Summon": "Pendelbeschwörung", "Link Summon": "Linkbeschwörung", "Other": "Andere", "Field Zone": "Spielfeldzone", "Graveyard": "Friedhof", "Banish Pile": "Verbannt", "Effect Monster": "Effektmonster", "Flip Effect Monster": "Flipeffektmonster", "Fusion Monster": "Fusionsmonster", "Link Monster": "Linkmonster", "Normal Monster": "Normales Monster", "Pendulum Effect Monster": "Pendeleffektmonster", "Ritual Effect Monster": "Ritualeffektmonster", "Spell Card": "Zauberkarte", "Synchro Monster": "Synchromonster", "Token": "Spielmarke", "Trap Card": "Fallenkarte", "Tuner Monster": "Empfängermonster", "Union Effect Monster": "Unionmonster", "Xyz Monster": "Xyz-Monster", "DARK": "FINSTERNIS", "DIVINE": "GÖTTLICH", "EARTH": "ERDE", "FIRE": "FEUER", "LIGHT": "LICHT", "WATER": "WASSER", "WIND": "WIND", "Extra Monster 1": "Extra-Monsterzone 1", "Extra Monster 2": "Extra-Monsterzone 2", "Main Monster 1": "Monsterzone 1", "Main Monster 2": "Monsterzone 2", "Main Monster 3": "Monsterzone 3", "Main Monster 4": "Monsterzone 4", "Main Monster 5": "Monsterzone 5", "Spell/Trap 1": "Zauber-/Fallenzone 1", "Spell/Trap 2": "Zauber-/Fallenzone 2", "Spell/Trap 3": "Zauber-/Fallenzone 3", "Spell/Trap 4": "Zauber-/Fallenzone 4", "Spell/Trap 5": "Zauber-/Fallenzone 5"}, "ru": {"Normal Summon": "Обычный призыв", "Special Summon": "Особый призыв", "Set": "Выставить", "Activate Spell/Trap": "Активировать заклинание/ловушку", "Activate Effect": "Активировать эффект", "Attack": "Атака", "Send to GY": "Отправить на кладбище", "Discard": "Сбросить", "Banish": "Изгнать", "Add to Hand": "Добавить в руку", "Search": "Найти в колоде", "Fusion Summon": "Призыв слиянием", "Synchro Summon": "Синхро-призыв", "Xyz Summon": "Икс-призыв", "Pendulum Summon": "Призыв маятником", "Link Summon": "Призыв связью", "Other": "Другое", "Field Zone": "Зона поля", "Graveyard": "Кладбище", "Banish Pile": "Изгнанные", "Effect Monster": "Монстр с эффектом", "Flip Effect Monster": "Монстр с эффектом переворота", "Fusion Monster": "Монстр слияния", "Link Monster": "Монстр связи", "Normal Monster": "Обычный монстр", "Pendulum Effect Monster": "Маятниковый монстр с эффектом", "Ritual Effect Monster": "Ритуальный монстр с эффектом", "Spell Card": "Карта заклинания", "Synchro Monster": "Синхро-монстр", "Token": "Жетон", "Trap Card": "Карта ловушки", "Tuner Monster": "Монстр-тюнер", "Union Effect Monster": "Монстр-союз", "Xyz Monster": "Икс-монстр", "DARK": "ТЬМА", "DIVINE": "БОЖЕСТВЕННЫЙ", "EARTH": "ЗЕМЛЯ", "FIRE": "ОГОНЬ", "LIGHT": "СВЕТ", "WATER": "ВОДА", "WIND": "ВЕТЕР", "Extra Monster 1": "Доп. зона монстров 1", "Extra Monster 2": "Доп. зона монстров 2", "Main Monster 1": "Зона монстров 1", "Main Monster 2": "Зона монстров 2", "Main Monster 3": "Зона монстров 3", "Main Monster 4": "Зона монстров 4", "Main Monster 5": "Зона монстров 5", "Spell/Trap 1": "Зона заклинаний/ловушек 1", "Spell/Trap 2": "Зона заклинаний/ловушек 2", "Spell/Trap 3": "Зона заклинаний/ловушек 3", "Spell/Trap 4": "Зона заклинаний/ловушек 4", "Spell/Trap 5": "Зона заклинаний/ловушек 5"}, "ja": {"Normal Summon": "通常召喚", "Special Summon": "特殊召喚", "Set": "セット", "Activate Spell/Trap": "魔法・罠を発動", "Activate Effect": "効果を発動", "Attack": "攻撃", "Send to GY": "墓地へ送る", "Discard": "捨てる", "Banish": "除外", "Add to Hand": "手札に加える", "Search": "デッキからサーチ", "Fusion Summon": "融合召喚", "Synchro Summon": "シンクロ召喚", "Xyz Summon": "エクシーズ召喚", "Pendulum Summon": "ペンデュラム召喚", "Link Summon": "リンク召喚", "Other": "その他", "Field Zone": "フィールドゾーン", "Graveyard": "墓地", "Banish Pile": "除外ゾーン", "Effect Monster": "効果モンスター", "Flip Effect Monster": "リバース効果モンスター", "Fusion Monster": "融合モンスター", "Link Monster": "リンクモンスター", "Normal Monster": "通常モンスター", "Pendulum Effect Monster": "ペンデュラム効果モンスター", "Ritual Effect Monster": "儀式効果モンスター", "Spell Card": "魔法カード", "Synchro Monster": "シンクロモンスター", "Token": "トークン", "Trap Card": "罠カード", "Tuner Monster": "チューナーモンスター", "Union Effect Monster": "ユニオンモンスター", "Xyz Monster": "エクシーズモンスター", "DARK": "闇", "DIVINE": "神", "EARTH": "地", "FIRE": "炎", "LIGHT": "光", "WATER": "水", "WIND": "風", "Extra Monster 1": "エクストラモンスターゾーン1", "Extra Monster 2": "エクストラモンスターゾーン2", "Main Monster 1": "メインモンスターゾーン1", "Main Monster 2": "メインモンスターゾーン2", "Main Monster 3": "メインモンスターゾーン3", "Main Monster 4": "メインモンスターゾーン4", "Main Monster 5": "メインモンスターゾーン5", "Spell/Trap 1": "魔法・罠ゾーン1", "Spell/Trap 2": "魔法・罠ゾーン2", "Spell/Trap 3": "魔法・罠ゾーン3", "Spell/Trap 4": "魔法・罠ゾーン4", "Spell/Trap 5": "魔法・罠ゾーン5"}, "ko": {"Normal Summon": "일반 소환", "Special Summon": "특수 소환", "Set": "세트", "Activate Spell/Trap": "마법/함정 발동", "Activate Effect": "효과 발동", "Attack": "공격", "Send to GY": "묘지로 보내기", "Discard": "버리기", "Banish": "제외", "Add to Hand": "패에 넣기", "Search": "덱에서 서치", "Fusion Summon": "융합 소환", "Synchro Summon": "싱크로 소환", "Xyz Summon": "엑시즈 소환", "Pendulum Summon": "펜듈럼 소환", "Link Summon": "링크 소환", "Other": "기타", "Field Zone": "필드 존", "Graveyard": "묘지", "Banish Pile": "제외 존", "Effect Monster": "효과 몬스터", "Flip Effect Monster": "리버스 효과 몬스터", "Fusion Monster": "융합 몬스터", "Link Monster": "링크 몬스터", "Normal Monster": "일반 몬스터", "Pendulum Effect Monster": "펜듈럼 효과 몬스터", "Ritual Effect Monster": "의식 효과 몬스터", "Spell Card": "마법 카드", "Synchro Monster": "싱크로 몬스터", "Token": "토큰", "Trap Card": "함정 카드", "Tuner Monster": "튜너 몬스터", "Union Effect Monster": "유니온 몬스터", "Xyz Monster": "엑시즈 몬스터", "DARK": "어둠", "DIVINE": "신", "EARTH": "땅", "FIRE": "화염", "LIGHT": "빛", "WATER": "물", "WIND": "바람", "Extra Monster 1": "엑스트라 몬스터 존 1", "Extra Monster 2": "엑스트라 몬스터 존 2", "Main Monster 1": "메인 몬스터 존 1", "Main Monster 2": "메인 몬스터 존 2", "Main Monster 3": "메인 몬스터 존 3", "Main Monster 4": "메인 몬스터 존 4", "Main Monster 5": "메인 몬스터 존 5", "Spell/Trap 1": "마법 & 함정 존 1", "Spell/Trap 2": "마법 & 함정 존 2", "Spell/Trap 3": "마법 & 함정 존 3", "Spell/Trap 4": "마법 & 함정 존 4", "Spell/Trap 5": "마법 & 함정 존 5"}, "zh": {"Normal Summon": "通常召唤", "Special Summon": "特殊召唤", "Set": "盖放", "Activate Spell/Trap": "发动魔法/陷阱", "Activate Effect": "发动效果", "Attack": "攻击", "Send to GY": "送去墓地", "Discard": "丢弃", "Banish": "除外", "Add to Hand": "加入手卡", "Search": "从卡组检索", "Fusion Summon": "融合召唤", "Synchro Summon": "同调召唤", "Xyz Summon": "超量召唤", "Pendulum Summon": "灵摆召唤", "Link Summon": "连接召唤", "Other": "其他", "Field Zone": "场地区", "Graveyard": "墓地", "Banish Pile": "除外区", "Effect Monster": "效果怪兽", "Flip Effect Monster": "反转效果怪兽", "Fusion Monster": "融合怪兽", "Link Monster": "连接怪兽", "Normal Monster": "通常怪兽", "Pendulum Effect Monster": "灵摆效果怪兽", "Ritual Effect Monster": "仪式效果怪兽", "Spell Card": "魔法卡", "Synchro Monster": "同调怪兽", "Token": "衍生物", "Trap Card": "陷阱卡", "Tuner Monster": "调整怪兽", "Union Effect Monster": "同盟怪兽", "Xyz Monster": "超量怪兽", "DARK": "暗", "DIVINE": "神", "EARTH": "地", "FIRE": "炎", "LIGHT": "光", "WATER": "水", "WIND": "风", "Extra Monster 1": "额外怪兽区1", "Extra Monster 2": "额外怪兽区2", "Main Monster 1": "主要怪兽区1", "Main Monster 2": "主要怪兽区2", "Main Monster 3": "主要怪兽区3", "Main Monster 4": "主要怪兽区4", "Main Monster 5": "主要怪兽区5", "Spell/Trap 1": "魔法与陷阱区1", "Spell/Trap 2": "魔法与陷阱区2", "Spell/Trap 3": "魔法与陷阱区3", "Spell/Trap 4": "魔法与陷阱区4", "Spell/Trap 5": "魔法与陷阱区5"}};
         Object.entries({"es": {"Hand": "Mano", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Péndulo izq.", "Pendulum Right": "Péndulo der."}, "pt": {"Hand": "Mão", "Deck": "Deck", "Extra Deck": "Deck Adicional", "Pendulum Left": "Pêndulo esq.", "Pendulum Right": "Pêndulo dir."}, "fr": {"Hand": "Main", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Pendule gauche", "Pendulum Right": "Pendule droite"}, "it": {"Hand": "Mano", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Pendulum sin.", "Pendulum Right": "Pendulum des."}, "de": {"Hand": "Hand", "Deck": "Deck", "Extra Deck": "Extra-Deck", "Pendulum Left": "Pendel links", "Pendulum Right": "Pendel rechts"}, "ru": {"Hand": "Рука", "Deck": "Колода", "Extra Deck": "Доп. колода", "Pendulum Left": "Маятник (лев.)", "Pendulum Right": "Маятник (прав.)"}, "ja": {"Hand": "手札", "Deck": "デッキ", "Extra Deck": "エクストラデッキ", "Pendulum Left": "左ペンデュラム", "Pendulum Right": "右ペンデュラム"}, "ko": {"Hand": "패", "Deck": "덱", "Extra Deck": "엑스트라 덱", "Pendulum Left": "왼쪽 펜듈럼", "Pendulum Right": "오른쪽 펜듈럼"}, "zh": {"Hand": "手卡", "Deck": "卡组", "Extra Deck": "额外卡组", "Pendulum Left": "左灵摆区", "Pendulum Right": "右灵摆区"}}).forEach(([l, d]) => { YGO_TERMS[l] = Object.assign(YGO_TERMS[l] || {}, d); });
         let CURRENT_LANG = 'en';
         const trTerm = (name) => (name && YGO_TERMS[CURRENT_LANG] && YGO_TERMS[CURRENT_LANG][name]) || name;
-        // Íconos de movimiento de las cartas afectadas: ícono del lugar + flecha/modificador (origen → destino)
+        // Iconos de movimiento: lugar + flecha (de dónde → a dónde)
         const MOVES = {draw: { base: 'fa-hand', mod: 'fa-arrow-down', group: 'hand', es: "Robar (del Deck, robo normal)", en: "Draw (from the Deck)" }, search: { base: 'fa-hand', mod: 'fa-magnifying-glass', group: 'hand', es: "Buscar (del Deck a la mano)", en: "Search (Deck to hand)" }, recover: { base: 'fa-hand', mod: 'fa-recycle', group: 'hand', es: "Recuperar (del Cementerio o desterradas a la mano)", en: "Add back (from GY or banished to hand)" }, bounce: { base: 'fa-hand', mod: 'fa-arrow-rotate-left', group: 'hand', es: "Devolver (del campo a la mano)", en: "Return (from the field to hand)" }, toGy: { base: 'fa-skull', mod: 'fa-arrow-down', group: 'gy', es: "Mandar al Cementerio (cualquier lugar)", en: "Send to the GY" }, mill: { base: 'fa-skull', mod: 'fa-layer-group', group: 'gy', es: "Del Deck al Cementerio (mill)", en: "Mill (Deck to GY)" }, discard: { base: 'fa-skull', mod: 'fa-hand', group: 'gy', es: "Descartar (de la mano)", en: "Discard" }, destroy: { base: 'fa-skull', mod: 'fa-burst', group: 'gy', es: "Destruir (del campo)", en: "Destroy" }, tribute: { base: 'fa-skull', mod: 'fa-hand-holding', group: 'gy', es: "Sacrificar", en: "Tribute" }, material: { base: 'fa-skull', mod: 'fa-plus', group: 'gy', es: "Usar como material", en: "Use as material" }, detach: { base: 'fa-skull', mod: 'fa-link-slash', group: 'gy', es: "Desacoplar material", en: "Detach material" }, banish: { base: 'fa-ban', mod: 'fa-arrow-down', group: 'ban', es: "Desterrar", en: "Banish" }, banishFd: { base: 'fa-ban', mod: 'fa-eye-slash', group: 'ban', es: "Desterrar boca abajo", en: "Banish face-down" }, shuffle: { base: 'fa-layer-group', mod: 'fa-shuffle', group: 'deck', es: "Barajar en el Deck", en: "Shuffle into the Deck" }, deckTop: { base: 'fa-layer-group', mod: 'fa-arrows-up-to-line', group: 'deck', es: "Al tope del Deck", en: "Top of the Deck" }, deckBottom: { base: 'fa-layer-group', mod: 'fa-arrows-down-to-line', group: 'deck', es: "Al fondo del Deck", en: "Bottom of the Deck" }, excavate: { base: 'fa-layer-group', mod: 'fa-eye', group: 'deck', es: "Excavar", en: "Excavate" }, toExtra: { base: 'fa-box-archive', mod: 'fa-arrow-down', group: 'extra', es: "Devolver al Deck Extra (boca abajo)", en: "Return to the Extra Deck" }, pendExtra: { base: 'fa-box-archive', mod: 'fa-eye', group: 'extra', es: "Al Deck Extra boca arriba", en: "To the Extra Deck face-up" }, ssHand: { base: 'fa-hand', mod: 'fa-arrow-up', group: 'summon', es: "Invocar de la mano", en: "Summon from the hand" }, ssDeck: { base: 'fa-layer-group', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Deck", en: "Summon from the Deck" }, revive: { base: 'fa-skull', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Cementerio", en: "Summon from the GY" }, ssBanish: { base: 'fa-ban', mod: 'fa-arrow-up', group: 'summon', es: "Invocar de desterradas", en: "Summon from banished" }, ssExtra: { base: 'fa-box-archive', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Deck Extra", en: "Summon from the Extra Deck" }, set: { base: 'fa-hand', mod: 'fa-eye-slash', group: 'field', es: "Colocar", en: "Set" }, attach: { base: 'fa-link', mod: 'fa-arrow-down', group: 'field', es: "Acoplar como material Xyz", en: "Attach as Xyz material" }, equip: { base: 'fa-shield-halved', mod: 'fa-link', group: 'field', es: "Equipar", en: "Equip" }, control: { base: 'fa-hand-holding', mod: 'fa-rotate', group: 'field', es: "Tomar el control", en: "Take control" }, effect: { base: 'fa-wand-sparkles', mod: null, group: 'other', es: "Afectada por el efecto", en: "Affected by the effect" }, negate: { base: 'fa-wand-sparkles', mod: 'fa-xmark', group: 'other', es: "Negar", en: "Negate" }, reveal: { base: 'fa-eye', mod: null, group: 'other', es: "Revelar", en: "Reveal" }};
         const MOVE_GROUPS = [['hand', 'groupHand'], ['gy', 'groupGy'], ['ban', 'groupBanish'], ['deck', 'groupDeck'], ['extra', 'groupExtra'], ['summon', 'groupSummon'], ['field', 'groupField'], ['other', 'groupOther']];
         const moveLabel = (k) => { const m = MOVES[k] || MOVES.effect; const tr = window.MOVE_LABELS && window.MOVE_LABELS[CURRENT_LANG]; return (tr && tr[MOVES[k] ? k : 'effect']) || (CURRENT_LANG === 'es' ? m.es : m.en); };
@@ -406,7 +406,7 @@
                 left = mx - boxW - 24;
             }
             top = Math.max(pad, Math.min(top, window.innerHeight - boxH - pad));
-            // body tiene zoom 0.9: el mouse da píxeles visibles; left/top van en píxeles de la página
+            // zoom 0.9 otra vez: el mouse da píxeles visibles y left/top van en píxeles de la página
             const style = { position: 'fixed', top: `${top / zf}px`, left: `${left / zf}px` };
         
             const previewContent = (
@@ -513,7 +513,7 @@
         };
 
         const CardSelector = ({ cardPool, onCardSelected, buttonText, displayAs = 'button', t, wrapperClassName = '', onMouseEnter, onMouseLeave, onMouseMove, preferredDirection = 'down', mode = 'pool', allowNote = false }) => {
-            const allMode = mode === 'all'; // «todas las cartas»: primero la base de datos, sin pool ni notas, y no agrega al pool
+            const allMode = mode === 'all'; // modo 'all' = buscar en todas las cartas, sin pool ni notas y sin meterlas al pool
             const [isOpen, setIsOpen] = useState(false);
             const [quickPicks, setQuickPicks] = useState(handTrapCache.data);
             useEffect(() => { if (isOpen && allMode && !quickPicks) { let alive = true; loadHandTraps().then(list => { if (alive) setQuickPicks(list); }); return () => { alive = false; }; } }, [isOpen, allMode]);
@@ -800,7 +800,7 @@
                 </div>
             );
         };
-        // Campo final dibujado como tablero (en la app y en la exportación)
+        // Campo final como tablero (sale igual en la app y al exportar)
         const FINAL_BOARD_LAYOUT = [
             ["Extra Monster 1", 1, 3], ["Extra Monster 2", 1, 5],
             ["Main Monster 1", 2, 2], ["Main Monster 2", 2, 3], ["Main Monster 3", 2, 4], ["Main Monster 4", 2, 5], ["Main Monster 5", 2, 6], ["Graveyard", 2, 7],
@@ -828,7 +828,7 @@
                 </div>
             );
         };
-        // Zona inicial de una carta nueva en el campo final, según su tipo
+        // Dónde cae una carta nueva en el campo final según su tipo
         const pickFinalBoardZone = (card, board) => {
             const used = new Set((board || []).map(i => i.zone));
             const firstFree = (zones) => zones.find(z => !used.has(z));
@@ -838,7 +838,7 @@
             if (/Link/.test(type)) return firstFree(EMZ) || firstFree(MMZ) || MMZ[0];
             return firstFree(MMZ) || MMZ[0];
         };
-        // Cartas rápidas para «vulnerable a…»: hand traps comunes, pedidas una sola vez
+        // Hand traps típicas para «vulnerable a…», las pido una sola vez
         const HAND_TRAP_NAMES = ["Ash Blossom & Joyous Spring", "Maxx \"C\"", "Effect Veiler", "Infinite Impermanence", "Nibiru, the Primal Being", "Ghost Belle & Haunted Mansion", "Ghost Ogre & Snow Rabbit", "Droll & Lock Bird", "D.D. Crow", "Called by the Grave"];
         const handTrapCache = { data: null, promise: null };
         const loadHandTraps = () => {
@@ -851,9 +851,9 @@
             }
             return handTrapCache.promise;
         };
-        // La app le presta a los selectores de cartas la forma de agregar cualquier carta de la base de datos
+        // Para que cualquier selector pueda agregar cartas de la base de datos
         const cardSourceRef = { current: null };
-        // Carta comodín («cualquier carta»): una carta propia con dibujo de «?»
+        // Comodín («cualquier carta»): carta propia con un «?»
         const WILDCARD_IMG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 59 86'><rect width='59' height='86' rx='3' fill='#4c1d95'/><rect x='4' y='4' width='51' height='78' rx='2' fill='none' stroke='#c4b5fd' stroke-width='1.5' stroke-dasharray='3 2'/><text x='29.5' y='55' font-size='36' text-anchor='middle' fill='#ede9fe' font-family='Arial' font-weight='bold'>?</text></svg>");
         const makeWildcardCard = (name) => ({ instanceId: generateId(), isCustom: true, isWildcard: true, name, type: 'Wildcard', desc: '', atk: '', def: '', image_url: WILDCARD_IMG, image_url_small: WILDCARD_IMG, image_url_cropped: WILDCARD_IMG, notes: '' });
 
@@ -886,7 +886,7 @@
             const showBoardTopX = quick && exportOptions.include.finalBoard && finalBoardCards.length > 0;
             const boardImg = (c) => imageMap[c.image_url_small] || c.image_url_small;
             const boardView = exportOptions.boardView || 'board';
-            // Código QR con el enlace del combo (solo si el enlace cabe en un QR que se pueda escanear)
+            // QR con el enlace, solo si cabe en uno que se pueda escanear
             const shareUrlX = useMemo(() => (shareUrlFn ? shareUrlFn() : ''), [shareUrlFn, comboSteps, startingHand, finalBoardCards, comboTitle, notes, meta]);
             const qr = useMemo(() => {
                 if (!exportOptions.include || exportOptions.include.qr === false || !shareUrlX || !window.qrcode) return null;
@@ -1004,7 +1004,7 @@
                 flushStepRow();
                 return elements;
             };
-            // Plantilla vertical para Discord (720 px de ancho)
+            // Plantilla vertical para Discord (720 px)
             if (exportOptions.layout === 'discord') {
                 let dn = 0;
                 return (
@@ -1131,8 +1131,8 @@
         };
         const RichTextEditor = ({ value, onChange }) => { 
             const editorRef = useRef(null);
-            // Lo último que escribió la propia persona. Si el valor que llega es ese, NO se reescribe
-            // el contenido: reescribirlo manda el cursor al inicio y el texto sale al revés.
+            // Guardo lo último que escribí yo. Si llega eso mismo NO lo reescribo, porque si no
+            // el cursor se va al inicio y todo sale al revés (me pasó)
             const lastEmittedRef = useRef(null);
             useEffect(() => {
                 const el = editorRef.current;
@@ -1176,8 +1176,8 @@
             ); 
         };
 
-        // Filtro de cartas para exportar/imprimir: 'gray' = escala de grises; 'ink' = grises claros (gasta mucha menos tinta).
-        // La fórmula de 'ink' es la misma que la vista previa en CSS: grayscale(1) contrast(0.5) brightness(1.4).
+        // Filtro al exportar/imprimir: 'gray' = grises; 'ink' = grises clarito para gastar mucho menos tinta.
+        // La fórmula de 'ink' tiene que ser la misma que la del CSS: grayscale(1) contrast(0.5) brightness(1.4)
         const applyCardFilterToCanvas = (ctx, w, h, filter) => {
             if (!filter || filter === 'color' || !w || !h) return;
             const data = ctx.getImageData(0, 0, w, h);
@@ -1190,9 +1190,9 @@
             ctx.putImageData(data, 0, 0);
         };
 
-        // Imprimir / PDF: parte la imagen en hojas (cortando, si se puede, en una franja lisa
-        // para no partir cartas a la mitad) y abre el diálogo de impresión del navegador.
-        // Hojas (en mm, vertical). «Automática»: Carta en los países que la usan; A4 en el resto.
+        // Imprimir / PDF: corto la imagen en hojas (si puedo, en una franja vacía
+        // para no partir cartas) y abro el diálogo de impresión.
+        // Tamaños en mm, vertical. «Automática» = Carta donde se usa Carta, A4 en lo demás
         const PAPER_MM = { letter: [215.9, 279.4], a4: [210, 297], oficio: [216, 330], legal: [215.9, 355.6] };
         const autoPaperKey = () => {
             const langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
@@ -1213,7 +1213,7 @@
         const printCanvasInPages = (canvas, title, paper = { w: 215.9, h: 279.4 }) => {
             const W = canvas.width, H = canvas.height;
             const MARGIN = 8; // mm
-            const pageH = Math.floor(W * ((paper.h - 2 * MARGIN) / (paper.w - 2 * MARGIN)) * 0.985); // alto de cada hoja según el papel elegido
+            const pageH = Math.floor(W * ((paper.h - 2 * MARGIN) / (paper.w - 2 * MARGIN)) * 0.985); // alto de cada hoja según el papel
             const ctx = canvas.getContext('2d');
             const isQuietRow = (y) => {
                 const row = ctx.getImageData(0, y, W, 1).data;
@@ -1256,7 +1256,7 @@
             return pieces.length;
         };
 
-        // Vista previa en vivo: el diseño de exportación real (1280 px de ancho) reducido al espacio disponible.
+        // Vista previa: el diseño real de exportación (1280 px) encogido al espacio que hay
         const ExportPreview = ({ layoutProps, exportOptions }) => {
             const outerRef = useRef(null);
             const innerRef = useRef(null);
@@ -1496,7 +1496,7 @@
         const Notification = ({ message, show, t }) => { const elRef = useRef(null); useEffect(() => { if (show) { elRef.current.classList.add('show'); elRef.current.classList.remove('hide'); } else { elRef.current.classList.add('hide'); elRef.current.classList.remove('show'); } }, [show]); return ( <div ref={elRef} className="notification hide fixed top-5 left-1/2 -translate-x-1/2 bg-green-500/80 text-white font-bold px-6 py-2 rounded-full shadow-lg z-50"> {message} </div> ); };
         
 
-        // Dibuja una carta personalizada con el marco de su tipo (como una carta real) y devuelve una imagen
+        // Dibujo la carta personalizada con su marco según el tipo, como una de verdad
         const CARD_FRAME_COLORS = { 'Normal Monster': '#e3bd67', 'Effect Monster': '#d07945', 'Flip Effect Monster': '#d07945', 'Union Effect Monster': '#d07945', 'Tuner Monster': '#d07945', 'Ritual Effect Monster': '#5582cc', 'Fusion Monster': '#8a57b5', 'Synchro Monster': '#e6e6e6', 'Xyz Monster': '#232323', 'Link Monster': '#285c9e', 'Pendulum Effect Monster': '#d07945', 'Spell Card': '#14917a', 'Trap Card': '#a43f6d', 'Token': '#a3a3a3' };
         const ATTRIBUTE_COLORS = { DARK: '#5b2a86', LIGHT: '#c9a417', EARTH: '#76562b', WATER: '#1f6fbf', FIRE: '#cc3a1e', WIND: '#2b9444', DIVINE: '#a8821a' };
         const loadImg = (src) => new Promise(res => { if (!src) return res(null); const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
@@ -1512,18 +1512,18 @@
             g.fillStyle = frame; rr(5, 5, W - 10, H - 10, 9); g.fill();
             const art = { x: 30, y: 72, s: W - 60 };
             if (isPend) { g.fillStyle = '#1d9e75'; g.fillRect(5, art.y + art.s * 0.55, W - 10, H - art.y - art.s * 0.55 - 5); }
-            // Nombre
+            // nombre
             g.fillStyle = 'rgba(255,255,255,.9)'; rr(14, 14, W - 28, 32, 4); g.fill();
             g.fillStyle = '#111'; let fs = 19; g.font = `800 ${fs}px Inter, Arial, sans-serif`;
             const name = (card.name || '?').slice(0, 60);
             while (g.measureText(name).width > W - 76 && fs > 10) { fs--; g.font = `800 ${fs}px Inter, Arial, sans-serif`; }
             g.textBaseline = 'middle'; g.fillText(name, 22, 30);
-            // Atributo
+            // atributo
             const attr = isST ? (isSpell ? 'SPELL' : 'TRAP') : (card.attribute || 'DARK');
             g.fillStyle = isSpell ? '#14917a' : isTrap ? '#a43f6d' : (ATTRIBUTE_COLORS[attr] || '#555');
             g.beginPath(); g.arc(W - 30, 30, 13, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
             g.fillStyle = '#fff'; g.font = '800 11px Inter, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(attr[0], W - 30, 31); g.textAlign = 'left';
-            // Estrellas / tipo de Magia-Trampa
+            // estrellas o tipo de magia/trampa
             const lvl = Math.max(0, Math.min(13, parseInt(card.level, 10) || 0));
             if (isST) { g.fillStyle = '#111'; g.font = '700 12px Inter, Arial, sans-serif'; g.textAlign = 'right'; g.fillText(isSpell ? '[SPELL CARD]' : '[TRAP CARD]', W - 18, 59); g.textAlign = 'left'; }
             else if (!isLink && lvl > 0) {
@@ -1531,12 +1531,12 @@
                 for (let i = 0; i < lvl; i++) { const x = isXyz ? 26 + i * 19 : W - 26 - i * 19; g.fillStyle = isXyz ? '#111' : '#f2b705'; g.strokeStyle = isXyz ? '#f2c94c' : '#7a4a00'; g.lineWidth = 1; g.fillText('★', x, 60); g.strokeText('★', x, 60); }
                 g.textAlign = 'left';
             }
-            // Ilustración
+            // ilustración
             g.fillStyle = '#0b0b0b'; g.fillRect(art.x - 3, art.y - 3, art.s + 6, art.s + 6);
             const im = await loadImg(card.art);
             if (im) { const k = Math.max(art.s / im.width, art.s / im.height); const w = im.width * k, h = im.height * k; g.save(); g.beginPath(); g.rect(art.x, art.y, art.s, art.s); g.clip(); g.drawImage(im, art.x + (art.s - w) / 2, art.y + (art.s - h) / 2, w, h); g.restore(); }
             else { g.fillStyle = '#3b2f63'; g.fillRect(art.x, art.y, art.s, art.s); g.fillStyle = 'rgba(255,255,255,.35)'; g.font = '800 70px Inter, Arial, sans-serif'; g.textAlign = 'center'; g.fillText('?', art.x + art.s / 2, art.y + art.s / 2 + 4); g.textAlign = 'left'; }
-            // Caja de texto
+            // caja de texto
             const ty = art.y + art.s + 10;
             g.fillStyle = 'rgba(250,244,226,.95)'; rr(14, ty, W - 28, H - ty - 14, 4); g.fill();
             g.fillStyle = '#111'; g.font = '700 10px Inter, Arial, sans-serif'; g.textBaseline = 'top';
@@ -1573,7 +1573,7 @@
                 }
                 setImagePreview('');
             }, [existingCard, show]);
-            // Vista previa: la carta dibujada con su marco
+            // Vista previa de la carta ya con marco
             useEffect(() => {
                 if (!show) return;
                 let alive = true;
@@ -1751,8 +1751,8 @@
             );
         };
 
-        // Selector de fichas (Token): antes se añadía una al azar
-        // Leer un mazo: enlace ydke:// (Main!Extra!Side en base64) o texto de un .ydk (#main, #extra, !side)
+        // Selector de fichas (antes salía una al azar, mejor elegir)
+        // Leer mazo: ydke:// (Main!Extra!Side en base64) o el texto de un .ydk (#main, #extra, !side)
         const parseDeckIds = (text) => {
             const s = String(text || '').trim();
             const ids = [];
@@ -1892,15 +1892,15 @@
             );
         };
 
-        // ===================== Tablero virtual «Probar combo» (fase 1) =====================
-        // Siguientes pasos: fase 2 = flechas animadas entre zonas y ramas («si te interrumpen…»); fase 3 = exportar la jugada como GIF.
-        // Estado del tablero (solo datos, sin funciones):
+        // ===================== Tablero «Probar combo» =====================
+        // Pendiente: flechas entre zonas. (Ramas y GIF ya están)
+        // Cómo guardo el tablero (solo datos):
         //   slots   { 'Extra Monster 1' … 'Spell/Trap 5', 'Field Zone': carta | null }
-        //   hand, deck, extra, gy, banish: listas de cartas (la última es la de arriba)
-        //   info    { instanceId: { type, race } }: lo que las reglas necesitan saber de cada carta
-        //   nextUid contador para crear copias nuevas siempre con el mismo nombre
-        //   last    { uids, mainUid, dest }: qué tocó el último paso (para resaltarlo)
-        // Cada carta física es { uid, id: instanceId, faceDown?, materials?: [cartas] }.
+        //   hand, deck, extra, gy, banish: listas (la última es la de arriba)
+        //   info    { instanceId: { type, race } } lo que necesito saber de cada carta
+        //   nextUid contador para las copias nuevas
+        //   last    { uids, mainUid, dest } qué tocó el último paso, para resaltarlo
+        // Cada carta es { uid, id: instanceId, faceDown?, materials?: [cartas] }
         const PLAY_EMZ = ["Extra Monster 1", "Extra Monster 2"];
         const PLAY_MMZ = ["Main Monster 1", "Main Monster 2", "Main Monster 3", "Main Monster 4", "Main Monster 5"];
         const PLAY_STZ = ["Spell/Trap 1", "Spell/Trap 2", "Spell/Trap 3", "Spell/Trap 4", "Spell/Trap 5"];
@@ -1911,8 +1911,8 @@
         const playIsSpellTrap = (info) => /spell|trap/i.test((info && info.type) || '');
         const playIsMonsterZone = (z) => PLAY_EMZ.includes(z) || PLAY_MMZ.includes(z);
 
-        // Estado inicial: Mano = grupo elegido de la mano inicial; Fusión/Sincronía/Xyz/Enlace del pool → Extra Deck;
-        // el resto del pool que no está en la mano → Deck (las fichas no van a ningún sitio: aparecen al invocarlas).
+        // Al empezar: mano = la mano inicial elegida; Fusión/Sincro/Xyz/Link → Extra Deck;
+        // lo demás del pool → Deck. Las fichas no van a ningún lado, salen cuando se invocan
         const createInitialBoard = (cardPool, handGroup) => {
             const info = {};
             cardPool.forEach(c => { info[c.instanceId] = { type: c.type || '', race: c.race || '' }; });
@@ -1933,8 +1933,8 @@
             return { slots, hand, deck, extra, gy: [], banish: [], info, nextUid: n, last: null };
         };
 
-        // Busca una copia de la carta en los lugares indicados (en orden), la quita de ahí y la devuelve.
-        // 'field' = cualquier zona del campo (también debajo de un Xyz). Si no hay ninguna, se asume otra copia que sale del Deck.
+        // Saca una copia de la carta de donde le diga (en orden) y la devuelve.
+        // 'field' = cualquier zona (también debajo de un Xyz). Si no la encuentra, asumo otra copia del Deck
         const playTake = (s, id, sources) => {
             for (const src of sources) {
                 if (src === 'field') {
@@ -1948,7 +1948,7 @@
             return { card: { uid: 'c' + (s.nextUid++), id }, from: null };
         };
 
-        // Busca una carta sin moverla (para resaltarla).
+        // Igual pero sin moverla (solo para resaltar)
         const playFind = (s, id) => {
             for (const z of PLAY_SLOTS) { const c = s.slots[z]; if (c && c.id === id) return c; }
             for (const z of PLAY_SLOTS) { const m = ((s.slots[z] && s.slots[z].materials) || []).find(x => x.id === id); if (m) return m; }
@@ -1956,8 +1956,8 @@
             return null;
         };
 
-        // Elige la zona: la del paso (si es del tipo correcto y está libre), la zona de donde venía la carta, o la primera libre.
-        // Si todo está lleno, la del paso (o la primera); lo que hubiera ahí se va al Cementerio.
+        // Zona: la del paso si sirve y está libre, si no de donde venía, si no la primera libre.
+        // Si todo está lleno uso la del paso y lo que había se va al GY
         const playPickZone = (s, kind, preferred, from) => {
             const valid = (kind === 'st' || kind === 'pend') ? PLAY_STZ : kind === 'field' ? ['Field Zone'] : [...PLAY_EMZ, ...PLAY_MMZ];
             const ok = (z) => z && valid.includes(z);
@@ -1970,8 +1970,8 @@
             return order.find(z => !s.slots[z]) || (ok(preferred) ? preferred : order[0]);
         };
 
-        // Deja una carta en una zona del campo o en 'hand' / 'deck' / 'extra' / 'gy' / 'banish'.
-        // Devuelve dónde quedó, o null si desapareció (una ficha que deja el campo).
+        // Pone una carta en una zona o en 'hand' / 'deck' / 'extra' / 'gy' / 'banish'.
+        // Devuelve dónde quedó, o null si desapareció (ficha que sale del campo)
         const playPut = (s, card, dest) => {
             const info = s.info[card.id];
             const mats = card.materials || [];
@@ -1988,25 +1988,25 @@
             return dest;
         };
 
-        // applyStep(boardState, step) → nuevo estado. Función pura: no cambia boardState.
-        // ---- Reglas simples de movimiento (fase 1; se pueden afinar más adelante) ----
-        // • Normal Summon → de la Mano a una Zona de Monstruo (step.location si es zona de monstruo; si no, la primera libre).
-        // • Set → un monstruo va boca abajo a una Zona de Monstruo; una Magia/Trampa, boca abajo a Magia/Trampa (Magia de Campo → Zona de Campo).
-        // • Special Summon → desde donde esté (Mano, Cementerio, Desterradas, Deck; las de Fusión/Sincronía/Xyz/Enlace, del Extra Deck)
-        //   a la Zona de Monstruo o a la Zona Extra (step.location o la primera libre).
-        // • Pendulum Summon → igual que Special Summon, para la principal y las afectadas (si la principal es una escala ya colocada, solo se resalta).
-        // • Fusion / Synchro / Xyz / Link Summon → las targetCards (materiales) van al Cementerio (en Xyz quedan debajo como material);
-        //   la principal sale del Extra Deck a la Zona Extra (si ya usas una, a la primera Zona de Monstruo libre) o a step.location.
-        //   Si la principal es una Magia (p. ej. Polymerization), se activa y se invoca la primera carta de Extra Deck de las afectadas.
-        // • Activate Spell/Trap → a Magia/Trampa (o se activa donde estaba colocada); Normal, Quick-Play, Ritual y Counter se ven ahí durante ese paso y van al Cementerio al empezar el siguiente.
-        //   Un monstruo Péndulo va a la Zona de Péndulo (Magia/Trampa 1 o 5). Cualquier otro monstruo se trata como Activate Effect.
-        // • Activate Effect / Attack / Other → nada se mueve; se resaltan la principal y las afectadas.
-        // • Search / Add to Hand → las targetCards (si no hay, la principal) van a la Mano (desde Deck, Cementerio, Desterradas o el campo).
-        // • Send to GY / Discard / Banish → las targetCards (si no hay, la principal) van al Cementerio o a Desterradas.
-        // • Los pasos de tipo 'note' y 'group' no cambian el tablero.
-        // Detalles: si una carta no está donde debería, se asume otra copia que sale del Deck (el Deck real tiene más copias que el pool);
-        // si la zona pedida está ocupada se usa la primera libre; las fichas desaparecen al dejar el campo; las cartas del Extra Deck
-        // que irían a la Mano o al Deck vuelven al Extra Deck; los materiales Xyz van al Cementerio si su monstruo deja la Zona de Monstruo.
+        // applyStep(boardState, step) → estado nuevo. No toca boardState.
+        // ---- Reglas de movimiento (simples, ya las iré afinando) ----
+        // • Normal Summon: mano → zona de monstruo (la del paso o la primera libre)
+        // • Set: monstruo boca abajo a zona de monstruo; magia/trampa boca abajo a su zona (magia de campo → zona de campo)
+        // • Special Summon: de donde esté (mano, GY, desterradas, deck; las de Extra, del Extra Deck)
+        //   a zona de monstruo o zona extra
+        // • Pendulum Summon: igual que Special; si la principal es una escala ya puesta, solo se resalta
+        // • Fusion / Synchro / Xyz / Link: los materiales al GY (en Xyz se quedan abajo);
+        //   la principal sale del Extra a la zona extra (si ya está ocupada, a la primera de monstruo) o a la del paso.
+        //   Si la principal es una magia (Polymerization y así), se activa e invoco la primera de Extra de las afectadas
+        // • Activate Spell/Trap: a su zona (o se activa donde estaba). Normales, rápidas, ritual y contraataque se quedan ahí hasta que se cierra la cadena
+        //   Péndulo → zona de péndulo (M/T 1 o 5). Cualquier otro monstruo cuenta como Activate Effect
+        // • Activate Effect / Attack / Other: no se mueve nada, solo resalto
+        // • Search / Add to Hand: las afectadas (o la principal) a la mano, de donde estén
+        // • Send to GY / Discard / Banish: las afectadas (o la principal) al GY o desterradas
+        // • Notas y grupos no cambian nada
+        // Ojo: si una carta no está donde debería, asumo otra copia del Deck (el deck real trae más copias que el pool);
+        // si la zona está ocupada uso la primera libre; las fichas desaparecen al salir; las de Extra
+        // que irían a la mano o al deck regresan al Extra; los materiales Xyz se van al GY si su monstruo sale
         const applyStep = (boardState, step) => {
             const s = JSON.parse(JSON.stringify(boardState));
             s.last = { uids: [], mainUid: null, dest: null };
@@ -2014,9 +2014,9 @@
             if (step.location === 'Pendulum Left') step = { ...step, location: 'Spell/Trap 1' };
             else if (step.location === 'Pendulum Right') step = { ...step, location: 'Spell/Trap 5' };
             else if (['Hand', 'Deck', 'Extra Deck'].includes(step.location)) step = { ...step, location: null };
-            // Cadenas: step.chainRole = 'link' (responde en cadena: nuevo eslabón) | 'resolve' (misma cadena: costo o resolución) | vacío (acción nueva).
-            // Mientras la cadena sigue abierta, las Magias/Trampas activadas se quedan en el campo. Solo cuando empieza una acción nueva
-            // la cadena terminó de resolverse y las Normales, Rápidas, de Ritual o Contraataque van al Cementerio.
+            // Cadenas: chainRole = 'link' (respuesta, eslabón nuevo) | 'resolve' (misma cadena: costo o resolución) | vacío (acción nueva).
+            // Mientras la cadena siga abierta las magias/trampas activadas se quedan en el campo. Cuando empieza una acción nueva
+            // ya se resolvió todo y las normales, rápidas, ritual o contraataque se van al GY
             const chainRole = step.chainRole || null;
             s.chain = s.chain || [];
             if (!chainRole) {
@@ -2054,7 +2054,7 @@
                 }
                 const card = summon(id, ['field', 'hand', 'deck', 'gy', 'banish'], /field/i.test(info.race || '') ? 'field' : 'st', { isMain });
                 if (/^(normal|quick-play|ritual|counter)$/i.test(info.race || '')) {
-                    // Se queda en su zona mientras se activa; al pasar al siguiente paso resuelve y va al Cementerio.
+                    // Se queda en su zona mientras siga la cadena
                     const z = PLAY_SLOTS.find(k => s.slots[k] && s.slots[k].uid === card.uid);
                     if (z) s.slots[z].resolveToGy = true;
                 }
@@ -2117,7 +2117,7 @@
                     highlight(mainId, true);
                     targetIds.forEach(id => highlight(id, false));
             }
-            // Movimientos elegidos a mano en las cartas afectadas (pasos cuya acción no mueve las afectadas)
+            // Movimientos que elegí a mano en las afectadas (pasos cuya acción no las mueve)
             const MOVE_DEST = { draw: 'hand', search: 'hand', recover: 'hand', bounce: 'hand', toGy: 'gy', mill: 'gy', discard: 'gy', destroy: 'gy', tribute: 'gy', material: 'gy', detach: 'gy', banish: 'banish', banishFd: 'banish', shuffle: 'deck', deckTop: 'deck', deckBottom: 'deck', toExtra: 'extra', pendExtra: 'extra' };
             const MOVE_SUMMON = { ssHand: 'hand', ssDeck: 'deck', revive: 'gy', ssBanish: 'banish', ssExtra: 'extra' };
             if (['Activate Effect', 'Activate Spell/Trap', 'Special Summon', 'Normal Summon', 'Set', 'Attack', 'Other'].includes(step.actionType)) {
@@ -2131,7 +2131,7 @@
                     }
                 });
             }
-            // Nuevo eslabón: la carta que activa (no cuenta cuando la principal es solo la carta que se mueve o se invoca por procedimiento)
+            // Eslabón nuevo: la que activa (no cuenta si la principal solo se mueve o se invoca por procedimiento)
             const NOT_ACTIVATION = ['Send to GY', 'Discard', 'Banish', 'Normal Summon', 'Pendulum Summon', 'Fusion Summon', 'Synchro Summon', 'Xyz Summon', 'Link Summon', 'Attack'];
             const activates = !NOT_ACTIVATION.includes(step.actionType) || (/Summon/.test(step.actionType || '') && playIsSpellTrap(mainInfo));
             if (chainRole !== 'resolve' && mainId && activates) {
@@ -2141,7 +2141,7 @@
             return s;
         };
 
-        // Nombres cortos para la lista de jugadas: se quita el prefijo de arquetipo compartido («Salamangreat Spinny» → «Spinny»).
+        // Nombres cortos en la lista: le quito el arquetipo («Salamangreat Spinny» → «Spinny»)
         const playShortNames = (cardPool) => {
             const out = {}, groups = {};
             cardPool.forEach(c => {
@@ -2176,7 +2176,7 @@
             const [score, setScore] = useState({ ok: 0, wrong: [] });
             const listRef = useRef(null);
 
-            // Rama elegida: la línea principal hasta ese paso y luego los pasos de la rama
+            // Rama elegida: línea principal hasta ese paso y luego los de la rama
             const [branchFrom, setBranchFrom] = useState(null);
             const timeline = useMemo(() => {
                 const main = comboSteps || [];
@@ -2186,7 +2186,7 @@
                 if (!src || !src.branch) return main;
                 return [...main.slice(0, idx + 1), { type: 'group', id: 'branch-' + src.id, title: '↳ ' + (src.branch.title || t('branchLabel')) }, ...(src.branch.steps || []).map(bs => ({ ...bs, type: 'step', vulnerability: { text: '', cards: [] }, targetCards: bs.targetCards || [] }))];
             }, [branchFrom, comboSteps, t]);
-            // Línea de tiempo: solo los pasos de verdad avanzan; las notas se muestran con el paso anterior y los grupos como títulos.
+            // Línea de tiempo: solo los pasos de verdad avanzan; las notas van con el paso anterior y los grupos son títulos
             const { steps, notesAt, groupAt, rows } = useMemo(() => {
                 const steps = [], notesAt = [[]], groupAt = [null], rows = [];
                 let group = null;
@@ -2200,7 +2200,7 @@
             }, [timeline]);
             const total = steps.length;
 
-            // boards[k] = estado tras k pasos, calculado siempre desde el inicio: avanzar y retroceder dan el mismo tablero.
+            // boards[k] = tablero tras k pasos, siempre desde el inicio, así ir y regresar da lo mismo
             const boards = useMemo(() => {
                 const list = [createInitialBoard(cardPool, handOptions[handIdx] || [])];
                 steps.forEach(st => list.push(applyStep(list[list.length - 1], st)));
@@ -2209,7 +2209,7 @@
             const p = Math.min(pos, total);
             const board = boards[p];
             const go = useCallback((n) => setPos(Math.max(0, Math.min(total, n))), [total]);
-            // Reproducción automática (▶) con velocidad lenta / normal / rápida
+            // ▶ automático: lento / normal / rápido
             const PLAY_DELAYS = { slow: 3000, normal: 1700, fast: 800 };
             const [playing, setPlaying] = useState(false);
             const [speed, setSpeed] = useState(() => { try { const v = localStorage.getItem('ygo_play_speed'); return PLAY_DELAYS[v] ? v : 'normal'; } catch (e) { return 'normal'; } });
@@ -2222,7 +2222,7 @@
             }, [playing, p, total, speed, go]);
             const togglePlay = () => { if (playing) { setPlaying(false); return; } if (total === 0) return; if (p >= total) go(0); setPlaying(true); };
             const manualGo = (n) => { setPlaying(false); go(n); };
-            // GIF animado: una foto del tablero por paso (html2canvas) y se unen en el navegador con gifenc
+            // GIF: foto del tablero por paso (html2canvas) y los junto con gifenc
             const [gifState, setGifState] = useState(null); // null | {phase:'options'} | {phase:'working',done,total} | {phase:'ready',url,bytes} | {phase:'error'}
             const [gifSize, setGifSize] = useState('small');
             const makeGif = async () => {
@@ -2330,7 +2330,7 @@
                 return () => { document.body.style.overflow = prev; };
             }, []);
 
-            // Mantiene visible la jugada actual en la lista (solo cuando la lista tiene su propia barra, en pantallas grandes).
+            // Que la jugada actual siempre se vea en la lista (solo en pantalla grande, donde tiene su barra)
             useEffect(() => {
                 const box = listRef.current;
                 const row = box && box.querySelector('[data-active="true"]');
@@ -2341,7 +2341,7 @@
 
             const hl = new Set((board.last && board.last.uids) || []);
             const mainUid = board.last && board.last.mainUid;
-            // La cadena se muestra mientras sigue abierta (este paso o el siguiente forman parte de ella)
+            // La cadena se ve mientras siga abierta (este paso o el siguiente son parte de ella)
             const chainList = board.chain || [];
             const chainOn = chainList.length > 0 && !!((steps[p - 1] && steps[p - 1].chainRole) || (steps[p] && steps[p].chainRole));
             const chainResolving = !!(steps[p - 1] && steps[p - 1].chainRole === 'resolve');
@@ -2661,7 +2661,7 @@
             const [showMoreMenu, setShowMoreMenu] = useState(false);
             const [wiggleKeys, setWiggleKeys] = useState(() => new Set());
             const [movePicker, setMovePicker] = useState(null); // { stepId, instanceId, top, left }
-            const [openSide, setOpenSide] = useState(null); // 'stepId:left' | 'stepId:right' (celular)
+            const [openSide, setOpenSide] = useState(null); // 'stepId:left' | 'stepId:right' (en celular)
             const [stepSize, setStepSize] = useState(() => { try { const v = localStorage.getItem('ygo_step_size'); return ['s', 'm', 'l'].includes(v) ? v : 'm'; } catch (e) { return 'm'; } });
             useEffect(() => { try { localStorage.setItem('ygo_step_size', stepSize); } catch (e) {} }, [stepSize]);
             useEffect(() => {
@@ -2724,11 +2724,11 @@
                 try { savedStyle = JSON.parse(localStorage.getItem('ygo_export_style') || '{}') || {}; } catch (e) {}
                 return { include: { startingHand: true, comboSteps: true, finalBoard: true, notes: true, comboStats: true, qr: true }, scale: 2, stepsPerRow: 4, theme: savedStyle.theme || 'dark', cardFilter: savedStyle.cardFilter || 'color', layout: ['quick', 'discord'].includes(savedStyle.layout) ? savedStyle.layout : 'full', boardView: ['board', 'cards', 'both'].includes(savedStyle.boardView) ? savedStyle.boardView : 'board', paper: savedStyle.paper || 'auto', paperW: savedStyle.paperW ?? 21.6, paperH: savedStyle.paperH ?? 33, paperUnit: savedStyle.paperUnit || 'cm' };
             });
-            // Se recuerda el estilo de exportación (fondo y color de cartas) para la próxima vez.
+            // Me acuerdo del estilo de exportación (fondo y color de cartas) para la próxima
             useEffect(() => { try { localStorage.setItem('ygo_export_style', JSON.stringify({ theme: exportOptions.theme, cardFilter: exportOptions.cardFilter, layout: exportOptions.layout, boardView: exportOptions.boardView, paper: exportOptions.paper, paperW: exportOptions.paperW, paperH: exportOptions.paperH, paperUnit: exportOptions.paperUnit })); } catch (e) {} }, [exportOptions.theme, exportOptions.cardFilter, exportOptions.layout, exportOptions.boardView, exportOptions.paper, exportOptions.paperW, exportOptions.paperH, exportOptions.paperUnit]);
             const initialComboState = { cardPool: [], startingHand: [[]], comboSteps: [], finalBoardCards: [], comboTitle: '', notes: '', };
             const { state: comboState, setState: setComboStateRaw, loadState, undo, redo, canUndo, canRedo } = useHistoryState(initialComboState);
-            // Cartas elegidas de la base de datos que todavía no están en el pool: entran con el siguiente cambio
+            // Cartas que elegí de la base y aún no están en el pool: entran con el siguiente cambio
             const pendingPoolRef = useRef([]);
             const setComboState = (newState, description) => {
                 const pending = pendingPoolRef.current;
@@ -2748,7 +2748,7 @@
             const cardPoolSectionRef = useRef(null);
             
             useEffect(() => { document.documentElement.lang = language; }, [language]);
-            // Solo se recuerda el idioma cuando la persona lo elige; si no, se sigue el idioma de su sistema.
+            // El idioma solo se guarda si lo eligen; si no, uso el del sistema
             const chooseLanguage = (lang) => { setLanguage(lang); try { localStorage.setItem('ygo_lang', lang); } catch (e) {} };
             CURRENT_LANG = language;
             const t = useCallback((key, params = {}) => { let str = (translations[language] && translations[language][key]) || translations['en'][key] || key; for (const param in params) { str = str.replace(`{${param}}`, params[param]); } return str; }, [language]);
@@ -2835,7 +2835,7 @@
             }, [comboState]);
 
             useEffect(() => {
-                if (new URLSearchParams(window.location.search).get('combo')) return; // al abrir un enlace, la copia se guarda aparte
+                if (new URLSearchParams(window.location.search).get('combo')) return; // si se abre un enlace, la copia se guarda aparte
                 const autoSavedData = localStorage.getItem(AUTO_SAVE_KEY);
                 if (autoSavedData) {
                     setShowRestoreNotification(true);
@@ -2889,7 +2889,7 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const comboData = urlParams.get('combo');
                 if (comboData) {
-                    // Si había un combo sin guardar, se guarda como copia en «Abrir» antes de reemplazarlo
+                    // Si había algo sin guardar, lo guardo como copia en «Abrir» antes de reemplazar
                     let backedUp = false;
                     try {
                         const prevRaw = localStorage.getItem(AUTO_SAVE_KEY);
@@ -3107,7 +3107,7 @@
                 if (!cardToRemove) return;
                 const newPool = cardPool.filter(c => c.instanceId !== instanceId);
                 const newHand = startingHand.map(group => group.filter(item => item.instanceId !== instanceId)).filter(group => group.length > 0);
-                // Las notas y los grupos no tienen cartas: antes esto fallaba y la carta no se podía quitar
+                // Notas y grupos no tienen cartas (esto tronaba y no dejaba quitar la carta)
                 const newSteps = comboSteps.map(step => step.type === 'step' ? ({ ...step, targetCards: (step.targetCards || []).filter(c => c.instanceId !== instanceId), vulnerability: step.vulnerability ? { ...step.vulnerability, cards: (step.vulnerability.cards || []).filter(c => c.instanceId !== instanceId) } : step.vulnerability }) : step).filter(step => step.mainCardInstanceId !== instanceId);
                 const newBoard = finalBoardCards.filter(item => item.card.instanceId !== instanceId);
                 setComboState({ ...comboState, cardPool: newPool, startingHand: newHand.length > 0 ? newHand : [[]], comboSteps: newSteps, finalBoardCards: newBoard }, `Removed '${cardToRemove.name}'`);
@@ -3129,7 +3129,7 @@
 
             const updateStep = (stepId, updatedData) => { const newSteps = comboSteps.map(step => step.id === stepId ? { ...step, ...updatedData } : step); setComboState({ ...comboState, comboSteps: newSteps }, `Updated step`); };
             const updateMeta = (key, value) => setComboState({ ...comboState, meta: { ...(comboState.meta || {}), [key]: value } }, 'Updated combo info');
-            // Cartas afectadas (derecha) y a las que es vulnerable (izquierda)
+            // Cartas afectadas (derecha) y vulnerable a (izquierda)
             const addTargetCard = (step, card) => {
                 if (!card || card.isNote) return;
                 updateStep(step.id, { targetCards: [...(step.targetCards || []), { instanceId: card.instanceId, quantity: 1, move: defaultMoveFor(step.actionType) }] });
@@ -3160,7 +3160,7 @@
                 let top = r.bottom + 6; if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
                 setMovePicker({ stepId, instanceId, top: top / z, left: left / z });
             };
-            // Ramas: un paso puede tener una línea alternativa («si me interrumpen aquí…») con sus propios pasos
+            // Ramas: un paso puede tener su línea alternativa («si me interrumpen aquí…»)
             const setBranch = (stepId, branch) => updateStep(stepId, { branch });
             const branchTitleFor = (step) => {
                 const v = step.vulnerability || {};
@@ -3462,7 +3462,7 @@
                 }
             };
 
-            // Guardar / abrir combos como archivo (.json) en la computadora del usuario.
+            // Guardar / abrir combos como archivo .json
             const handleDownloadComboFile = (name) => {
                 const fileName = (name || comboTitle || 'combo').replace(/[\\/:*?"<>|]+/g, '').trim().slice(0, 80) || 'combo';
                 const payload = { app: 'yugioh-combo-maker', fileVersion: 1, savedAt: new Date().toISOString(), combo: comboState };
@@ -3525,7 +3525,7 @@
                 }
             };
             
-            // Combo en texto plano (para Discord, WhatsApp, Reddit…)
+            // Combo en texto (para Discord, WhatsApp, Reddit…)
             const htmlToText = (html) => {
                 if (!html) return '';
                 const withBreaks = String(html).replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li)>/gi, '\n');
@@ -3676,10 +3676,10 @@
                 try { localStorage.setItem('ygo_bg_anim', v ? '1' : '0'); } catch (e) {}
                 document.documentElement.classList.toggle('bg-static', !v);
             };
-            // Abre el formulario de GitHub de la Comunidad ya rellenado (título, arquetipo sugerido y enlace)
+            // Abre el formulario de Comunidad en GitHub ya llenado (título, arquetipo y enlace)
             const handlePublishCommunity = async () => {
                 if (!comboSteps.some(s => s.type === 'step')) { setNotification({ show: true, message: t('publishNeedSteps') }); return; }
-                const win = window.open('', '_blank'); // se abre ya, para que el navegador no lo bloquee
+                const win = window.open('', '_blank'); // la abro ya para que el navegador no la bloquee
                 let arch = '';
                 try {
                     const ids = [...new Set(cardPool.filter(c => !c.isCustom && c.ygoprodeck_id && !/token/i.test(c.type || '')).map(c => c.ygoprodeck_id))].slice(0, 40);
@@ -3692,7 +3692,7 @@
                 const url = `https://github.com/aaoollaaooll/Yugioh-combo-maker/issues/new?${params.toString()}`;
                 if (win) { win.opener = null; win.location.href = url; } else window.open(url, '_blank', 'noopener');
             };
-            // Importar mazo: añade al pool las cartas que aún no estén (en bloques de 50 por consulta)
+            // Importar mazo: agrego al pool lo que falte (de 50 en 50 por consulta)
             const importDeckIds = async (ids) => {
                 const have = new Set(cardPool.filter(c => !c.isCustom).map(c => c.ygoprodeck_id));
                 const unique = [...new Set(ids)].filter(id => !have.has(id));

@@ -119,7 +119,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':
 const show = (el, on = true) => el.classList.toggle('hidden', !on);
 const norm = (s) => (s || '').toLowerCase();
 
-// ---------- Leer el formulario del Issue ----------
+// ---------- leer el formulario del Issue ----------
 function parseFormSections(body) {
   const out = {};
   String(body || '').split(/^###\s+/m).slice(1).forEach(part => {
@@ -133,7 +133,7 @@ function parseFormSections(body) {
 const pick = (sections, prefix) => { const k = Object.keys(sections).find(k => k.startsWith(prefix)); return k ? sections[k] : ''; };
 const splitList = (s) => (s || '').split(',').map(x => x.trim()).filter(Boolean);
 
-// ---------- Leer el enlace del combo (formato v2: pako + base64url) ----------
+// ---------- leer el enlace (v2: pako + base64url) ----------
 function decodeShare(encoded) {
   const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
   const bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
@@ -192,7 +192,7 @@ async function fetchCombos() {
   return data;
 }
 
-// Imagen de cada arquetipo (una carta del arquetipo; se guarda en el navegador)
+// Imagen por arquetipo (una carta suya, se guarda en el navegador)
 const archImgCache = (() => { try { return JSON.parse(localStorage.getItem('ygo_arch_img') || '{}'); } catch (e) { return {}; } })();
 async function archImage(name) {
   if (name in archImgCache) return archImgCache[name];
@@ -203,7 +203,7 @@ async function archImage(name) {
   return id;
 }
 
-// ---------- Estado e interfaz ----------
+// ---------- estado e interfaz ----------
 const state = { data: [], fmt: 'all', arch: null, sort: 'recent' };
 function texts() {
   document.title = `${t.title} · Yu-Gi-Oh! Combo Maker`;
