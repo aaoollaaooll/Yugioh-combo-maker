@@ -416,6 +416,12 @@
         .grid-pos-stz5 { grid-area: 3 / 5 / 4 / 6; }
         
         .grid-pos-bp { grid-area: 3 / 6 / 4 / 7; }
+        .grid-pos-ed { grid-area: 4 / 1 / 5 / 2; }
+        .grid-pos-pl { grid-area: 4 / 2 / 5 / 3; }
+        .grid-pos-hand { grid-area: 4 / 3 / 5 / 5; }
+        .grid-pos-pr { grid-area: 4 / 5 / 5 / 6; }
+        .grid-pos-deck { grid-area: 4 / 6 / 5 / 7; }
+        .ygo-field-zone.zone-extra { font-size: .58rem; line-height: 1.1; padding: 2px; border-style: dashed; }
 
         /* --- Tablero virtual «Probar combo» --- */
         .play-overlay { background: var(--color-background); }
@@ -927,6 +933,9 @@
         // Botón «Publicar en Comunidad» (GitHub)
         const EXTRA_TRANSLATIONS_PUB = {"es": {"publishCommunity": "Publicar en Comunidad", "publishNeedSteps": "Agrega al menos un paso antes de publicar."}, "en": {"publishCommunity": "Publish to Community", "publishNeedSteps": "Add at least one step before publishing."}, "pt": {"publishCommunity": "Publicar na Comunidade", "publishNeedSteps": "Adicione pelo menos um passo antes de publicar."}, "fr": {"publishCommunity": "Publier dans la communauté", "publishNeedSteps": "Ajoutez au moins une étape avant de publier."}, "it": {"publishCommunity": "Pubblica nella community", "publishNeedSteps": "Aggiungi almeno un passo prima di pubblicare."}, "de": {"publishCommunity": "In der Community veröffentlichen", "publishNeedSteps": "Füge vor dem Veröffentlichen mindestens einen Schritt hinzu."}, "ru": {"publishCommunity": "Опубликовать в сообществе", "publishNeedSteps": "Добавьте хотя бы один шаг перед публикацией."}, "ja": {"publishCommunity": "コミュニティに投稿", "publishNeedSteps": "投稿する前にステップを1つ以上追加してください。"}, "ko": {"publishCommunity": "커뮤니티에 게시", "publishNeedSteps": "게시하기 전에 단계를 하나 이상 추가하세요."}, "zh": {"publishCommunity": "发布到社区", "publishNeedSteps": "发布前请至少添加一个步骤。"}};
         Object.entries(EXTRA_TRANSLATIONS_PUB).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        // Tanda 4: campo final al exportar y tamaño de hoja
+        const EXTRA_TRANSLATIONS_T4 = {"es": {"exportBoardView": "Campo final en la hoja", "boardViewBoard": "Tablero", "boardViewCards": "Cartas", "boardViewBoth": "Ambos", "paperSize": "Hoja para imprimir", "paperAuto": "Automática", "paper_letter": "Carta", "paper_a4": "A4", "paper_oficio": "Oficio", "paper_legal": "Legal", "paper_custom": "A medida", "paperHint": "Solo cambia «Imprimir / PDF»."}, "en": {"exportBoardView": "End board on the sheet", "boardViewBoard": "Board", "boardViewCards": "Cards", "boardViewBoth": "Both", "paperSize": "Paper for printing", "paperAuto": "Automatic", "paper_letter": "Letter", "paper_a4": "A4", "paper_oficio": "Oficio (8.5×13 in)", "paper_legal": "Legal", "paper_custom": "Custom size", "paperHint": "Only affects “Print / PDF”."}, "pt": {"exportBoardView": "Campo final na folha", "boardViewBoard": "Tabuleiro", "boardViewCards": "Cartas", "boardViewBoth": "Ambos", "paperSize": "Papel para imprimir", "paperAuto": "Automático", "paper_letter": "Carta", "paper_a4": "A4", "paper_oficio": "Ofício", "paper_legal": "Legal", "paper_custom": "Personalizado", "paperHint": "Só afeta «Imprimir / PDF»."}, "fr": {"exportBoardView": "Terrain final sur la feuille", "boardViewBoard": "Plateau", "boardViewCards": "Cartes", "boardViewBoth": "Les deux", "paperSize": "Papier d'impression", "paperAuto": "Automatique", "paper_letter": "Lettre US", "paper_a4": "A4", "paper_oficio": "Oficio (8,5×13 po)", "paper_legal": "Légal US", "paper_custom": "Sur mesure", "paperHint": "Ne change que « Imprimer / PDF »."}, "it": {"exportBoardView": "Campo finale nel foglio", "boardViewBoard": "Tabellone", "boardViewCards": "Carte", "boardViewBoth": "Entrambi", "paperSize": "Carta per la stampa", "paperAuto": "Automatica", "paper_letter": "Lettera US", "paper_a4": "A4", "paper_oficio": "Oficio (8,5×13 in)", "paper_legal": "Legal US", "paper_custom": "Personalizzata", "paperHint": "Cambia solo «Stampa / PDF»."}, "de": {"exportBoardView": "Endfeld auf dem Blatt", "boardViewBoard": "Spielfeld", "boardViewCards": "Karten", "boardViewBoth": "Beides", "paperSize": "Papier zum Drucken", "paperAuto": "Automatisch", "paper_letter": "US-Letter", "paper_a4": "A4", "paper_oficio": "Oficio (8,5×13 in)", "paper_legal": "US-Legal", "paper_custom": "Eigene Größe", "paperHint": "Betrifft nur „Drucken / PDF“."}, "ru": {"exportBoardView": "Итоговое поле на листе", "boardViewBoard": "Поле", "boardViewCards": "Карты", "boardViewBoth": "Оба", "paperSize": "Бумага для печати", "paperAuto": "Автоматически", "paper_letter": "Letter (США)", "paper_a4": "A4", "paper_oficio": "Oficio (8,5×13 дюйма)", "paper_legal": "Legal (США)", "paper_custom": "Свой размер", "paperHint": "Влияет только на «Печать / PDF»."}, "ja": {"exportBoardView": "最終盤面の表示", "boardViewBoard": "盤面", "boardViewCards": "カード", "boardViewBoth": "両方", "paperSize": "印刷用紙", "paperAuto": "自動", "paper_letter": "レター", "paper_a4": "A4", "paper_oficio": "オフィシオ (8.5×13 in)", "paper_legal": "リーガル", "paper_custom": "カスタム", "paperHint": "「印刷 / PDF」にだけ影響します。"}, "ko": {"exportBoardView": "최종 필드 표시", "boardViewBoard": "보드", "boardViewCards": "카드", "boardViewBoth": "둘 다", "paperSize": "인쇄 용지", "paperAuto": "자동", "paper_letter": "레터", "paper_a4": "A4", "paper_oficio": "오피시오 (8.5×13 in)", "paper_legal": "리걸", "paper_custom": "사용자 지정", "paperHint": "'인쇄 / PDF'에만 적용됩니다."}, "zh": {"exportBoardView": "最终场面显示方式", "boardViewBoard": "棋盘", "boardViewCards": "卡片", "boardViewBoth": "两者", "paperSize": "打印纸张", "paperAuto": "自动", "paper_letter": "Letter", "paper_a4": "A4", "paper_oficio": "Oficio (8.5×13 英寸)", "paper_legal": "Legal", "paper_custom": "自定义", "paperHint": "仅影响“打印 / PDF”。"}};
+        Object.entries(EXTRA_TRANSLATIONS_T4).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
@@ -1022,6 +1031,7 @@
         };
         // Nombres de acciones, zonas, tipos y atributos en cada idioma. Lo que se guarda sigue en inglés.
         const YGO_TERMS = {"es": {"Normal Summon": "Invocación Normal", "Special Summon": "Invocación Especial", "Set": "Colocar", "Activate Spell/Trap": "Activar Mágica/Trampa", "Activate Effect": "Activar efecto", "Attack": "Atacar", "Send to GY": "Enviar al Cementerio", "Discard": "Descartar", "Banish": "Desterrar", "Add to Hand": "Añadir a la mano", "Search": "Buscar del Deck", "Fusion Summon": "Invocación por Fusión", "Synchro Summon": "Invocación por Sincronía", "Xyz Summon": "Invocación Xyz", "Pendulum Summon": "Invocación por Péndulo", "Link Summon": "Invocación por Enlace", "Other": "Otra", "Field Zone": "Zona de Campo", "Graveyard": "Cementerio", "Banish Pile": "Desterradas", "Effect Monster": "Monstruo de Efecto", "Flip Effect Monster": "Monstruo de Efecto de Volteo", "Fusion Monster": "Monstruo de Fusión", "Link Monster": "Monstruo de Enlace", "Normal Monster": "Monstruo Normal", "Pendulum Effect Monster": "Monstruo de Efecto de Péndulo", "Ritual Effect Monster": "Monstruo de Ritual de Efecto", "Spell Card": "Carta Mágica", "Synchro Monster": "Monstruo de Sincronía", "Token": "Ficha", "Trap Card": "Carta de Trampa", "Tuner Monster": "Monstruo Cantante", "Union Effect Monster": "Monstruo de Unión", "Xyz Monster": "Monstruo Xyz", "DARK": "OSCURIDAD", "DIVINE": "DIVINIDAD", "EARTH": "TIERRA", "FIRE": "FUEGO", "LIGHT": "LUZ", "WATER": "AGUA", "WIND": "VIENTO", "Extra Monster 1": "Zona de Monstruo Extra 1", "Extra Monster 2": "Zona de Monstruo Extra 2", "Main Monster 1": "Zona de Monstruo 1", "Main Monster 2": "Zona de Monstruo 2", "Main Monster 3": "Zona de Monstruo 3", "Main Monster 4": "Zona de Monstruo 4", "Main Monster 5": "Zona de Monstruo 5", "Spell/Trap 1": "Zona de Mágicas/Trampas 1", "Spell/Trap 2": "Zona de Mágicas/Trampas 2", "Spell/Trap 3": "Zona de Mágicas/Trampas 3", "Spell/Trap 4": "Zona de Mágicas/Trampas 4", "Spell/Trap 5": "Zona de Mágicas/Trampas 5"}, "pt": {"Normal Summon": "Invocação-Normal", "Special Summon": "Invocação-Especial", "Set": "Baixar", "Activate Spell/Trap": "Ativar Magia/Armadilha", "Activate Effect": "Ativar efeito", "Attack": "Atacar", "Send to GY": "Enviar ao Cemitério", "Discard": "Descartar", "Banish": "Banir", "Add to Hand": "Adicionar à mão", "Search": "Buscar no Deck", "Fusion Summon": "Invocação-Fusão", "Synchro Summon": "Invocação-Sincro", "Xyz Summon": "Invocação-Xyz", "Pendulum Summon": "Invocação-Pêndulo", "Link Summon": "Invocação-Link", "Other": "Outra", "Field Zone": "Zona de Campo", "Graveyard": "Cemitério", "Banish Pile": "Banidas", "Effect Monster": "Monstro de Efeito", "Flip Effect Monster": "Monstro de Efeito de Virar", "Fusion Monster": "Monstro de Fusão", "Link Monster": "Monstro Link", "Normal Monster": "Monstro Normal", "Pendulum Effect Monster": "Monstro de Efeito Pêndulo", "Ritual Effect Monster": "Monstro de Ritual de Efeito", "Spell Card": "Card de Magia", "Synchro Monster": "Monstro Sincro", "Token": "Ficha", "Trap Card": "Card de Armadilha", "Tuner Monster": "Monstro Regulador", "Union Effect Monster": "Monstro de União", "Xyz Monster": "Monstro Xyz", "DARK": "TREVAS", "DIVINE": "DIVINO", "EARTH": "TERRA", "FIRE": "FOGO", "LIGHT": "LUZ", "WATER": "ÁGUA", "WIND": "VENTO", "Extra Monster 1": "Zona de Monstro Adicional 1", "Extra Monster 2": "Zona de Monstro Adicional 2", "Main Monster 1": "Zona de Monstro 1", "Main Monster 2": "Zona de Monstro 2", "Main Monster 3": "Zona de Monstro 3", "Main Monster 4": "Zona de Monstro 4", "Main Monster 5": "Zona de Monstro 5", "Spell/Trap 1": "Zona de Magias e Armadilhas 1", "Spell/Trap 2": "Zona de Magias e Armadilhas 2", "Spell/Trap 3": "Zona de Magias e Armadilhas 3", "Spell/Trap 4": "Zona de Magias e Armadilhas 4", "Spell/Trap 5": "Zona de Magias e Armadilhas 5"}, "fr": {"Normal Summon": "Invocation Normale", "Special Summon": "Invocation Spéciale", "Set": "Poser", "Activate Spell/Trap": "Activer Magie/Piège", "Activate Effect": "Activer un effet", "Attack": "Attaquer", "Send to GY": "Envoyer au Cimetière", "Discard": "Défausser", "Banish": "Bannir", "Add to Hand": "Ajouter à la main", "Search": "Chercher dans le Deck", "Fusion Summon": "Invocation Fusion", "Synchro Summon": "Invocation Synchro", "Xyz Summon": "Invocation Xyz", "Pendulum Summon": "Invocation Pendule", "Link Summon": "Invocation Lien", "Other": "Autre", "Field Zone": "Zone Terrain", "Graveyard": "Cimetière", "Banish Pile": "Bannies", "Effect Monster": "Monstre à Effet", "Flip Effect Monster": "Monstre à Effet Flip", "Fusion Monster": "Monstre Fusion", "Link Monster": "Monstre Lien", "Normal Monster": "Monstre Normal", "Pendulum Effect Monster": "Monstre à Effet Pendule", "Ritual Effect Monster": "Monstre Rituel à Effet", "Spell Card": "Carte Magie", "Synchro Monster": "Monstre Synchro", "Token": "Jeton", "Trap Card": "Carte Piège", "Tuner Monster": "Monstre Syntoniseur", "Union Effect Monster": "Monstre Union", "Xyz Monster": "Monstre Xyz", "DARK": "TÉNÈBRES", "DIVINE": "DIVIN", "EARTH": "TERRE", "FIRE": "FEU", "LIGHT": "LUMIÈRE", "WATER": "EAU", "WIND": "VENT", "Extra Monster 1": "Zone Monstre Extra 1", "Extra Monster 2": "Zone Monstre Extra 2", "Main Monster 1": "Zone Monstre 1", "Main Monster 2": "Zone Monstre 2", "Main Monster 3": "Zone Monstre 3", "Main Monster 4": "Zone Monstre 4", "Main Monster 5": "Zone Monstre 5", "Spell/Trap 1": "Zone Magie/Piège 1", "Spell/Trap 2": "Zone Magie/Piège 2", "Spell/Trap 3": "Zone Magie/Piège 3", "Spell/Trap 4": "Zone Magie/Piège 4", "Spell/Trap 5": "Zone Magie/Piège 5"}, "it": {"Normal Summon": "Evocazione Normale", "Special Summon": "Evocazione Speciale", "Set": "Posizionare", "Activate Spell/Trap": "Attivare Magia/Trappola", "Activate Effect": "Attivare effetto", "Attack": "Attaccare", "Send to GY": "Mandare al Cimitero", "Discard": "Scartare", "Banish": "Bandire", "Add to Hand": "Aggiungere alla mano", "Search": "Cercare nel Deck", "Fusion Summon": "Evocazione Fusione", "Synchro Summon": "Evocazione Synchro", "Xyz Summon": "Evocazione Xyz", "Pendulum Summon": "Evocazione Pendulum", "Link Summon": "Evocazione Link", "Other": "Altro", "Field Zone": "Zona Terreno", "Graveyard": "Cimitero", "Banish Pile": "Bandite", "Effect Monster": "Mostro con Effetto", "Flip Effect Monster": "Mostro con Effetto Scoperta", "Fusion Monster": "Mostro Fusione", "Link Monster": "Mostro Link", "Normal Monster": "Mostro Normale", "Pendulum Effect Monster": "Mostro con Effetto Pendulum", "Ritual Effect Monster": "Mostro Rituale con Effetto", "Spell Card": "Carta Magia", "Synchro Monster": "Mostro Synchro", "Token": "Segna-Mostro", "Trap Card": "Carta Trappola", "Tuner Monster": "Mostro Tuner", "Union Effect Monster": "Mostro Unione", "Xyz Monster": "Mostro Xyz", "DARK": "OSCURITÀ", "DIVINE": "DIVINO", "EARTH": "TERRA", "FIRE": "FUOCO", "LIGHT": "LUCE", "WATER": "ACQUA", "WIND": "VENTO", "Extra Monster 1": "Zona Mostri Extra 1", "Extra Monster 2": "Zona Mostri Extra 2", "Main Monster 1": "Zona Mostri 1", "Main Monster 2": "Zona Mostri 2", "Main Monster 3": "Zona Mostri 3", "Main Monster 4": "Zona Mostri 4", "Main Monster 5": "Zona Mostri 5", "Spell/Trap 1": "Zona Magie/Trappole 1", "Spell/Trap 2": "Zona Magie/Trappole 2", "Spell/Trap 3": "Zona Magie/Trappole 3", "Spell/Trap 4": "Zona Magie/Trappole 4", "Spell/Trap 5": "Zona Magie/Trappole 5"}, "de": {"Normal Summon": "Normalbeschwörung", "Special Summon": "Spezialbeschwörung", "Set": "Setzen", "Activate Spell/Trap": "Zauber/Falle aktivieren", "Activate Effect": "Effekt aktivieren", "Attack": "Angreifen", "Send to GY": "Auf den Friedhof legen", "Discard": "Abwerfen", "Banish": "Verbannen", "Add to Hand": "Zur Hand hinzufügen", "Search": "Aus dem Deck suchen", "Fusion Summon": "Fusionsbeschwörung", "Synchro Summon": "Synchrobeschwörung", "Xyz Summon": "Xyz-Beschwörung", "Pendulum Summon": "Pendelbeschwörung", "Link Summon": "Linkbeschwörung", "Other": "Andere", "Field Zone": "Spielfeldzone", "Graveyard": "Friedhof", "Banish Pile": "Verbannt", "Effect Monster": "Effektmonster", "Flip Effect Monster": "Flipeffektmonster", "Fusion Monster": "Fusionsmonster", "Link Monster": "Linkmonster", "Normal Monster": "Normales Monster", "Pendulum Effect Monster": "Pendeleffektmonster", "Ritual Effect Monster": "Ritualeffektmonster", "Spell Card": "Zauberkarte", "Synchro Monster": "Synchromonster", "Token": "Spielmarke", "Trap Card": "Fallenkarte", "Tuner Monster": "Empfängermonster", "Union Effect Monster": "Unionmonster", "Xyz Monster": "Xyz-Monster", "DARK": "FINSTERNIS", "DIVINE": "GÖTTLICH", "EARTH": "ERDE", "FIRE": "FEUER", "LIGHT": "LICHT", "WATER": "WASSER", "WIND": "WIND", "Extra Monster 1": "Extra-Monsterzone 1", "Extra Monster 2": "Extra-Monsterzone 2", "Main Monster 1": "Monsterzone 1", "Main Monster 2": "Monsterzone 2", "Main Monster 3": "Monsterzone 3", "Main Monster 4": "Monsterzone 4", "Main Monster 5": "Monsterzone 5", "Spell/Trap 1": "Zauber-/Fallenzone 1", "Spell/Trap 2": "Zauber-/Fallenzone 2", "Spell/Trap 3": "Zauber-/Fallenzone 3", "Spell/Trap 4": "Zauber-/Fallenzone 4", "Spell/Trap 5": "Zauber-/Fallenzone 5"}, "ru": {"Normal Summon": "Обычный призыв", "Special Summon": "Особый призыв", "Set": "Выставить", "Activate Spell/Trap": "Активировать заклинание/ловушку", "Activate Effect": "Активировать эффект", "Attack": "Атака", "Send to GY": "Отправить на кладбище", "Discard": "Сбросить", "Banish": "Изгнать", "Add to Hand": "Добавить в руку", "Search": "Найти в колоде", "Fusion Summon": "Призыв слиянием", "Synchro Summon": "Синхро-призыв", "Xyz Summon": "Икс-призыв", "Pendulum Summon": "Призыв маятником", "Link Summon": "Призыв связью", "Other": "Другое", "Field Zone": "Зона поля", "Graveyard": "Кладбище", "Banish Pile": "Изгнанные", "Effect Monster": "Монстр с эффектом", "Flip Effect Monster": "Монстр с эффектом переворота", "Fusion Monster": "Монстр слияния", "Link Monster": "Монстр связи", "Normal Monster": "Обычный монстр", "Pendulum Effect Monster": "Маятниковый монстр с эффектом", "Ritual Effect Monster": "Ритуальный монстр с эффектом", "Spell Card": "Карта заклинания", "Synchro Monster": "Синхро-монстр", "Token": "Жетон", "Trap Card": "Карта ловушки", "Tuner Monster": "Монстр-тюнер", "Union Effect Monster": "Монстр-союз", "Xyz Monster": "Икс-монстр", "DARK": "ТЬМА", "DIVINE": "БОЖЕСТВЕННЫЙ", "EARTH": "ЗЕМЛЯ", "FIRE": "ОГОНЬ", "LIGHT": "СВЕТ", "WATER": "ВОДА", "WIND": "ВЕТЕР", "Extra Monster 1": "Доп. зона монстров 1", "Extra Monster 2": "Доп. зона монстров 2", "Main Monster 1": "Зона монстров 1", "Main Monster 2": "Зона монстров 2", "Main Monster 3": "Зона монстров 3", "Main Monster 4": "Зона монстров 4", "Main Monster 5": "Зона монстров 5", "Spell/Trap 1": "Зона заклинаний/ловушек 1", "Spell/Trap 2": "Зона заклинаний/ловушек 2", "Spell/Trap 3": "Зона заклинаний/ловушек 3", "Spell/Trap 4": "Зона заклинаний/ловушек 4", "Spell/Trap 5": "Зона заклинаний/ловушек 5"}, "ja": {"Normal Summon": "通常召喚", "Special Summon": "特殊召喚", "Set": "セット", "Activate Spell/Trap": "魔法・罠を発動", "Activate Effect": "効果を発動", "Attack": "攻撃", "Send to GY": "墓地へ送る", "Discard": "捨てる", "Banish": "除外", "Add to Hand": "手札に加える", "Search": "デッキからサーチ", "Fusion Summon": "融合召喚", "Synchro Summon": "シンクロ召喚", "Xyz Summon": "エクシーズ召喚", "Pendulum Summon": "ペンデュラム召喚", "Link Summon": "リンク召喚", "Other": "その他", "Field Zone": "フィールドゾーン", "Graveyard": "墓地", "Banish Pile": "除外ゾーン", "Effect Monster": "効果モンスター", "Flip Effect Monster": "リバース効果モンスター", "Fusion Monster": "融合モンスター", "Link Monster": "リンクモンスター", "Normal Monster": "通常モンスター", "Pendulum Effect Monster": "ペンデュラム効果モンスター", "Ritual Effect Monster": "儀式効果モンスター", "Spell Card": "魔法カード", "Synchro Monster": "シンクロモンスター", "Token": "トークン", "Trap Card": "罠カード", "Tuner Monster": "チューナーモンスター", "Union Effect Monster": "ユニオンモンスター", "Xyz Monster": "エクシーズモンスター", "DARK": "闇", "DIVINE": "神", "EARTH": "地", "FIRE": "炎", "LIGHT": "光", "WATER": "水", "WIND": "風", "Extra Monster 1": "エクストラモンスターゾーン1", "Extra Monster 2": "エクストラモンスターゾーン2", "Main Monster 1": "メインモンスターゾーン1", "Main Monster 2": "メインモンスターゾーン2", "Main Monster 3": "メインモンスターゾーン3", "Main Monster 4": "メインモンスターゾーン4", "Main Monster 5": "メインモンスターゾーン5", "Spell/Trap 1": "魔法・罠ゾーン1", "Spell/Trap 2": "魔法・罠ゾーン2", "Spell/Trap 3": "魔法・罠ゾーン3", "Spell/Trap 4": "魔法・罠ゾーン4", "Spell/Trap 5": "魔法・罠ゾーン5"}, "ko": {"Normal Summon": "일반 소환", "Special Summon": "특수 소환", "Set": "세트", "Activate Spell/Trap": "마법/함정 발동", "Activate Effect": "효과 발동", "Attack": "공격", "Send to GY": "묘지로 보내기", "Discard": "버리기", "Banish": "제외", "Add to Hand": "패에 넣기", "Search": "덱에서 서치", "Fusion Summon": "융합 소환", "Synchro Summon": "싱크로 소환", "Xyz Summon": "엑시즈 소환", "Pendulum Summon": "펜듈럼 소환", "Link Summon": "링크 소환", "Other": "기타", "Field Zone": "필드 존", "Graveyard": "묘지", "Banish Pile": "제외 존", "Effect Monster": "효과 몬스터", "Flip Effect Monster": "리버스 효과 몬스터", "Fusion Monster": "융합 몬스터", "Link Monster": "링크 몬스터", "Normal Monster": "일반 몬스터", "Pendulum Effect Monster": "펜듈럼 효과 몬스터", "Ritual Effect Monster": "의식 효과 몬스터", "Spell Card": "마법 카드", "Synchro Monster": "싱크로 몬스터", "Token": "토큰", "Trap Card": "함정 카드", "Tuner Monster": "튜너 몬스터", "Union Effect Monster": "유니온 몬스터", "Xyz Monster": "엑시즈 몬스터", "DARK": "어둠", "DIVINE": "신", "EARTH": "땅", "FIRE": "화염", "LIGHT": "빛", "WATER": "물", "WIND": "바람", "Extra Monster 1": "엑스트라 몬스터 존 1", "Extra Monster 2": "엑스트라 몬스터 존 2", "Main Monster 1": "메인 몬스터 존 1", "Main Monster 2": "메인 몬스터 존 2", "Main Monster 3": "메인 몬스터 존 3", "Main Monster 4": "메인 몬스터 존 4", "Main Monster 5": "메인 몬스터 존 5", "Spell/Trap 1": "마법 & 함정 존 1", "Spell/Trap 2": "마법 & 함정 존 2", "Spell/Trap 3": "마법 & 함정 존 3", "Spell/Trap 4": "마법 & 함정 존 4", "Spell/Trap 5": "마법 & 함정 존 5"}, "zh": {"Normal Summon": "通常召唤", "Special Summon": "特殊召唤", "Set": "盖放", "Activate Spell/Trap": "发动魔法/陷阱", "Activate Effect": "发动效果", "Attack": "攻击", "Send to GY": "送去墓地", "Discard": "丢弃", "Banish": "除外", "Add to Hand": "加入手卡", "Search": "从卡组检索", "Fusion Summon": "融合召唤", "Synchro Summon": "同调召唤", "Xyz Summon": "超量召唤", "Pendulum Summon": "灵摆召唤", "Link Summon": "连接召唤", "Other": "其他", "Field Zone": "场地区", "Graveyard": "墓地", "Banish Pile": "除外区", "Effect Monster": "效果怪兽", "Flip Effect Monster": "反转效果怪兽", "Fusion Monster": "融合怪兽", "Link Monster": "连接怪兽", "Normal Monster": "通常怪兽", "Pendulum Effect Monster": "灵摆效果怪兽", "Ritual Effect Monster": "仪式效果怪兽", "Spell Card": "魔法卡", "Synchro Monster": "同调怪兽", "Token": "衍生物", "Trap Card": "陷阱卡", "Tuner Monster": "调整怪兽", "Union Effect Monster": "同盟怪兽", "Xyz Monster": "超量怪兽", "DARK": "暗", "DIVINE": "神", "EARTH": "地", "FIRE": "炎", "LIGHT": "光", "WATER": "水", "WIND": "风", "Extra Monster 1": "额外怪兽区1", "Extra Monster 2": "额外怪兽区2", "Main Monster 1": "主要怪兽区1", "Main Monster 2": "主要怪兽区2", "Main Monster 3": "主要怪兽区3", "Main Monster 4": "主要怪兽区4", "Main Monster 5": "主要怪兽区5", "Spell/Trap 1": "魔法与陷阱区1", "Spell/Trap 2": "魔法与陷阱区2", "Spell/Trap 3": "魔法与陷阱区3", "Spell/Trap 4": "魔法与陷阱区4", "Spell/Trap 5": "魔法与陷阱区5"}};
+        Object.entries({"es": {"Hand": "Mano", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Péndulo izq.", "Pendulum Right": "Péndulo der."}, "pt": {"Hand": "Mão", "Deck": "Deck", "Extra Deck": "Deck Adicional", "Pendulum Left": "Pêndulo esq.", "Pendulum Right": "Pêndulo dir."}, "fr": {"Hand": "Main", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Pendule gauche", "Pendulum Right": "Pendule droite"}, "it": {"Hand": "Mano", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Pendulum sin.", "Pendulum Right": "Pendulum des."}, "de": {"Hand": "Hand", "Deck": "Deck", "Extra Deck": "Extra-Deck", "Pendulum Left": "Pendel links", "Pendulum Right": "Pendel rechts"}, "ru": {"Hand": "Рука", "Deck": "Колода", "Extra Deck": "Доп. колода", "Pendulum Left": "Маятник (лев.)", "Pendulum Right": "Маятник (прав.)"}, "ja": {"Hand": "手札", "Deck": "デッキ", "Extra Deck": "エクストラデッキ", "Pendulum Left": "左ペンデュラム", "Pendulum Right": "右ペンデュラム"}, "ko": {"Hand": "패", "Deck": "덱", "Extra Deck": "엑스트라 덱", "Pendulum Left": "왼쪽 펜듈럼", "Pendulum Right": "오른쪽 펜듈럼"}, "zh": {"Hand": "手卡", "Deck": "卡组", "Extra Deck": "额外卡组", "Pendulum Left": "左灵摆区", "Pendulum Right": "右灵摆区"}}).forEach(([l, d]) => { YGO_TERMS[l] = Object.assign(YGO_TERMS[l] || {}, d); });
         let CURRENT_LANG = 'en';
         const trTerm = (name) => (name && YGO_TERMS[CURRENT_LANG] && YGO_TERMS[CURRENT_LANG][name]) || name;
         const YGO_ACTIONS = [ { name: "Normal Summon", emoji: "⬆️" }, { name: "Special Summon", emoji: "⭐" }, { name: "Set", emoji: "⬇️" }, { name: "Activate Spell/Trap", emoji: "🌀" }, { name: "Activate Effect", emoji: "⚡" }, { name: "Attack", emoji: "⚔️" }, { name: "Send to GY", emoji: "🪦" }, { name: "Discard", emoji: "👋" }, { name: "Banish", emoji: "🌌" }, { name: "Add to Hand", emoji: "✋" }, { name: "Search", emoji: "🔍" }, { name: "Fusion Summon", emoji: "⚛️" }, { name: "Synchro Summon", emoji: "🟢" }, { name: "Xyz Summon", emoji: "💫" }, { name: "Pendulum Summon", emoji: "⚖️" }, { name: "Link Summon", emoji: "🔻" }, { name: "Other", emoji: "..." } ];
@@ -1238,6 +1248,11 @@
                 { name: "Spell/Trap 4", gridClass: "grid-pos-stz4" },
                 { name: "Spell/Trap 5", gridClass: "grid-pos-stz5" },
                 { name: "Banish Pile", gridClass: "grid-pos-bp" },
+                { name: "Extra Deck", gridClass: "grid-pos-ed zone-extra" },
+                { name: "Pendulum Left", gridClass: "grid-pos-pl zone-extra" },
+                { name: "Hand", gridClass: "grid-pos-hand zone-extra" },
+                { name: "Pendulum Right", gridClass: "grid-pos-pr zone-extra" },
+                { name: "Deck", gridClass: "grid-pos-deck zone-extra" },
             ];
 
             return (
@@ -1251,7 +1266,7 @@
                                     className={`ygo-field-zone ${zone.gridClass}`}
                                     onClick={() => handleSelect(zone.name)}
                                 >
-                                    {ZONE_ABBREVIATIONS[zone.name] || zone.name}
+                                    {ZONE_ABBREVIATIONS[zone.name] || trTerm(zone.name)}
                                 </button>
                             ))}
                         </div>
@@ -1341,7 +1356,7 @@
 
 
             const filteredPool = cardPool.filter(card => card.name.toLowerCase().includes(filter.toLowerCase()));
-            const buttonClasses = { 'menu-item': "step-menu-item", 'button': "w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed", 'small-button': "p-2 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed flex items-center justify-center", 'card-placeholder': "w-28 h-44 flex items-center justify-center border-2 border-dashed border-slate-600 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors" };
+            const buttonClasses = { 'menu-item': "step-menu-item", 'button': "w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed", 'small-button': "p-2 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed flex items-center justify-center", 'card-placeholder': "w-24 h-[8.5rem] flex items-center justify-center border-2 border-dashed border-slate-600 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors" };
             const buttonContent = { 'menu-item': <><i className="fas fa-plus w-5 text-center"></i>{buttonText}</>, 'button': buttonText || t('addStep'), 'small-button': <i className="fas fa-plus"></i>, 'card-placeholder': <i className="fas fa-plus"></i> };
             
             const handleSelect = (card) => {
@@ -1613,6 +1628,26 @@
             const showNotesX = !quick && exportOptions.include.notes && notes;
             const showBoardTopX = quick && exportOptions.include.finalBoard && finalBoardCards.length > 0;
             const boardImg = (c) => imageMap[c.image_url_small] || c.image_url_small;
+            const boardView = exportOptions.boardView || 'board';
+            const renderBoardCards = (size) => (
+                <div className="flex flex-wrap justify-center gap-4">
+                    {finalBoardCards.map(item => (
+                        <div key={item.id} className="flex flex-col items-center gap-2">
+                            <ExportCard card={item.card} size={size} />
+                            <div className="text-center">
+                                <p className="font-bold text-sm text-slate-300">{nbsp(trTerm(item.zone))}</p>
+                                {item.isDisruption && <p className="text-xs text-red-400 font-bold">{nbsp(t('finalBoardDisruption'))}</p>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+            const renderFinalBoardContent = (compact) => (
+                <>
+                    {boardView !== 'cards' && <FinalBoardMini items={finalBoardCards} imgSrc={boardImg} className={`fbm-export${boardView === 'both' ? ' mb-6' : ''}`} />}
+                    {boardView !== 'board' && renderBoardCards(compact ? 'small' : 'normal')}
+                </>
+            );
             
             const renderStepRows = () => {
                 const elements = [];
@@ -1664,7 +1699,7 @@
                                     <span className="font-bold text-lg text-slate-300">{nbsp(t('step'))} {stepNumber}</span>
                                     <h3 className="font-semibold text-base text-yellow-300 h-12 flex items-center justify-center">{action.emoji} {nbsp(step.actionType === 'Other' ? (step.customActionText || trTerm('Other')) : trTerm(step.actionType))}</h3>
                                     <div className="relative">
-                                        <ExportCard card={mainCard} size="medium" location={step.location ? ZONE_ABBREVIATIONS[step.location] : null} />
+                                        <ExportCard card={mainCard} size="medium" location={step.location ? (ZONE_ABBREVIATIONS[step.location] || trTerm(step.location)) : null} />
                                         {step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (
                                             <div className="absolute -right-3 -top-3 z-10 flex flex-col gap-1">
                                                 {step.vulnerability.cards.map(vCard => (
@@ -1730,7 +1765,7 @@
                                     {showBoardTopX && (
                                         <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex-grow min-w-0 flex flex-col">
                                             <h2 className="text-2xl font-semibold mb-4 text-violet-400 font-yugioh">{nbsp(t('finalBoardTitle'))}</h2>
-                                            <div className="flex-grow flex items-center"><FinalBoardMini items={finalBoardCards} imgSrc={boardImg} className="fbm-export" /></div>
+                                            <div className="flex-grow flex flex-col justify-center">{renderFinalBoardContent(true)}</div>
                                         </div>
                                     )}
                                 </div>
@@ -1746,18 +1781,7 @@
                             {!quick && exportOptions.include.finalBoard && finalBoardCards.length > 0 && (
                                 <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                                     <h2 className="text-2xl font-semibold mb-4 text-violet-400 font-yugioh">{nbsp(t('finalBoardTitle'))}</h2>
-                                    <FinalBoardMini items={finalBoardCards} imgSrc={boardImg} className="fbm-export mb-6" />
-                                    <div className="flex flex-wrap justify-center gap-4">
-                                        {finalBoardCards.map(item => (
-                                            <div key={item.id} className="flex flex-col items-center gap-2">
-                                                <ExportCard card={item.card} size="normal" />
-                                                <div className="text-center">
-                                                    <p className="font-bold text-sm text-slate-300">{nbsp(trTerm(item.zone))}</p>
-                                                    {item.isDisruption && <p className="text-xs text-red-400 font-bold">{nbsp(t('finalBoardDisruption'))}</p>}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    {renderFinalBoardContent(false)}
                                 </div>
                             )}
                         </div>
@@ -1828,9 +1852,28 @@
 
         // Imprimir / PDF: parte la imagen en hojas (cortando, si se puede, en una franja lisa
         // para no partir cartas a la mitad) y abre el diálogo de impresión del navegador.
-        const printCanvasInPages = (canvas, title) => {
+        // Hojas (en mm, vertical). «Automática»: Carta en los países que la usan; A4 en el resto.
+        const PAPER_MM = { letter: [215.9, 279.4], a4: [210, 297], oficio: [216, 330], legal: [215.9, 355.6] };
+        const autoPaperKey = () => {
+            const langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
+            const withRegion = langs.find(l => /-[a-z]{2}$/i.test(l || ''));
+            const region = withRegion ? withRegion.split('-').pop().toUpperCase() : '';
+            return ['US', 'CA', 'MX', 'CL', 'CO', 'VE', 'PH', 'PR', 'GT', 'CR', 'DO', 'PA', 'SV', 'NI', 'HN', 'BZ'].includes(region) ? 'letter' : 'a4';
+        };
+        const resolvePaper = (o = {}) => {
+            let k = o.paper || 'auto';
+            if (k === 'auto') k = autoPaperKey();
+            if (k === 'custom') {
+                const f = o.paperUnit === 'in' ? 25.4 : 10;
+                return { w: Math.min(1000, Math.max(60, (parseFloat(o.paperW) || 21.6) * f)), h: Math.min(2000, Math.max(60, (parseFloat(o.paperH) || 33) * f)) };
+            }
+            const [w, h] = PAPER_MM[k] || PAPER_MM.letter;
+            return { w, h };
+        };
+        const printCanvasInPages = (canvas, title, paper = { w: 215.9, h: 279.4 }) => {
             const W = canvas.width, H = canvas.height;
-            const pageH = Math.floor(W * 1.29); // cabe en carta y en A4, en vertical, con márgenes
+            const MARGIN = 8; // mm
+            const pageH = Math.floor(W * ((paper.h - 2 * MARGIN) / (paper.w - 2 * MARGIN)) * 0.985); // alto de cada hoja según el papel elegido
             const ctx = canvas.getContext('2d');
             const isQuietRow = (y) => {
                 const row = ctx.getImageData(0, y, W, 1).data;
@@ -1861,7 +1904,7 @@
             document.body.appendChild(iframe);
             const doc = iframe.contentWindow.document;
             doc.open();
-            doc.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{margin:8mm}html,body{margin:0}img{display:block;width:100%;break-after:page;page-break-after:always}img:last-child{break-after:auto;page-break-after:auto}</style></head><body></body></html>');
+            doc.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{size:' + paper.w + 'mm ' + paper.h + 'mm;margin:' + MARGIN + 'mm}html,body{margin:0}img{display:block;width:100%;break-after:page;page-break-after:always}img:last-child{break-after:auto;page-break-after:auto}</style></head><body></body></html>');
             doc.close();
             doc.title = title || 'Combo';
             const loads = pieces.map(src => new Promise(res => { const img = doc.createElement('img'); img.onload = res; img.onerror = res; img.src = src; doc.body.appendChild(img); }));
@@ -1927,10 +1970,27 @@
                                     </label>
                                 ))}
                                 {optionRow(t('exportContent'), 'layout', [['full', t('exportContentFull')], ['quick', t('exportContentQuick')]])}
+                                {optionRow(t('exportBoardView'), 'boardView', [['board', t('boardViewBoard')], ['cards', t('boardViewCards')], ['both', t('boardViewBoth')]])}
                                 {optionRow(t('exportStyle'), 'theme', [['dark', t('styleDark')], ['light', t('styleLight')], ['white', t('styleWhite')]])}
                                 {optionRow(t('exportCardColor'), 'cardFilter', [['color', t('filterColor')], ['gray', t('filterGray')], ['ink', t('filterInk')]])}
                                 {optionRow(t('exportLayout'), 'stepsPerRow', [3, 4, 5, 6].map(n => [n, `${n}xN`]))}
                                 {optionRow(t('exportQuality'), 'scale', [[1, t('qualityLow')], [2, t('qualityMedium')], [3, t('qualityHigh')]])}
+                                <div className="border-t border-slate-600 pt-4">
+                                    <label className="block text-sm font-medium text-slate-300 mb-2" htmlFor="paper-size">{t('paperSize')}</label>
+                                    <select id="paper-size" value={exportOptions.paper || 'auto'} onChange={e => setExportOptions(p => ({ ...p, paper: e.target.value }))} className="w-full p-2 bg-slate-700 border border-slate-600 rounded-md text-sm text-white">
+                                        <option value="auto">{t('paperAuto')} ({t('paper_' + autoPaperKey())})</option>
+                                        {['letter', 'a4', 'oficio', 'legal', 'custom'].map(k => <option key={k} value={k}>{t('paper_' + k)}</option>)}
+                                    </select>
+                                    {exportOptions.paper === 'custom' && (
+                                        <div className="flex flex-wrap gap-2 mt-2 items-center text-sm text-slate-300">
+                                            <input type="number" min="5" step="0.1" value={exportOptions.paperW ?? 21.6} onChange={e => setExportOptions(p => ({ ...p, paperW: e.target.value }))} className="w-20 p-2 bg-slate-700 border border-slate-600 rounded-md text-white" aria-label="ancho" />
+                                            <span>×</span>
+                                            <input type="number" min="5" step="0.1" value={exportOptions.paperH ?? 33} onChange={e => setExportOptions(p => ({ ...p, paperH: e.target.value }))} className="w-20 p-2 bg-slate-700 border border-slate-600 rounded-md text-white" aria-label="alto" />
+                                            <select value={exportOptions.paperUnit || 'cm'} onChange={e => setExportOptions(p => ({ ...p, paperUnit: e.target.value }))} className="p-2 bg-slate-700 border border-slate-600 rounded-md text-white"><option value="cm">cm</option><option value="in">in</option></select>
+                                        </div>
+                                    )}
+                                    <p className="text-xs text-slate-400 mt-1">{t('paperHint')}</p>
+                                </div>
                             </div>
                             <div className="flex flex-wrap justify-end gap-3">
                                 <button onClick={onClose} className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-700">{t('cancel')}</button>
@@ -2547,6 +2607,9 @@
             const s = JSON.parse(JSON.stringify(boardState));
             s.last = { uids: [], mainUid: null, dest: null };
             if (!step || step.type !== 'step') return s;
+            if (step.location === 'Pendulum Left') step = { ...step, location: 'Spell/Trap 1' };
+            else if (step.location === 'Pendulum Right') step = { ...step, location: 'Spell/Trap 5' };
+            else if (['Hand', 'Deck', 'Extra Deck'].includes(step.location)) step = { ...step, location: null };
             // Las Magias/Trampas Normales, Rápidas, de Ritual o Contraataque activadas en el paso anterior ya resolvieron: van al Cementerio.
             PLAY_SLOTS.forEach(z => { const c = s.slots[z]; if (c && c.resolveToGy) { s.slots[z] = null; delete c.resolveToGy; playPut(s, c, 'gy'); } });
             const known = (id) => !!(id && s.info[id]);
@@ -2984,10 +3047,10 @@
             const [exportOptions, setExportOptions] = useState(() => {
                 let savedStyle = {};
                 try { savedStyle = JSON.parse(localStorage.getItem('ygo_export_style') || '{}') || {}; } catch (e) {}
-                return { include: { startingHand: true, comboSteps: true, finalBoard: true, notes: true, comboStats: true }, scale: 2, stepsPerRow: 4, theme: savedStyle.theme || 'dark', cardFilter: savedStyle.cardFilter || 'color', layout: savedStyle.layout === 'quick' ? 'quick' : 'full' };
+                return { include: { startingHand: true, comboSteps: true, finalBoard: true, notes: true, comboStats: true }, scale: 2, stepsPerRow: 4, theme: savedStyle.theme || 'dark', cardFilter: savedStyle.cardFilter || 'color', layout: savedStyle.layout === 'quick' ? 'quick' : 'full', boardView: ['board', 'cards', 'both'].includes(savedStyle.boardView) ? savedStyle.boardView : 'board', paper: savedStyle.paper || 'auto', paperW: savedStyle.paperW ?? 21.6, paperH: savedStyle.paperH ?? 33, paperUnit: savedStyle.paperUnit || 'cm' };
             });
             // Se recuerda el estilo de exportación (fondo y color de cartas) para la próxima vez.
-            useEffect(() => { try { localStorage.setItem('ygo_export_style', JSON.stringify({ theme: exportOptions.theme, cardFilter: exportOptions.cardFilter, layout: exportOptions.layout })); } catch (e) {} }, [exportOptions.theme, exportOptions.cardFilter, exportOptions.layout]);
+            useEffect(() => { try { localStorage.setItem('ygo_export_style', JSON.stringify({ theme: exportOptions.theme, cardFilter: exportOptions.cardFilter, layout: exportOptions.layout, boardView: exportOptions.boardView, paper: exportOptions.paper, paperW: exportOptions.paperW, paperH: exportOptions.paperH, paperUnit: exportOptions.paperUnit })); } catch (e) {} }, [exportOptions.theme, exportOptions.cardFilter, exportOptions.layout, exportOptions.boardView, exportOptions.paper, exportOptions.paperW, exportOptions.paperH, exportOptions.paperUnit]);
             const initialComboState = { cardPool: [], startingHand: [[]], comboSteps: [], finalBoardCards: [], comboTitle: '', notes: '', };
             const { state: comboState, setState: setComboStateRaw, loadState, undo, redo, canUndo, canRedo } = useHistoryState(initialComboState);
             // Cartas elegidas de la base de datos que todavía no están en el pool: entran con el siguiente cambio
@@ -3511,7 +3574,7 @@
                     const canvas = await html2canvas(exportContainer, { scale: adaptiveScale, useCORS: true, backgroundColor: null });
 
                     setExportProgress(100);
-                    if (mode === 'print') printCanvasInPages(canvas, comboTitle);
+                    if (mode === 'print') printCanvasInPages(canvas, comboTitle, resolvePaper(exportOptions));
                     else setPngPreviewUrl(canvas.toDataURL('image/png'));
                     exportRoot.unmount();
                 } catch(err) {
@@ -3745,7 +3808,7 @@
                     let line = `${n}. ${act}: ${nameOf(s.mainCardInstanceId)}`;
                     const targets = (s.targetCards || []).map(tc => nameOf(tc.instanceId));
                     if (targets.length) line += ` → ${targets.join(', ')}`;
-                    if (s.location) line += ` [${ZONE_ABBREVIATIONS[s.location] || s.location}]`;
+                    if (s.location) line += ` [${ZONE_ABBREVIATIONS[s.location] || trTerm(s.location)}]`;
                     lines.push(line);
                     const desc = htmlToText(s.actionDescription);
                     if (desc) lines.push(`   ${desc}`);
@@ -4129,7 +4192,7 @@
                                         </h3>
                                         <div className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${isCardPoolOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
                                             <div className="p-4 pt-0">
-                                                <div className="p-4 bg-black/20 rounded-lg min-h-[11rem] relative">
+                                                <div className="p-4 bg-black/20 rounded-lg min-h-[9.5rem] relative">
                                                     {cardPool.length > 0 ? (
                                                         <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] max-h-[34rem] overflow-y-auto pt-2 pr-2">
                                                             {cardPool.map((card) => <CardDisplay key={card.instanceId} card={card} size="small" onClick={(c) => setSelectedCardForZoom(c)} onRemove={() => removeCardFromPool(card.instanceId)} onEdit={() => { setEditingCustomCard(card); setShowCustomCardModal(true); }} draggable={true} onDragStart={(e) => handleDragStart(e, 'pool-card', card)} onTouchStart={(e) => handleTouchStart(e, 'pool-card', card)} onDragEnd={handleDragEnd} onContextMenu={(c, e) => handleContextMenu(c, e, 'pool')} isHighlighted={highlightedCardIds.includes(card.instanceId)} isNew={card.instanceId === justAddedCardId} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />)}
@@ -4157,12 +4220,12 @@
                                         </h3>
                                         <div className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${isStartingHandOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
                                             <div className="p-4 pt-0">
-                                                <div className="flex flex-row items-start gap-4 pb-4 overflow-x-auto">
+                                                <div className="flex flex-row flex-wrap items-start gap-3 pb-3">
                                                     {startingHand.map((group, groupIndex) => (
                                                         <React.Fragment key={groupIndex}>
                                                             <div className="relative flex-shrink-0">
                                                                 {startingHand.length > 1 && (<button onClick={() => { const newHands = startingHand.filter((_, i) => i !== groupIndex); setComboState({...comboState, startingHand: newHands}, 'Removed alternate hand'); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold hover:bg-red-700 z-10">X</button>)}
-                                                                <div data-drop-area="startingHand" data-group-index={groupIndex} onDragOver={(e) => {e.preventDefault(); e.currentTarget.classList.add('drag-over')}} onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')} onDrop={(e) => handleDrop(e, 'startingHand', groupIndex)} className="drop-zone p-4 bg-black/20 rounded-lg min-h-[11rem] flex flex-wrap justify-start items-center gap-4 border-2 border-dashed border-[var(--color-border)] transition-colors w-max">
+                                                                <div data-drop-area="startingHand" data-group-index={groupIndex} onDragOver={(e) => {e.preventDefault(); e.currentTarget.classList.add('drag-over')}} onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')} onDrop={(e) => handleDrop(e, 'startingHand', groupIndex)} className="drop-zone p-2 bg-black/20 rounded-lg min-h-[9.5rem] flex flex-wrap justify-start items-center gap-2 border-2 border-dashed border-[var(--color-border)] transition-colors w-max max-w-full">
                                                                     {group.map(item => { const card = findCard(item.instanceId); if (!card) return null; return <CardDisplay key={`hand-${card.instanceId}`} card={card} size="small" quantity={item.quantity} draggable={true} onDragStart={(e) => handleDragStart(e, 'hand-card', { ...item, groupIndex })} onDrop={e => { e.preventDefault(); e.stopPropagation(); const droppedData = JSON.parse(e.dataTransfer.getData('text/plain')); if (droppedData.type === 'hand-card') handleReorder('hand', droppedData.data, { ...item, groupIndex }); }} onQuantityChange={(id, change) => setComboState({...comboState, startingHand: startingHand.map((g, i) => i === groupIndex ? g.map(it => it.instanceId === id ? {...it, quantity: Math.max(1, Math.min(3, it.quantity+change))} : it) : g)}, 'Update quantity')} onRemove={() => removeCardFromHand(card.instanceId, groupIndex)} isHighlighted={highlightedCardIds.includes(card.instanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} /> })}
                                                                     {group.length === 0 && <p className="text-[var(--color-text-muted)] text-center w-full">{t('startingHandPlaceholder')}</p>}
                                                                     <CardSelector cardPool={cardPool.filter(p => !group.find(c => c.instanceId === p.instanceId))} onCardSelected={(card) => { const newHands = [...startingHand]; newHands[groupIndex].push({instanceId: card.instanceId, quantity: 1}); setComboState({...comboState, startingHand: newHands}, "Added card to hand") }} displayAs="card-placeholder" t={t} preferredDirection="side" />
@@ -4171,8 +4234,8 @@
                                                             {groupIndex < startingHand.length - 1 && <div className="self-center font-bold text-2xl text-violet-400 px-2">{t('or')}</div>}
                                                         </React.Fragment>
                                                     ))}
+                                                    <button onClick={() => setComboState({...comboState, startingHand: [...startingHand, []]}, 'Add alternate hand')} className="btn self-center px-3 py-1 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-primary-hover)]">{t('addAlternateHand')}</button>
                                                 </div>
-                                                <button onClick={() => setComboState({...comboState, startingHand: [...startingHand, []]}, 'Add alternate hand')} className="btn px-3 py-1 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-primary-hover)]">{t('addAlternateHand')}</button>
                                             </div>
                                         </div>
                                     </section>
@@ -4264,7 +4327,7 @@
                                                     <select value={step.actionType} onChange={e => updateStep(step.id, { actionType: e.target.value })} disabled={step.isLocked} className="tutorial-action-select bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-sm font-semibold text-[var(--color-accent)] w-full disabled:opacity-50 disabled:cursor-not-allowed">{YGO_ACTIONS.map(act => <option key={act.name} value={act.name}>{act.emoji} {trTerm(act.name)}</option>)}</select>
                                                     {step.actionType === 'Other' && ( <input type="text" value={step.customActionText || ''} onChange={e => updateStep(step.id, { customActionText: sanitizeHTML(e.target.value) })} disabled={step.isLocked} placeholder="Especificar acción..." className="w-full bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs text-center mt-1" /> )}
                                                     <div className="step-main flex justify-center my-2 relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />{step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (<div className="absolute -right-4 -top-2 z-10 flex flex-col items-end gap-1">{step.vulnerability.cards.map((vCard) => (<CardDisplay key={vCard.instanceId} card={vCard.card || findCard(vCard.instanceId)} size="tiny" useCropped={true} onRemove={!step.isLocked ? () => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); } : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove}><span className="absolute top-0 right-0 text-xl z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span></CardDisplay>))}</div>)}</div>
-                                                    <button onClick={() => setZonePickerStepId(step.id)} className="btn text-xs py-1 px-2 bg-slate-600 hover:bg-slate-500 mb-2">{step.location ? ZONE_ABBREVIATIONS[step.location] : t('location')}</button>
+                                                    <button onClick={() => setZonePickerStepId(step.id)} className="btn text-xs py-1 px-2 bg-slate-600 hover:bg-slate-500 mb-2">{step.location ? (ZONE_ABBREVIATIONS[step.location] || trTerm(step.location)) : t('location')}</button>
                                                     {isVulnerable && (<div className="flex items-center gap-2 w-full">{(!step.vulnerability.cards || step.vulnerability.cards.length === 0) && (<input type="text" value={step.vulnerability.text} onChange={e => updateStep(step.id, { vulnerability: {...step.vulnerability, text: sanitizeHTML(e.target.value)} })} disabled={step.isLocked} placeholder="Vulnerable a..." className="flex-grow bg-red-900/50 border border-red-500/50 text-red-300 placeholder-red-400 rounded p-1 text-xs text-center disabled:opacity-50"/>)}<CardSelector cardPool={cardPool} mode="all" onCardSelected={card => { const currentVCards = step.vulnerability?.cards || []; const idOf = (vc) => (vc.card ? vc.card.ygoprodeck_id : (findCard(vc.instanceId) || {}).ygoprodeck_id); if (!currentVCards.some(vc => vc.instanceId === card.instanceId || (card.ygoprodeck_id && idOf(vc) === card.ygoprodeck_id))) { updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: [...currentVCards, { instanceId: card.instanceId, card }] } }); } }} displayAs="small-button" t={t} preferredDirection="side" /></div>)}
                                                     <div className="flex flex-wrap justify-center gap-1 border-t border-[var(--color-border)] pt-2 min-h-[4.5rem]">{step.targetCards.map(target => (<CardDisplay key={`target-${target.instanceId}`} card={findCard(target.instanceId)} size="tiny" isHighlighted={highlightedCardIds.includes(target.instanceId)} onRemove={!step.isLocked ? () => removeTargetCardFromStep(step.id, target.instanceId) : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />))}<CardSelector wrapperClassName="tutorial-add-target-btn" cardPool={cardPool} onCardSelected={card => updateStep(step.id, { targetCards: [...step.targetCards, {instanceId: card.instanceId, quantity: 1}]})} displayAs="small-button" t={t} preferredDirection="side" /></div>
                                                     <AutoResizeTextarea
@@ -4277,7 +4340,7 @@
                                                     />
                                                 </div>
                                             )})}
-                                            <div className="steps-add-slot flex items-center justify-center w-full min-h-[18rem]" onDragOver={(e) => {e.preventDefault(); setDragOverIndex(comboSteps.length);}}><CardSelector cardPool={cardPool} onCardSelected={handleAddStepOrNote} allowNote={true} displayAs="card-placeholder" t={t} preferredDirection="side" /></div>
+                                            <div className="steps-add-slot flex items-center justify-center w-full min-h-[10rem]" onDragOver={(e) => {e.preventDefault(); setDragOverIndex(comboSteps.length);}}><CardSelector cardPool={cardPool} onCardSelected={handleAddStepOrNote} allowNote={true} displayAs="card-placeholder" t={t} preferredDirection="side" /></div>
                                         </div>
                                     </section>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -4293,7 +4356,7 @@
                                             </h3>
                                              <div className={`transition-[max-height] duration-500 ease-in-out ${isFinalBoardOpen ? 'max-h-[90rem] overflow-visible' : 'max-h-0 overflow-hidden'}`}>
                                                 {finalBoardCards.length > 0 && <FinalBoardMini items={finalBoardCards} className="mb-4" onCardClick={c => setSelectedCardForZoom(c)} />}
-                                                <div data-drop-area="finalBoard" onDragOver={(e) => {e.preventDefault(); e.currentTarget.classList.add('drag-over')}} onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')} onDrop={(e) => handleDrop(e, 'finalBoard')} className={`drop-zone p-4 bg-black/20 rounded-lg min-h-[11rem] flex flex-wrap gap-4 border-2 border-dashed border-[var(--color-border)] ${finalBoardCards.length === 0 ? 'justify-center items-center' : 'justify-start items-start'}`}>
+                                                <div data-drop-area="finalBoard" onDragOver={(e) => {e.preventDefault(); e.currentTarget.classList.add('drag-over')}} onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')} onDrop={(e) => handleDrop(e, 'finalBoard')} className={`drop-zone p-4 bg-black/20 rounded-lg min-h-[9.5rem] flex flex-wrap gap-3 border-2 border-dashed border-[var(--color-border)] ${finalBoardCards.length === 0 ? 'justify-center items-center' : 'justify-start items-start'}`}>
                                                     {finalBoardCards.map(item => (
                                                         <div key={item.id} className="flex flex-col items-center gap-1 w-28" draggable={true} onDragStart={e => handleDragStart(e, 'board-card', item)} onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'board-card') handleReorder('board', d.data, item); }}>
                                                             <CardDisplay card={item.card} size="small" onClick={c => setSelectedCardForZoom(c)} onRemove={() => removeCardFromFinalBoard(item.id)} isHighlighted={highlightedCardIds.includes(item.card.instanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />
