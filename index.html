@@ -576,6 +576,32 @@
         .move-picker .mv-badge { width: 32px !important; height: 32px !important; font-size: 14px !important; }
         .move-picker .mv-badge .mv-mod { width: 17px; height: 17px; font-size: 9px; right: -7px; top: -7px; }
         .move-picker button { padding-top: 6px !important; padding-bottom: 6px !important; }
+        /* Plegables suaves: la altura se anima con grid (sin max-height) y el contenido aparece con un leve deslizamiento */
+        .collapse-box { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .32s cubic-bezier(.2,.8,.2,1), opacity .22s ease; }
+        .collapse-box.is-open { grid-template-rows: 1fr; opacity: 1; }
+        .collapse-box > * { min-height: 0; overflow: hidden; transform: translateY(-6px); transition: transform .32s cubic-bezier(.2,.8,.2,1); }
+        .collapse-box.is-open > * { transform: none; }
+        /* Ya abierta, el contenido puede sobresalir (menús, ventanitas) */
+        @keyframes ygo-unclip { to { overflow: visible; } }
+        .collapse-box.is-open > * { animation: ygo-unclip 0s .34s forwards; }
+        /* Animaciones ligeras (solo opacidad y transform) */
+        @keyframes ygo-pop-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+        .combo-step-card, .branch-box { animation: ygo-pop-in .26s cubic-bezier(.2,.8,.2,1) both; }
+        .side-thumb { animation: ygo-pop-in .2s ease-out both; }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); }
+        .btn:active:not(:disabled) { transform: translateY(0) scale(.96); }
+        .card-display { transition: transform .18s ease, box-shadow .18s ease; }
+        section > h3 > i.fa-chevron-down { transition: transform .3s cubic-bezier(.2,.8,.2,1) !important; }
+        .guide-panel { background: var(--color-surface-light); border: 1px solid var(--color-border); border-radius: 14px; padding: 14px; animation: ygo-pop-in .35s cubic-bezier(.2,.8,.2,1) both; }
+        .guide-panel:nth-child(2) { animation-delay: .06s; } .guide-panel:nth-child(3) { animation-delay: .12s; } .guide-panel:nth-child(4) { animation-delay: .18s; }
+        .guide-panel h3 { font-weight: 800; margin: 8px 0 4px; color: var(--color-text); }
+        .guide-panel p { font-size: .88rem; color: var(--color-text-muted); line-height: 1.4; }
+        .guide-art { display: flex; align-items: center; gap: 10px; height: 64px; }
+        .guide-icon { width: 46px; height: 46px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; }
+        .guide-mini { display: inline-flex; align-items: center; gap: 8px; }
+        .guide-thumb { position: relative; width: 34px; height: 34px; border-radius: 6px; background: #3b2f63; border: 1px solid var(--color-border); }
+        .guide-main { width: 42px; height: 60px; border-radius: 5px; background: linear-gradient(#d07945, #a85a2f); border: 2px solid #111; }
+        @media (prefers-reduced-motion: reduce) { .collapse-box, .collapse-box > *, .combo-step-card, .branch-box, .side-thumb, .guide-panel { transition: none !important; animation: none !important; } }
     </style>
 </head>
 <body

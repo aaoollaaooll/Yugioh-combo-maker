@@ -3263,6 +3263,196 @@ const Notification = ({
     className: "notification hide fixed top-5 left-1/2 -translate-x-1/2 bg-green-500/80 text-white font-bold px-6 py-2 rounded-full shadow-lg z-50"
   }, " ", message, " ");
 };
+const CARD_FRAME_COLORS = {
+  'Normal Monster': '#e3bd67',
+  'Effect Monster': '#d07945',
+  'Flip Effect Monster': '#d07945',
+  'Union Effect Monster': '#d07945',
+  'Tuner Monster': '#d07945',
+  'Ritual Effect Monster': '#5582cc',
+  'Fusion Monster': '#8a57b5',
+  'Synchro Monster': '#e6e6e6',
+  'Xyz Monster': '#232323',
+  'Link Monster': '#285c9e',
+  'Pendulum Effect Monster': '#d07945',
+  'Spell Card': '#14917a',
+  'Trap Card': '#a43f6d',
+  'Token': '#a3a3a3'
+};
+const ATTRIBUTE_COLORS = {
+  DARK: '#5b2a86',
+  LIGHT: '#c9a417',
+  EARTH: '#76562b',
+  WATER: '#1f6fbf',
+  FIRE: '#cc3a1e',
+  WIND: '#2b9444',
+  DIVINE: '#a8821a'
+};
+const loadImg = src => new Promise(res => {
+  if (!src) return res(null);
+  const im = new Image();
+  im.onload = () => res(im);
+  im.onerror = () => res(null);
+  im.src = src;
+});
+const renderCustomCardFace = async card => {
+  const W = 300,
+    H = 437,
+    c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+  const type = card.type || 'Effect Monster';
+  const isSpell = type === 'Spell Card',
+    isTrap = type === 'Trap Card',
+    isST = isSpell || isTrap;
+  const isLink = type === 'Link Monster',
+    isXyz = type === 'Xyz Monster',
+    isPend = /Pendulum/.test(type);
+  const frame = CARD_FRAME_COLORS[type] || '#d07945';
+  const rr = (x, y, w, h, r) => {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  };
+  g.fillStyle = '#111';
+  rr(0, 0, W, H, 12);
+  g.fill();
+  g.fillStyle = frame;
+  rr(5, 5, W - 10, H - 10, 9);
+  g.fill();
+  const art = {
+    x: 30,
+    y: 72,
+    s: W - 60
+  };
+  if (isPend) {
+    g.fillStyle = '#1d9e75';
+    g.fillRect(5, art.y + art.s * 0.55, W - 10, H - art.y - art.s * 0.55 - 5);
+  }
+  g.fillStyle = 'rgba(255,255,255,.9)';
+  rr(14, 14, W - 28, 32, 4);
+  g.fill();
+  g.fillStyle = '#111';
+  let fs = 19;
+  g.font = `800 ${fs}px Inter, Arial, sans-serif`;
+  const name = (card.name || '?').slice(0, 60);
+  while (g.measureText(name).width > W - 76 && fs > 10) {
+    fs--;
+    g.font = `800 ${fs}px Inter, Arial, sans-serif`;
+  }
+  g.textBaseline = 'middle';
+  g.fillText(name, 22, 30);
+  const attr = isST ? isSpell ? 'SPELL' : 'TRAP' : card.attribute || 'DARK';
+  g.fillStyle = isSpell ? '#14917a' : isTrap ? '#a43f6d' : ATTRIBUTE_COLORS[attr] || '#555';
+  g.beginPath();
+  g.arc(W - 30, 30, 13, 0, Math.PI * 2);
+  g.fill();
+  g.strokeStyle = '#fff';
+  g.lineWidth = 2;
+  g.stroke();
+  g.fillStyle = '#fff';
+  g.font = '800 11px Inter, Arial, sans-serif';
+  g.textAlign = 'center';
+  g.fillText(attr[0], W - 30, 31);
+  g.textAlign = 'left';
+  const lvl = Math.max(0, Math.min(13, parseInt(card.level, 10) || 0));
+  if (isST) {
+    g.fillStyle = '#111';
+    g.font = '700 12px Inter, Arial, sans-serif';
+    g.textAlign = 'right';
+    g.fillText(isSpell ? '[SPELL CARD]' : '[TRAP CARD]', W - 18, 59);
+    g.textAlign = 'left';
+  } else if (!isLink && lvl > 0) {
+    g.font = '16px Arial';
+    g.textAlign = 'center';
+    for (let i = 0; i < lvl; i++) {
+      const x = isXyz ? 26 + i * 19 : W - 26 - i * 19;
+      g.fillStyle = isXyz ? '#111' : '#f2b705';
+      g.strokeStyle = isXyz ? '#f2c94c' : '#7a4a00';
+      g.lineWidth = 1;
+      g.fillText('★', x, 60);
+      g.strokeText('★', x, 60);
+    }
+    g.textAlign = 'left';
+  }
+  g.fillStyle = '#0b0b0b';
+  g.fillRect(art.x - 3, art.y - 3, art.s + 6, art.s + 6);
+  const im = await loadImg(card.art);
+  if (im) {
+    const k = Math.max(art.s / im.width, art.s / im.height);
+    const w = im.width * k,
+      h = im.height * k;
+    g.save();
+    g.beginPath();
+    g.rect(art.x, art.y, art.s, art.s);
+    g.clip();
+    g.drawImage(im, art.x + (art.s - w) / 2, art.y + (art.s - h) / 2, w, h);
+    g.restore();
+  } else {
+    g.fillStyle = '#3b2f63';
+    g.fillRect(art.x, art.y, art.s, art.s);
+    g.fillStyle = 'rgba(255,255,255,.35)';
+    g.font = '800 70px Inter, Arial, sans-serif';
+    g.textAlign = 'center';
+    g.fillText('?', art.x + art.s / 2, art.y + art.s / 2 + 4);
+    g.textAlign = 'left';
+  }
+  const ty = art.y + art.s + 10;
+  g.fillStyle = 'rgba(250,244,226,.95)';
+  rr(14, ty, W - 28, H - ty - 14, 4);
+  g.fill();
+  g.fillStyle = '#111';
+  g.font = '700 10px Inter, Arial, sans-serif';
+  g.textBaseline = 'top';
+  g.fillText(`[ ${trTerm(type)} ]`.slice(0, 48), 20, ty + 5);
+  g.font = '9px Inter, Arial, sans-serif';
+  const words = String(card.desc || '').replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean);
+  let line = '',
+    y = ty + 19;
+  const maxW = W - 40,
+    lastY = H - (isST ? 22 : 38);
+  for (const wd of words) {
+    const test = line ? line + ' ' + wd : wd;
+    if (g.measureText(test).width > maxW) {
+      g.fillText(line, 20, y);
+      line = wd;
+      y += 11;
+      if (y > lastY) {
+        line = '…';
+        break;
+      }
+    } else line = test;
+  }
+  if (line && y <= lastY + 11) g.fillText(line, 20, y);
+  if (!isST) {
+    g.strokeStyle = '#111';
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(20, H - 32);
+    g.lineTo(W - 20, H - 32);
+    g.stroke();
+    g.font = '700 11px Inter, Arial, sans-serif';
+    g.textAlign = 'right';
+    const atk = card.atk !== undefined && card.atk !== '' ? card.atk : '?';
+    const second = isLink ? `LINK-${lvl || '?'}` : `DEF/${card.def !== undefined && card.def !== '' ? card.def : '?'}`;
+    g.fillText(`ATK/${atk}   ${second}`, W - 20, H - 28);
+    g.textAlign = 'left';
+  }
+  const face = c.toDataURL('image/jpeg', 0.82);
+  const crop = document.createElement('canvas');
+  crop.width = 140;
+  crop.height = 140;
+  crop.getContext('2d').drawImage(c, art.x, art.y, art.s, art.s, 0, 0, 140, 140);
+  return {
+    face,
+    crop: crop.toDataURL('image/jpeg', 0.82)
+  };
+};
 const CustomCardModal = ({
   show,
   onClose,
@@ -3276,13 +3466,20 @@ const CustomCardModal = ({
     desc: '',
     atk: '',
     def: '',
-    image_url: ''
+    image_url: '',
+    attribute: 'DARK',
+    level: 4,
+    art: ''
   });
   const [imagePreview, setImagePreview] = useState('');
   useEffect(() => {
     if (existingCard) {
-      setCardData(existingCard);
-      setImagePreview(existingCard.image_url);
+      setCardData({
+        attribute: 'DARK',
+        level: 4,
+        ...existingCard,
+        art: existingCard.art || (existingCard.faceGenerated ? '' : existingCard.image_url) || ''
+      });
     } else {
       setCardData({
         name: '',
@@ -3290,11 +3487,26 @@ const CustomCardModal = ({
         desc: '',
         atk: '',
         def: '',
-        image_url: ''
+        image_url: '',
+        attribute: 'DARK',
+        level: 4,
+        art: ''
       });
-      setImagePreview('');
     }
+    setImagePreview('');
   }, [existingCard, show]);
+  useEffect(() => {
+    if (!show) return;
+    let alive = true;
+    const tm = setTimeout(async () => {
+      const r = await renderCustomCardFace(cardData);
+      if (alive) setImagePreview(r.face);
+    }, 150);
+    return () => {
+      alive = false;
+      clearTimeout(tm);
+    };
+  }, [show, cardData.name, cardData.type, cardData.desc, cardData.atk, cardData.def, cardData.attribute, cardData.level, cardData.art]);
   if (!show) return null;
   const handleInputChange = e => {
     const {
@@ -3311,18 +3523,23 @@ const CustomCardModal = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result);
         setCardData(prev => ({
           ...prev,
-          image_url: reader.result
+          art: reader.result
         }));
       };
       reader.readAsDataURL(file);
     }
   };
-  const handleSave = () => {
+  const handleSave = async () => {
+    const drawn = await renderCustomCardFace(cardData);
     const finalCard = {
       ...cardData,
+      image_url: drawn.face,
+      image_url_small: drawn.face,
+      image_url_cropped: drawn.crop,
+      faceGenerated: true,
+      linkval: cardData.type === 'Link Monster' ? parseInt(cardData.level, 10) || undefined : undefined,
       isCustom: true,
       instanceId: existingCard ? existingCard.instanceId : generateId(),
       ygoprodeck_id: existingCard ? existingCard.ygoprodeck_id : `custom_${Date.now()}`
@@ -3359,7 +3576,29 @@ const CustomCardModal = ({
   }, CARD_TYPES.map(type => React.createElement("option", {
     key: type,
     value: type
-  }, trTerm(type)))), React.createElement("textarea", {
+  }, trTerm(type)))), !['Spell Card', 'Trap Card'].includes(cardData.type) && React.createElement("div", {
+    className: "flex gap-4"
+  }, React.createElement("label", {
+    className: "flex-1 text-xs text-slate-400"
+  }, t('cardAttribute'), React.createElement("select", {
+    name: "attribute",
+    value: cardData.attribute || 'DARK',
+    onChange: handleInputChange,
+    className: "mt-1 w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white"
+  }, ATTRIBUTES.map(a => React.createElement("option", {
+    key: a,
+    value: a
+  }, trTerm(a))))), React.createElement("label", {
+    className: "w-36 text-xs text-slate-400"
+  }, t('cardLevel'), React.createElement("input", {
+    type: "number",
+    name: "level",
+    min: "0",
+    max: "13",
+    value: cardData.level ?? '',
+    onChange: handleInputChange,
+    className: "mt-1 w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white"
+  }))), React.createElement("textarea", {
     name: "desc",
     value: cardData.desc,
     onChange: handleInputChange,
@@ -3382,7 +3621,9 @@ const CustomCardModal = ({
     onChange: handleInputChange,
     placeholder: t('defense'),
     className: "w-full p-2 bg-slate-700 border border-slate-600 rounded-lg"
-  })), React.createElement("input", {
+  })), React.createElement("label", {
+    className: "block text-xs text-slate-400 -mb-3"
+  }, t('cardArt')), React.createElement("input", {
     type: "file",
     accept: "image/*",
     onChange: handleImageUpload,
@@ -3391,10 +3632,12 @@ const CustomCardModal = ({
     className: "flex-shrink-0 w-48"
   }, React.createElement("p", {
     className: "text-center mb-2"
-  }, t('preview')), React.createElement("img", {
-    src: imagePreview || 'https://placehold.co/200x292/1e293b/a78bfa?text=Upload+Image',
+  }, t('preview')), imagePreview ? React.createElement("img", {
+    src: imagePreview,
     alt: "Preview",
-    className: "w-full rounded-lg shadow-md"
+    className: "w-full rounded-lg shadow-md custom-face-preview"
+  }) : React.createElement("div", {
+    className: "w-full aspect-[300/437] rounded-lg bg-slate-800 animate-pulse"
   }))), React.createElement("div", {
     className: "flex justify-end gap-4 mt-6"
   }, React.createElement("button", {
@@ -3445,7 +3688,7 @@ const PopularCardsCarousel = ({
   }, React.createElement("span", null, "Popular Cards"), React.createElement("i", {
     className: `fas fa-chevron-down transition-transform duration-300 ${isCarouselOpen ? '' : '-rotate-90'}`
   })), React.createElement("div", {
-    className: `transition-all duration-200 ease-out overflow-hidden ${isCarouselOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`
+    className: `collapse-box ${isCarouselOpen ? 'is-open' : ''}`
   }, React.createElement("div", {
     className: "relative pt-2"
   }, React.createElement("button", {
@@ -7835,6 +8078,15 @@ const App = () => {
     className: "step-menu-item",
     onClick: () => {
       setShowMoreMenu(false);
+      setShowWelcome(true);
+    }
+  }, React.createElement("i", {
+    className: "fas fa-book-open w-5 text-center"
+  }), t('guideMenu')), React.createElement("button", {
+    role: "menuitem",
+    className: "step-menu-item",
+    onClick: () => {
+      setShowMoreMenu(false);
       setTutorialState({
         active: true,
         steps: tutorialSteps.main,
@@ -7929,21 +8181,90 @@ const App = () => {
     onClick: () => updateMeta('updated', new Date().toISOString().slice(0, 10)),
     className: "px-2 rounded bg-[var(--color-surface-light)] text-xs text-[var(--color-text)]"
   }, t('metaToday')))))), showWelcome && React.createElement("div", {
-    className: "mb-4 p-4 rounded-lg border border-violet-500/40 bg-violet-900/20 flex flex-wrap items-center gap-3 justify-between"
+    className: "fixed inset-0 z-[65] bg-black/75 flex items-center justify-center p-3 modal-enter",
+    onClick: dismissWelcome
   }, React.createElement("div", {
-    className: "min-w-0"
-  }, React.createElement("p", {
-    className: "font-semibold text-[var(--color-text)]"
-  }, t('welcomeTitle')), React.createElement("p", {
-    className: "text-sm text-[var(--color-text-muted)]"
-  }, t('welcomeText'))), React.createElement("div", {
-    className: "flex flex-wrap gap-2"
-  }, React.createElement("button", {
-    onClick: loadExampleCombo,
-    className: "btn px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700"
+    className: "guide-card modal-content w-full max-w-3xl max-h-[92vh] overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-5",
+    onClick: e => e.stopPropagation()
+  }, React.createElement("div", {
+    className: "flex items-center mb-3"
+  }, React.createElement("h2", {
+    className: "text-2xl font-bold text-[var(--color-secondary)] flex-1"
+  }, t('guideTitle')), React.createElement("button", {
+    onClick: dismissWelcome,
+    "aria-label": t('closeLabel'),
+    className: "w-10 h-10 rounded-full hover:bg-[var(--color-surface-light)] text-2xl"
+  }, "\xD7")), React.createElement("div", {
+    className: "grid gap-3 sm:grid-cols-2"
+  }, React.createElement("div", {
+    className: "guide-panel"
+  }, React.createElement("div", {
+    className: "guide-art"
+  }, React.createElement("span", {
+    className: "guide-icon bg-violet-600"
   }, React.createElement("i", {
-    className: "fas fa-magic mr-2"
-  }), t('welcomeExample')), React.createElement("button", {
+    className: "fas fa-magnifying-glass"
+  })), React.createElement("span", {
+    className: "side-add-btn",
+    style: {
+      width: 40,
+      height: 40
+    }
+  }, React.createElement("i", {
+    className: "fas fa-plus"
+  }))), React.createElement("h3", null, "1. ", t('guide1Title')), React.createElement("p", null, t('guide1Text'))), React.createElement("div", {
+    className: "guide-panel"
+  }, React.createElement("div", {
+    className: "guide-art"
+  }, React.createElement("span", {
+    className: "guide-mini"
+  }, React.createElement("span", {
+    className: "guide-thumb"
+  }, React.createElement("span", {
+    className: "mv-badge mv-warn"
+  }, React.createElement("i", {
+    className: "fas fa-triangle-exclamation"
+  }))), React.createElement("span", {
+    className: "guide-main"
+  }), React.createElement("span", {
+    className: "guide-thumb"
+  }, React.createElement("span", {
+    className: "mv-badge mv-hand"
+  }, React.createElement("i", {
+    className: "fas fa-hand"
+  }), React.createElement("i", {
+    className: "fas fa-magnifying-glass mv-mod"
+  }))))), React.createElement("h3", null, "2. ", t('guide2Title')), React.createElement("p", null, t('guide2Text'))), React.createElement("div", {
+    className: "guide-panel"
+  }, React.createElement("div", {
+    className: "guide-art"
+  }, React.createElement("span", {
+    className: "guide-icon bg-amber-500 text-slate-900"
+  }, React.createElement("i", {
+    className: "fas fa-play"
+  })), React.createElement("span", {
+    className: "guide-icon bg-amber-600"
+  }, React.createElement("i", {
+    className: "fas fa-graduation-cap"
+  }))), React.createElement("h3", null, "3. ", t('guide3Title')), React.createElement("p", null, t('guide3Text'))), React.createElement("div", {
+    className: "guide-panel"
+  }, React.createElement("div", {
+    className: "guide-art"
+  }, React.createElement("span", {
+    className: "guide-icon bg-green-600"
+  }, React.createElement("i", {
+    className: "fas fa-download"
+  })), React.createElement("span", {
+    className: "guide-icon bg-purple-600"
+  }, React.createElement("i", {
+    className: "fas fa-link"
+  })), React.createElement("span", {
+    className: "guide-icon bg-slate-600"
+  }, React.createElement("i", {
+    className: "fas fa-film"
+  }))), React.createElement("h3", null, "4. ", t('guide4Title')), React.createElement("p", null, t('guide4Text')))), React.createElement("div", {
+    className: "flex flex-wrap justify-end gap-2 mt-4"
+  }, React.createElement("button", {
     onClick: () => {
       setShowWelcome(false);
       try {
@@ -7957,12 +8278,14 @@ const App = () => {
     },
     className: "btn px-4 py-2 bg-[var(--color-surface-light)] text-[var(--color-text)] font-semibold rounded-lg"
   }, t('welcomeTutorial')), React.createElement("button", {
-    onClick: dismissWelcome,
-    "aria-label": t('closeLabel'),
-    className: "btn w-10 h-10 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+    onClick: loadExampleCombo,
+    className: "btn px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700"
   }, React.createElement("i", {
-    className: "fas fa-times"
-  })))), React.createElement("div", {
+    className: "fas fa-magic mr-2"
+  }), t('welcomeExample')), React.createElement("button", {
+    onClick: dismissWelcome,
+    className: "btn px-5 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
+  }, t('guideStart'))))), React.createElement("div", {
     className: "flex-grow space-y-6"
   }, React.createElement("section", {
     id: "card-pool-section",
@@ -7989,7 +8312,7 @@ const App = () => {
   }, isAddingToken && React.createElement(Spinner, null), " ", t('addToken'))), React.createElement("i", {
     className: `fas fa-chevron-down transition-transform duration-300 ${isCardPoolOpen ? '' : '-rotate-90'}`
   })), React.createElement("div", {
-    className: `transition-[max-height] duration-200 ease-out overflow-hidden ${isCardPoolOpen ? 'max-h-[40rem]' : 'max-h-0'}`
+    className: `collapse-box ${isCardPoolOpen ? 'is-open' : ''}`
   }, React.createElement("div", {
     className: "p-4 pt-0"
   }, React.createElement("div", {
@@ -8028,7 +8351,7 @@ const App = () => {
   }, React.createElement("span", null, t('comboStatsTitle')), React.createElement("i", {
     className: `fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`
   })), React.createElement("div", {
-    className: `transition-[max-height] duration-200 ease-out overflow-hidden ${isStatsOpen ? 'max-h-[40rem]' : 'max-h-0'}`
+    className: `collapse-box ${isStatsOpen ? 'is-open' : ''}`
   }, React.createElement(ComboStats, {
     stats: comboStats,
     t: t
@@ -8047,7 +8370,7 @@ const App = () => {
   }))), React.createElement("i", {
     className: `fas fa-chevron-down transition-transform duration-300 ${isStartingHandOpen ? '' : '-rotate-90'}`
   })), React.createElement("div", {
-    className: `transition-[max-height] duration-200 ease-out overflow-hidden ${isStartingHandOpen ? 'max-h-[40rem]' : 'max-h-0'}`
+    className: `collapse-box ${isStartingHandOpen ? 'is-open' : ''}`
   }, React.createElement("div", {
     className: "p-4 pt-0"
   }, React.createElement("div", {
@@ -8769,7 +9092,7 @@ const App = () => {
   }, "(", disruptionCount, " ", t('finalBoardDisruption'), ")")), React.createElement("i", {
     className: `fas fa-chevron-down transition-transform duration-300 ${isFinalBoardOpen ? '' : '-rotate-90'}`
   })), React.createElement("div", {
-    className: `transition-[max-height] duration-200 ease-out ${isFinalBoardOpen ? 'max-h-[90rem] overflow-visible' : 'max-h-0 overflow-hidden'}`
+    className: `collapse-box ${isFinalBoardOpen ? 'is-open' : ''}`
   }, finalBoardCards.length > 0 && React.createElement(FinalBoardMini, {
     items: finalBoardCards,
     className: "mb-4",

@@ -1485,21 +1485,91 @@
         };
         const Notification = ({ message, show, t }) => { const elRef = useRef(null); useEffect(() => { if (show) { elRef.current.classList.add('show'); elRef.current.classList.remove('hide'); } else { elRef.current.classList.add('hide'); elRef.current.classList.remove('show'); } }, [show]); return ( <div ref={elRef} className="notification hide fixed top-5 left-1/2 -translate-x-1/2 bg-green-500/80 text-white font-bold px-6 py-2 rounded-full shadow-lg z-50"> {message} </div> ); };
         
+
+        // Dibuja una carta personalizada con el marco de su tipo (como una carta real) y devuelve una imagen
+        const CARD_FRAME_COLORS = { 'Normal Monster': '#e3bd67', 'Effect Monster': '#d07945', 'Flip Effect Monster': '#d07945', 'Union Effect Monster': '#d07945', 'Tuner Monster': '#d07945', 'Ritual Effect Monster': '#5582cc', 'Fusion Monster': '#8a57b5', 'Synchro Monster': '#e6e6e6', 'Xyz Monster': '#232323', 'Link Monster': '#285c9e', 'Pendulum Effect Monster': '#d07945', 'Spell Card': '#14917a', 'Trap Card': '#a43f6d', 'Token': '#a3a3a3' };
+        const ATTRIBUTE_COLORS = { DARK: '#5b2a86', LIGHT: '#c9a417', EARTH: '#76562b', WATER: '#1f6fbf', FIRE: '#cc3a1e', WIND: '#2b9444', DIVINE: '#a8821a' };
+        const loadImg = (src) => new Promise(res => { if (!src) return res(null); const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+        const renderCustomCardFace = async (card) => {
+            const W = 300, H = 437, c = document.createElement('canvas'); c.width = W; c.height = H;
+            const g = c.getContext('2d');
+            const type = card.type || 'Effect Monster';
+            const isSpell = type === 'Spell Card', isTrap = type === 'Trap Card', isST = isSpell || isTrap;
+            const isLink = type === 'Link Monster', isXyz = type === 'Xyz Monster', isPend = /Pendulum/.test(type);
+            const frame = CARD_FRAME_COLORS[type] || '#d07945';
+            const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+            g.fillStyle = '#111'; rr(0, 0, W, H, 12); g.fill();
+            g.fillStyle = frame; rr(5, 5, W - 10, H - 10, 9); g.fill();
+            const art = { x: 30, y: 72, s: W - 60 };
+            if (isPend) { g.fillStyle = '#1d9e75'; g.fillRect(5, art.y + art.s * 0.55, W - 10, H - art.y - art.s * 0.55 - 5); }
+            // Nombre
+            g.fillStyle = 'rgba(255,255,255,.9)'; rr(14, 14, W - 28, 32, 4); g.fill();
+            g.fillStyle = '#111'; let fs = 19; g.font = `800 ${fs}px Inter, Arial, sans-serif`;
+            const name = (card.name || '?').slice(0, 60);
+            while (g.measureText(name).width > W - 76 && fs > 10) { fs--; g.font = `800 ${fs}px Inter, Arial, sans-serif`; }
+            g.textBaseline = 'middle'; g.fillText(name, 22, 30);
+            // Atributo
+            const attr = isST ? (isSpell ? 'SPELL' : 'TRAP') : (card.attribute || 'DARK');
+            g.fillStyle = isSpell ? '#14917a' : isTrap ? '#a43f6d' : (ATTRIBUTE_COLORS[attr] || '#555');
+            g.beginPath(); g.arc(W - 30, 30, 13, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
+            g.fillStyle = '#fff'; g.font = '800 11px Inter, Arial, sans-serif'; g.textAlign = 'center'; g.fillText(attr[0], W - 30, 31); g.textAlign = 'left';
+            // Estrellas / tipo de Magia-Trampa
+            const lvl = Math.max(0, Math.min(13, parseInt(card.level, 10) || 0));
+            if (isST) { g.fillStyle = '#111'; g.font = '700 12px Inter, Arial, sans-serif'; g.textAlign = 'right'; g.fillText(isSpell ? '[SPELL CARD]' : '[TRAP CARD]', W - 18, 59); g.textAlign = 'left'; }
+            else if (!isLink && lvl > 0) {
+                g.font = '16px Arial'; g.textAlign = 'center';
+                for (let i = 0; i < lvl; i++) { const x = isXyz ? 26 + i * 19 : W - 26 - i * 19; g.fillStyle = isXyz ? '#111' : '#f2b705'; g.strokeStyle = isXyz ? '#f2c94c' : '#7a4a00'; g.lineWidth = 1; g.fillText('★', x, 60); g.strokeText('★', x, 60); }
+                g.textAlign = 'left';
+            }
+            // Ilustración
+            g.fillStyle = '#0b0b0b'; g.fillRect(art.x - 3, art.y - 3, art.s + 6, art.s + 6);
+            const im = await loadImg(card.art);
+            if (im) { const k = Math.max(art.s / im.width, art.s / im.height); const w = im.width * k, h = im.height * k; g.save(); g.beginPath(); g.rect(art.x, art.y, art.s, art.s); g.clip(); g.drawImage(im, art.x + (art.s - w) / 2, art.y + (art.s - h) / 2, w, h); g.restore(); }
+            else { g.fillStyle = '#3b2f63'; g.fillRect(art.x, art.y, art.s, art.s); g.fillStyle = 'rgba(255,255,255,.35)'; g.font = '800 70px Inter, Arial, sans-serif'; g.textAlign = 'center'; g.fillText('?', art.x + art.s / 2, art.y + art.s / 2 + 4); g.textAlign = 'left'; }
+            // Caja de texto
+            const ty = art.y + art.s + 10;
+            g.fillStyle = 'rgba(250,244,226,.95)'; rr(14, ty, W - 28, H - ty - 14, 4); g.fill();
+            g.fillStyle = '#111'; g.font = '700 10px Inter, Arial, sans-serif'; g.textBaseline = 'top';
+            g.fillText(`[ ${trTerm(type)} ]`.slice(0, 48), 20, ty + 5);
+            g.font = '9px Inter, Arial, sans-serif';
+            const words = String(card.desc || '').replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean);
+            let line = '', y = ty + 19; const maxW = W - 40, lastY = H - (isST ? 22 : 38);
+            for (const wd of words) { const test = line ? line + ' ' + wd : wd; if (g.measureText(test).width > maxW) { g.fillText(line, 20, y); line = wd; y += 11; if (y > lastY) { line = '…'; break; } } else line = test; }
+            if (line && y <= lastY + 11) g.fillText(line, 20, y);
+            if (!isST) {
+                g.strokeStyle = '#111'; g.lineWidth = 1; g.beginPath(); g.moveTo(20, H - 32); g.lineTo(W - 20, H - 32); g.stroke();
+                g.font = '700 11px Inter, Arial, sans-serif'; g.textAlign = 'right';
+                const atk = card.atk !== undefined && card.atk !== '' ? card.atk : '?';
+                const second = isLink ? `LINK-${lvl || '?'}` : `DEF/${card.def !== undefined && card.def !== '' ? card.def : '?'}`;
+                g.fillText(`ATK/${atk}   ${second}`, W - 20, H - 28); g.textAlign = 'left';
+            }
+            const face = c.toDataURL('image/jpeg', 0.82);
+            const crop = document.createElement('canvas'); crop.width = 140; crop.height = 140;
+            crop.getContext('2d').drawImage(c, art.x, art.y, art.s, art.s, 0, 0, 140, 140);
+            return { face, crop: crop.toDataURL('image/jpeg', 0.82) };
+        };
+
         const CustomCardModal = ({ show, onClose, onSave, t, existingCard }) => {
             const [cardData, setCardData] = useState({
-                name: '', type: 'Effect Monster', desc: '', atk: '', def: '', image_url: '',
+                name: '', type: 'Effect Monster', desc: '', atk: '', def: '', image_url: '', attribute: 'DARK', level: 4, art: '',
             });
             const [imagePreview, setImagePreview] = useState('');
 
             useEffect(() => {
                 if (existingCard) {
-                    setCardData(existingCard);
-                    setImagePreview(existingCard.image_url);
+                    setCardData({ attribute: 'DARK', level: 4, ...existingCard, art: existingCard.art || (existingCard.faceGenerated ? '' : existingCard.image_url) || '' });
                 } else {
-                    setCardData({ name: '', type: 'Effect Monster', desc: '', atk: '', def: '', image_url: '' });
-                    setImagePreview('');
+                    setCardData({ name: '', type: 'Effect Monster', desc: '', atk: '', def: '', image_url: '', attribute: 'DARK', level: 4, art: '' });
                 }
+                setImagePreview('');
             }, [existingCard, show]);
+            // Vista previa: la carta dibujada con su marco
+            useEffect(() => {
+                if (!show) return;
+                let alive = true;
+                const tm = setTimeout(async () => { const r = await renderCustomCardFace(cardData); if (alive) setImagePreview(r.face); }, 150);
+                return () => { alive = false; clearTimeout(tm); };
+            }, [show, cardData.name, cardData.type, cardData.desc, cardData.atk, cardData.def, cardData.attribute, cardData.level, cardData.art]);
 
             if (!show) return null;
 
@@ -1513,16 +1583,18 @@
                 if (file) {
                     const reader = new FileReader();
                     reader.onloadend = () => {
-                        setImagePreview(reader.result);
-                        setCardData(prev => ({ ...prev, image_url: reader.result }));
+                        setCardData(prev => ({ ...prev, art: reader.result }));
                     };
                     reader.readAsDataURL(file);
                 }
             };
 
-            const handleSave = () => {
+            const handleSave = async () => {
+                const drawn = await renderCustomCardFace(cardData);
                 const finalCard = {
                     ...cardData,
+                    image_url: drawn.face, image_url_small: drawn.face, image_url_cropped: drawn.crop, faceGenerated: true,
+                    linkval: cardData.type === 'Link Monster' ? (parseInt(cardData.level, 10) || undefined) : undefined,
                     isCustom: true,
                     instanceId: existingCard ? existingCard.instanceId : generateId(),
                     ygoprodeck_id: existingCard ? existingCard.ygoprodeck_id : `custom_${Date.now()}`
@@ -1542,16 +1614,29 @@
                                 <select name="type" value={cardData.type} onChange={handleInputChange} className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg">
                                     {CARD_TYPES.map(type => <option key={type} value={type}>{trTerm(type)}</option>)}
                                 </select>
+                                {!['Spell Card', 'Trap Card'].includes(cardData.type) && (
+                                    <div className="flex gap-4">
+                                        <label className="flex-1 text-xs text-slate-400">{t('cardAttribute')}
+                                            <select name="attribute" value={cardData.attribute || 'DARK'} onChange={handleInputChange} className="mt-1 w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white">
+                                                {ATTRIBUTES.map(a => <option key={a} value={a}>{trTerm(a)}</option>)}
+                                            </select>
+                                        </label>
+                                        <label className="w-36 text-xs text-slate-400">{t('cardLevel')}
+                                            <input type="number" name="level" min="0" max="13" value={cardData.level ?? ''} onChange={handleInputChange} className="mt-1 w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white" />
+                                        </label>
+                                    </div>
+                                )}
                                 <textarea name="desc" value={cardData.desc} onChange={handleInputChange} placeholder={t('cardDescription')} rows="5" className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg"></textarea>
                                 <div className="flex gap-4">
                                     <input type="text" name="atk" value={cardData.atk} onChange={handleInputChange} placeholder={t('attack')} className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg" />
                                     <input type="text" name="def" value={cardData.def} onChange={handleInputChange} placeholder={t('defense')} className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg" />
                                 </div>
+                                <label className="block text-xs text-slate-400 -mb-3">{t('cardArt')}</label>
                                 <input type="file" accept="image/*" onChange={handleImageUpload} className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
                             </div>
                             <div className="flex-shrink-0 w-48">
                                 <p className="text-center mb-2">{t('preview')}</p>
-                                <img src={imagePreview || 'https://placehold.co/200x292/1e293b/a78bfa?text=Upload+Image'} alt="Preview" className="w-full rounded-lg shadow-md" />
+                                {imagePreview ? <img src={imagePreview} alt="Preview" className="w-full rounded-lg shadow-md custom-face-preview" /> : <div className="w-full aspect-[300/437] rounded-lg bg-slate-800 animate-pulse"></div>}
                             </div>
                         </div>
                         <div className="flex justify-end gap-4 mt-6">
@@ -1603,7 +1688,7 @@
                         <span>Popular Cards</span>
                         <i className={`fas fa-chevron-down transition-transform duration-300 ${isCarouselOpen ? '' : '-rotate-90'}`}></i>
                     </h4>
-                    <div className={`transition-all duration-200 ease-out overflow-hidden ${isCarouselOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className={`collapse-box ${isCarouselOpen ? 'is-open' : ''}`}>
                         <div className="relative pt-2">
                             <button onClick={() => scroll(-1)} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-slate-700/50 hover:bg-slate-600 rounded-full p-1 text-white">
                                 <i className="fas fa-chevron-left"></i>
@@ -3934,6 +4019,7 @@
                                                     <label className="step-menu-item"><i className="fas fa-globe w-5 text-center"></i><select value={language} onChange={(e) => chooseLanguage(e.target.value)} aria-label={t('languageTooltip')} className="flex-1 min-w-0 bg-[var(--color-surface-light)] text-[var(--color-text)] rounded p-1 text-sm">{LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select></label>
                                                     <button role="menuitem" className="step-menu-item hidden lg:flex" onClick={toggleInspector} aria-pressed={inspectorOn}><i className={`fas fa-id-card w-5 text-center ${inspectorOn ? 'text-amber-300' : ''}`}></i>{t('inspectorToggle')}{inspectorOn ? ' ✓' : ''}</button>
                                                     <button role="menuitem" className="step-menu-item hidden lg:flex" onClick={() => { setShowMoreMenu(false); setShowShortcuts(true); }}><i className="fas fa-keyboard w-5 text-center"></i>{t('shortcutsTitle')} (?)</button>
+                                                    <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setShowWelcome(true); }}><i className="fas fa-book-open w-5 text-center"></i>{t('guideMenu')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' }); }}><i className="fas fa-question-circle w-5 text-center"></i>{t('welcomeTutorial')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); loadExampleCombo(); }}><i className="fas fa-magic w-5 text-center"></i>{t('welcomeExample')}</button>
                                                     <div className="border-t border-[var(--color-border)] my-1"></div>
@@ -3975,15 +4061,20 @@
                                     </div>
                                 </details>
                                 {showWelcome && (
-                                    <div className="mb-4 p-4 rounded-lg border border-violet-500/40 bg-violet-900/20 flex flex-wrap items-center gap-3 justify-between">
-                                        <div className="min-w-0">
-                                            <p className="font-semibold text-[var(--color-text)]">{t('welcomeTitle')}</p>
-                                            <p className="text-sm text-[var(--color-text-muted)]">{t('welcomeText')}</p>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            <button onClick={loadExampleCombo} className="btn px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700"><i className="fas fa-magic mr-2"></i>{t('welcomeExample')}</button>
-                                            <button onClick={() => { setShowWelcome(false); try { localStorage.setItem('ygo_welcome_done', '1'); } catch (e) {} setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' }); }} className="btn px-4 py-2 bg-[var(--color-surface-light)] text-[var(--color-text)] font-semibold rounded-lg">{t('welcomeTutorial')}</button>
-                                            <button onClick={dismissWelcome} aria-label={t('closeLabel')} className="btn w-10 h-10 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"><i className="fas fa-times"></i></button>
+                                    <div className="fixed inset-0 z-[65] bg-black/75 flex items-center justify-center p-3 modal-enter" onClick={dismissWelcome}>
+                                        <div className="guide-card modal-content w-full max-w-3xl max-h-[92vh] overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-5" onClick={e => e.stopPropagation()}>
+                                            <div className="flex items-center mb-3"><h2 className="text-2xl font-bold text-[var(--color-secondary)] flex-1">{t('guideTitle')}</h2><button onClick={dismissWelcome} aria-label={t('closeLabel')} className="w-10 h-10 rounded-full hover:bg-[var(--color-surface-light)] text-2xl">×</button></div>
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <div className="guide-panel"><div className="guide-art"><span className="guide-icon bg-violet-600"><i className="fas fa-magnifying-glass"></i></span><span className="side-add-btn" style={{ width: 40, height: 40 }}><i className="fas fa-plus"></i></span></div><h3>1. {t('guide1Title')}</h3><p>{t('guide1Text')}</p></div>
+                                                <div className="guide-panel"><div className="guide-art"><span className="guide-mini"><span className="guide-thumb"><span className="mv-badge mv-warn"><i className="fas fa-triangle-exclamation"></i></span></span><span className="guide-main"></span><span className="guide-thumb"><span className="mv-badge mv-hand"><i className="fas fa-hand"></i><i className="fas fa-magnifying-glass mv-mod"></i></span></span></span></div><h3>2. {t('guide2Title')}</h3><p>{t('guide2Text')}</p></div>
+                                                <div className="guide-panel"><div className="guide-art"><span className="guide-icon bg-amber-500 text-slate-900"><i className="fas fa-play"></i></span><span className="guide-icon bg-amber-600"><i className="fas fa-graduation-cap"></i></span></div><h3>3. {t('guide3Title')}</h3><p>{t('guide3Text')}</p></div>
+                                                <div className="guide-panel"><div className="guide-art"><span className="guide-icon bg-green-600"><i className="fas fa-download"></i></span><span className="guide-icon bg-purple-600"><i className="fas fa-link"></i></span><span className="guide-icon bg-slate-600"><i className="fas fa-film"></i></span></div><h3>4. {t('guide4Title')}</h3><p>{t('guide4Text')}</p></div>
+                                            </div>
+                                            <div className="flex flex-wrap justify-end gap-2 mt-4">
+                                                <button onClick={() => { setShowWelcome(false); try { localStorage.setItem('ygo_welcome_done', '1'); } catch (e) {} setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' }); }} className="btn px-4 py-2 bg-[var(--color-surface-light)] text-[var(--color-text)] font-semibold rounded-lg">{t('welcomeTutorial')}</button>
+                                                <button onClick={loadExampleCombo} className="btn px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700"><i className="fas fa-magic mr-2"></i>{t('welcomeExample')}</button>
+                                                <button onClick={dismissWelcome} className="btn px-5 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">{t('guideStart')}</button>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -3996,7 +4087,7 @@
                                             </span>
                                             <i className={`fas fa-chevron-down transition-transform duration-300 ${isCardPoolOpen ? '' : '-rotate-90'}`}></i>
                                         </h3>
-                                        <div className={`transition-[max-height] duration-200 ease-out overflow-hidden ${isCardPoolOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
+                                        <div className={`collapse-box ${isCardPoolOpen ? 'is-open' : ''}`}>
                                             <div className="p-4 pt-0">
                                                 <div className="p-4 bg-black/20 rounded-lg min-h-[9.5rem] relative">
                                                     {cardPool.length > 0 ? (
@@ -4015,7 +4106,7 @@
                                             <span>{t('comboStatsTitle')}</span>
                                             <i className={`fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`}></i>
                                         </h3>
-                                        <div className={`transition-[max-height] duration-200 ease-out overflow-hidden ${isStatsOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
+                                        <div className={`collapse-box ${isStatsOpen ? 'is-open' : ''}`}>
                                             <ComboStats stats={comboStats} t={t} />
                                         </div>
                                     </section>
@@ -4024,7 +4115,7 @@
                                             <span className="flex items-center">{t('startingHandTitle')} <span data-tooltip={t('helpStartingHand')}><i className="fas fa-question-circle ml-2"></i></span></span>
                                             <i className={`fas fa-chevron-down transition-transform duration-300 ${isStartingHandOpen ? '' : '-rotate-90'}`}></i>
                                         </h3>
-                                        <div className={`transition-[max-height] duration-200 ease-out overflow-hidden ${isStartingHandOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
+                                        <div className={`collapse-box ${isStartingHandOpen ? 'is-open' : ''}`}>
                                             <div className="p-4 pt-0">
                                                 <div className="flex flex-row flex-wrap items-start gap-3 pb-3">
                                                     {startingHand.map((group, groupIndex) => (
@@ -4240,7 +4331,7 @@
                                                 </span>
                                                 <i className={`fas fa-chevron-down transition-transform duration-300 ${isFinalBoardOpen ? '' : '-rotate-90'}`}></i>
                                             </h3>
-                                             <div className={`transition-[max-height] duration-200 ease-out ${isFinalBoardOpen ? 'max-h-[90rem] overflow-visible' : 'max-h-0 overflow-hidden'}`}>
+                                             <div className={`collapse-box ${isFinalBoardOpen ? 'is-open' : ''}`}>
                                                 {finalBoardCards.length > 0 && <FinalBoardMini items={finalBoardCards} className="mb-4" onCardClick={c => setSelectedCardForZoom(c)} />}
                                                 <div data-drop-area="finalBoard" onDragOver={(e) => {e.preventDefault(); e.currentTarget.classList.add('drag-over')}} onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')} onDrop={(e) => handleDrop(e, 'finalBoard')} className={`drop-zone p-4 bg-black/20 rounded-lg min-h-[9.5rem] flex flex-wrap gap-3 border-2 border-dashed border-[var(--color-border)] ${finalBoardCards.length === 0 ? 'justify-center items-center' : 'justify-start items-start'}`}>
                                                     {finalBoardCards.map(item => (
