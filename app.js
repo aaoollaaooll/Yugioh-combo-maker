@@ -1974,7 +1974,17 @@ const CardSelector = ({
       src: WILDCARD_IMG,
       alt: "",
       className: "w-10 h-14 object-cover rounded-sm mr-2"
-    }), React.createElement("span", null, t('anyCard'))), !allMode && allowNote && React.createElement("div", {
+    }), React.createElement("span", null, t('anyCard'))), !allMode && cardSourceRef.current && cardSourceRef.current.pickToken && React.createElement("div", {
+      onMouseDown: () => {
+        const f = onCardSelected;
+        setIsOpen(false);
+        setFilter('');
+        cardSourceRef.current.pickToken(f);
+      },
+      className: "flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm text-sky-300 font-semibold border-b border-slate-700"
+    }, React.createElement("i", {
+      className: "fas fa-coins w-10 text-center mr-2"
+    }), React.createElement("span", null, t('addToken'))), !allMode && allowNote && React.createElement("div", {
       onMouseDown: () => handleSelect({
         isNote: true
       }),
@@ -2044,7 +2054,19 @@ const CardSelector = ({
     src: WILDCARD_IMG,
     alt: "",
     className: "w-6 h-9 rounded-sm"
-  }), t('anyCard'))), !allMode && allowNote && React.createElement("div", {
+  }), t('anyCard'))), !allMode && cardSourceRef.current && cardSourceRef.current.pickToken && React.createElement("div", {
+    className: "flex-shrink-0 mb-2"
+  }, React.createElement("button", {
+    onClick: () => {
+      const f = onCardSelected;
+      setIsOpen(false);
+      setFilter('');
+      cardSourceRef.current.pickToken(f);
+    },
+    className: "w-full p-3 bg-sky-700 text-white font-semibold rounded-lg hover:bg-sky-600 transition-colors"
+  }, React.createElement("i", {
+    className: "fas fa-coins mr-2"
+  }), t('addToken'))), !allMode && allowNote && React.createElement("div", {
     className: "flex-shrink-0 mb-2"
   }, React.createElement("button", {
     onClick: () => handleSelect({
@@ -4797,13 +4819,15 @@ const PlayComboBoard = ({
     className: "font-bold truncate flex-1 min-w-0"
   }, comboTitle || t('untitledCombo'), " ", React.createElement("span", {
     className: "hidden sm:inline font-normal text-[var(--color-text-muted)]"
-  }, "\xB7 ", t('playCombo'))), branchFrom && React.createElement("button", {
+  }, "\xB7 ", t('playCombo')), React.createElement("span", {
+    className: "ml-1.5 px-1.5 py-0.5 rounded bg-slate-900/80 text-amber-300 text-[10px] font-bold uppercase tracking-wide align-middle"
+  }, "Beta")), branchFrom && React.createElement("button", {
     type: "button",
     onClick: () => setBranchFrom(null),
     className: "px-3 py-2 rounded-md bg-red-600 text-white text-sm font-semibold"
   }, React.createElement("i", {
     className: "fas fa-undo mr-1"
-  }), t('branchBack')), handOptions.length > 1 && React.createElement("div", {
+  }), t('branchBack')), handOptions.length > 1 && pos === 0 && React.createElement("div", {
     className: "flex flex-wrap gap-1 order-last sm:order-none w-full sm:w-auto"
   }, handOptions.map((_, i) => React.createElement("button", {
     key: i,
@@ -5931,6 +5955,7 @@ const App = () => {
     pendingPoolRef.current.push(inst);
     return inst;
   };
+  const tokenCallbackRef = useRef(null);
   const prepareWildcard = () => {
     const existing = cardPool.find(c => c.isWildcard) || pendingPoolRef.current.find(c => c.isWildcard);
     if (existing) return existing;
@@ -5941,6 +5966,10 @@ const App = () => {
   cardSourceRef.current = {
     prepareApiCard,
     prepareWildcard,
+    pickToken: cb => {
+      tokenCallbackRef.current = cb;
+      handleAddToken();
+    },
     poolIds: new Set(cardPool.filter(c => !c.isCustom).map(c => c.ygoprodeck_id))
   };
   const [destMenu, setDestMenu] = useState(null);
@@ -7528,7 +7557,7 @@ const App = () => {
     className: "text-amber-400"
   }, React.createElement("i", {
     className: "fas fa-play"
-  }), React.createElement("span", null, t('navTest')))), React.createElement(ImportDeckModal, {
+  }), React.createElement("span", null, t('navTest'), " \u03B2"))), React.createElement(ImportDeckModal, {
     show: showImportDeck,
     onClose: () => setShowImportDeck(false),
     onImport: importDeckIds,
@@ -7612,10 +7641,15 @@ const App = () => {
     show: showTokenPicker,
     tokens: allTokens,
     onPick: tk => {
-      addCardToPool(tk);
+      const cb = tokenCallbackRef.current;
+      tokenCallbackRef.current = null;
+      if (cb) cb(prepareApiCard(tk));else addCardToPool(tk);
       setShowTokenPicker(false);
     },
-    onClose: () => setShowTokenPicker(false),
+    onClose: () => {
+      tokenCallbackRef.current = null;
+      setShowTokenPicker(false);
+    },
     t: t
   }), React.createElement(CustomCardModal, {
     show: showCustomCardModal,
@@ -7947,7 +7981,9 @@ const App = () => {
     className: "fas fa-play"
   }), " ", React.createElement("span", {
     className: "hidden sm:inline"
-  }, t('playCombo'))), React.createElement("button", {
+  }, t('playCombo')), React.createElement("span", {
+    className: "ml-1.5 px-1.5 py-0.5 rounded bg-slate-900/80 text-amber-300 text-[10px] font-bold uppercase tracking-wide align-middle"
+  }, "Beta")), React.createElement("button", {
     onClick: handleShareUrl,
     "data-tooltip": t('shareUrl'),
     className: "btn p-3 bg-purple-600 text-white rounded-md hover:bg-purple-700"
@@ -8079,15 +8115,6 @@ const App = () => {
   }, React.createElement("i", {
     className: "fas fa-pen-ruler w-5 text-center"
   }), t('createCustomCard')), React.createElement("button", {
-    role: "menuitem",
-    className: "step-menu-item",
-    onClick: () => {
-      setShowMoreMenu(false);
-      handleAddToken();
-    }
-  }, React.createElement("i", {
-    className: "fas fa-coins w-5 text-center"
-  }), t('addToken')), React.createElement("button", {
     role: "menuitem",
     className: "step-menu-item",
     onClick: () => {

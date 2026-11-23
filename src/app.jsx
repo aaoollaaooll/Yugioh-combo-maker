@@ -694,6 +694,13 @@
                             <img src={WILDCARD_IMG} alt="" className="w-10 h-14 object-cover rounded-sm mr-2" />
                             <span>{t('anyCard')}</span>
                         </div>)}
+                        {!allMode && cardSourceRef.current && cardSourceRef.current.pickToken && (<div
+                            onMouseDown={() => { const f = onCardSelected; setIsOpen(false); setFilter(''); cardSourceRef.current.pickToken(f); }}
+                            className="flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm text-sky-300 font-semibold border-b border-slate-700"
+                        >
+                            <i className="fas fa-coins w-10 text-center mr-2"></i>
+                            <span>{t('addToken')}</span>
+                        </div>)}
                         {!allMode && allowNote && (<div
                             onMouseDown={() => handleSelect({ isNote: true })}
                             className="flex items-center p-2 hover:bg-slate-700 cursor-pointer text-sm text-amber-300 font-semibold border-b border-slate-700"
@@ -740,6 +747,9 @@
                         <button onClick={() => handleSelect(cardSourceRef.current.prepareWildcard())} className="w-full p-3 bg-violet-700 text-white font-semibold rounded-lg hover:bg-violet-600 transition-colors flex items-center justify-center gap-2">
                             <img src={WILDCARD_IMG} alt="" className="w-6 h-9 rounded-sm" />{t('anyCard')}
                         </button>
+                    </div>)}
+                    {!allMode && cardSourceRef.current && cardSourceRef.current.pickToken && (<div className="flex-shrink-0 mb-2">
+                        <button onClick={() => { const f = onCardSelected; setIsOpen(false); setFilter(''); cardSourceRef.current.pickToken(f); }} className="w-full p-3 bg-sky-700 text-white font-semibold rounded-lg hover:bg-sky-600 transition-colors"><i className="fas fa-coins mr-2"></i>{t('addToken')}</button>
                     </div>)}
                     {!allMode && allowNote && (<div className="flex-shrink-0 mb-2">
                         <button
@@ -2360,9 +2370,9 @@
                 <div className="play-overlay fixed inset-0 z-[60] flex flex-col text-[var(--color-text)]" role="dialog" aria-modal="true" aria-label={t('playCombo')}>
                     <header className="shrink-0 flex flex-wrap items-center gap-2 px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
                         <i className="fas fa-play text-amber-500"></i>
-                        <h2 className="font-bold truncate flex-1 min-w-0">{comboTitle || t('untitledCombo')} <span className="hidden sm:inline font-normal text-[var(--color-text-muted)]">· {t('playCombo')}</span></h2>
+                        <h2 className="font-bold truncate flex-1 min-w-0">{comboTitle || t('untitledCombo')} <span className="hidden sm:inline font-normal text-[var(--color-text-muted)]">· {t('playCombo')}</span><span className="ml-1.5 px-1.5 py-0.5 rounded bg-slate-900/80 text-amber-300 text-[10px] font-bold uppercase tracking-wide align-middle">Beta</span></h2>
                         {branchFrom && <button type="button" onClick={() => setBranchFrom(null)} className="px-3 py-2 rounded-md bg-red-600 text-white text-sm font-semibold"><i className="fas fa-undo mr-1"></i>{t('branchBack')}</button>}
-                        {handOptions.length > 1 && (
+                        {handOptions.length > 1 && pos === 0 && (
                             <div className="flex flex-wrap gap-1 order-last sm:order-none w-full sm:w-auto">
                                 {handOptions.map((_, i) => (
                                     <button key={i} type="button" onClick={() => setHandIdx(i)} className={`px-3 py-2 rounded-md text-sm font-semibold ${i === handIdx ? 'bg-amber-500 text-slate-900' : 'bg-[var(--color-surface-light)] hover:opacity-80'}`}>{t('playHandOption', { n: i + 1 })}</button>
@@ -3000,6 +3010,7 @@
                 pendingPoolRef.current.push(inst);
                 return inst;
             };
+            const tokenCallbackRef = useRef(null);
             const prepareWildcard = () => {
                 const existing = cardPool.find(c => c.isWildcard) || pendingPoolRef.current.find(c => c.isWildcard);
                 if (existing) return existing;
@@ -3007,7 +3018,7 @@
                 pendingPoolRef.current.push(w);
                 return w;
             };
-            cardSourceRef.current = { prepareApiCard, prepareWildcard, poolIds: new Set(cardPool.filter(c => !c.isCustom).map(c => c.ygoprodeck_id)) };
+            cardSourceRef.current = { prepareApiCard, prepareWildcard, pickToken: (cb) => { tokenCallbackRef.current = cb; handleAddToken(); }, poolIds: new Set(cardPool.filter(c => !c.isCustom).map(c => c.ygoprodeck_id)) };
 
             // Menú «¿Dónde la pongo?» al tocar una carta del buscador o del carrusel
             const [destMenu, setDestMenu] = useState(null);
@@ -3857,7 +3868,7 @@
                             <button type="button" onClick={() => scrollToSection('#starting-hand-section')}><i className="fas fa-hand-paper"></i><span>{t('navHand')}</span></button>
                             <button type="button" onClick={() => scrollToSection('#combo-steps-section')}><i className="fas fa-list-ol"></i><span>{t('navSteps')}</span></button>
                             <button type="button" onClick={() => scrollToSection('.final-board')}><i className="fas fa-chess-board"></i><span>{t('navBoard')}</span></button>
-                            <button type="button" onClick={() => setIsPlayOpen(true)} className="text-amber-400"><i className="fas fa-play"></i><span>{t('navTest')}</span></button>
+                            <button type="button" onClick={() => setIsPlayOpen(true)} className="text-amber-400"><i className="fas fa-play"></i><span>{t('navTest')} β</span></button>
                         </nav>
                         <ImportDeckModal show={showImportDeck} onClose={() => setShowImportDeck(false)} onImport={importDeckIds} t={t} />
                         {showShortcuts && (
@@ -3908,7 +3919,7 @@
                                 </div>
                             );
                         })()}
-                        <TokenPickerModal show={showTokenPicker} tokens={allTokens} onPick={(tk) => { addCardToPool(tk); setShowTokenPicker(false); }} onClose={() => setShowTokenPicker(false)} t={t} />
+                        <TokenPickerModal show={showTokenPicker} tokens={allTokens} onPick={(tk) => { const cb = tokenCallbackRef.current; tokenCallbackRef.current = null; if (cb) cb(prepareApiCard(tk)); else addCardToPool(tk); setShowTokenPicker(false); }} onClose={() => { tokenCallbackRef.current = null; setShowTokenPicker(false); }} t={t} />
                         <CustomCardModal show={showCustomCardModal} onClose={() => { setShowCustomCardModal(false); setEditingCustomCard(null); }} onSave={handleSaveCustomCard} t={t} existingCard={editingCustomCard} />
 
                         {isExportingPng && <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"><div className="bg-slate-800 rounded-lg shadow-xl p-8 text-center"><h3 className="text-xl font-bold mb-4 text-violet-300">{exportMessage}</h3><div className="w-full bg-slate-600 rounded-full h-4"><div className="bg-violet-500 h-4 rounded-full" style={{ width: `${exportProgress}%` }}></div></div><p className="text-white mt-2">{Math.round(exportProgress)}%</p></div></div>}
@@ -4004,7 +4015,7 @@
                                     <div className="flex flex-wrap justify-center md:justify-end items-center gap-2 max-w-full mx-auto md:mr-0 main-actions">
                                         <button onClick={undo} disabled={!canUndo} data-tooltip={`${t('undo')} (Ctrl+Z)`} className="btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)] disabled:opacity-50"><i className="fas fa-undo"></i></button>
                                         <button onClick={redo} disabled={!canRedo} data-tooltip={`${t('redo')} (Ctrl+Y)`} className="btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)] disabled:opacity-50"><i className="fas fa-redo"></i></button>
-                                        <button onClick={() => setIsPlayOpen(true)} data-tooltip={t('playCombo')} aria-label={t('playCombo')} className="btn p-3 bg-amber-500 text-slate-900 font-semibold rounded-md hover:bg-amber-400 flex items-center gap-2"><i className="fas fa-play"></i> <span className="hidden sm:inline">{t('playCombo')}</span></button>
+                                        <button onClick={() => setIsPlayOpen(true)} data-tooltip={t('playCombo')} aria-label={t('playCombo')} className="btn p-3 bg-amber-500 text-slate-900 font-semibold rounded-md hover:bg-amber-400 flex items-center gap-2"><i className="fas fa-play"></i> <span className="hidden sm:inline">{t('playCombo')}</span><span className="ml-1.5 px-1.5 py-0.5 rounded bg-slate-900/80 text-amber-300 text-[10px] font-bold uppercase tracking-wide align-middle">Beta</span></button>
                                         <button onClick={handleShareUrl} data-tooltip={t('shareUrl')} className="btn p-3 bg-purple-600 text-white rounded-md hover:bg-purple-700"><i className="fas fa-link"></i></button>
                                         <button onClick={() => setShowSaveModal(true)} data-tooltip={isOnlineSaveEnabled ? t('saveOnlineTooltip') : t('saveLocalTooltip')} className="btn p-3 bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"><i className="fas fa-save"></i> {isOnlineSaveEnabled && <i className="fas fa-cloud text-xs"></i>}</button>
                                         <button onClick={() => setShowLoadModal(true)} data-tooltip={t('openSavedTooltip')} className="btn p-3 bg-blue-600 rounded-md hover:bg-blue-700"><i className="fas fa-folder-open"></i></button>
@@ -4024,7 +4035,6 @@
                                                     <button role="menuitem" className="step-menu-item hidden lg:flex" onClick={toggleInspector} aria-pressed={inspectorOn}><i className={`fas fa-id-card w-5 text-center ${inspectorOn ? 'text-amber-300' : ''}`}></i>{t('inspectorToggle')}{inspectorOn ? ' ✓' : ''}</button>
                                                     <button role="menuitem" className="step-menu-item hidden lg:flex" onClick={() => { setShowMoreMenu(false); setShowShortcuts(true); }}><i className="fas fa-keyboard w-5 text-center"></i>{t('shortcutsTitle')} (?)</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setShowCustomCardModal(true); }}><i className="fas fa-pen-ruler w-5 text-center"></i>{t('createCustomCard')}</button>
-                                                    <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); handleAddToken(); }}><i className="fas fa-coins w-5 text-center"></i>{t('addToken')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setShowWelcome(true); }}><i className="fas fa-book-open w-5 text-center"></i>{t('guideMenu')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' }); }}><i className="fas fa-question-circle w-5 text-center"></i>{t('welcomeTutorial')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); loadExampleCombo(); }}><i className="fas fa-magic w-5 text-center"></i>{t('welcomeExample')}</button>
