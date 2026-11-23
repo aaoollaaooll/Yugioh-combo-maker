@@ -949,6 +949,9 @@
         // Barra de arriba con menú «Más» y barra inferior en celular
         const EXTRA_TRANSLATIONS_BAR = {"es": {"moreOptions": "Más opciones", "moreLabel": "Más", "exampleReplaceConfirm": "Esto reemplaza el combo que tienes abierto. ¿Continuar?", "quickNav": "Ir a la sección", "navPool": "Pool", "navHand": "Mano", "navSteps": "Pasos", "navBoard": "Campo", "navTest": "Probar"}, "en": {"moreOptions": "More options", "moreLabel": "More", "exampleReplaceConfirm": "This replaces the combo you have open. Continue?", "quickNav": "Go to section", "navPool": "Pool", "navHand": "Hand", "navSteps": "Steps", "navBoard": "Board", "navTest": "Test"}, "pt": {"moreOptions": "Mais opções", "moreLabel": "Mais", "exampleReplaceConfirm": "Isto substitui o combo aberto. Continuar?", "quickNav": "Ir para a seção", "navPool": "Pool", "navHand": "Mão", "navSteps": "Passos", "navBoard": "Campo", "navTest": "Testar"}, "fr": {"moreOptions": "Plus d'options", "moreLabel": "Plus", "exampleReplaceConfirm": "Cela remplace le combo ouvert. Continuer ?", "quickNav": "Aller à la section", "navPool": "Pool", "navHand": "Main", "navSteps": "Étapes", "navBoard": "Terrain", "navTest": "Tester"}, "it": {"moreOptions": "Altre opzioni", "moreLabel": "Altro", "exampleReplaceConfirm": "Questo sostituisce la combo aperta. Continuare?", "quickNav": "Vai alla sezione", "navPool": "Pool", "navHand": "Mano", "navSteps": "Passi", "navBoard": "Campo", "navTest": "Prova"}, "de": {"moreOptions": "Weitere Optionen", "moreLabel": "Mehr", "exampleReplaceConfirm": "Das ersetzt die geöffnete Combo. Fortfahren?", "quickNav": "Zum Abschnitt", "navPool": "Pool", "navHand": "Hand", "navSteps": "Schritte", "navBoard": "Feld", "navTest": "Testen"}, "ru": {"moreOptions": "Ещё", "moreLabel": "Ещё", "exampleReplaceConfirm": "Это заменит открытое комбо. Продолжить?", "quickNav": "Перейти к разделу", "navPool": "Пул", "navHand": "Рука", "navSteps": "Шаги", "navBoard": "Поле", "navTest": "Тест"}, "ja": {"moreOptions": "その他", "moreLabel": "その他", "exampleReplaceConfirm": "開いているコンボが置き換えられます。続けますか?", "quickNav": "セクションへ移動", "navPool": "プール", "navHand": "手札", "navSteps": "手順", "navBoard": "盤面", "navTest": "テスト"}, "ko": {"moreOptions": "더보기", "moreLabel": "더보기", "exampleReplaceConfirm": "열려 있는 콤보가 바뀝니다. 계속할까요?", "quickNav": "섹션으로 이동", "navPool": "풀", "navHand": "패", "navSteps": "단계", "navBoard": "필드", "navTest": "테스트"}, "zh": {"moreOptions": "更多选项", "moreLabel": "更多", "exampleReplaceConfirm": "这会替换当前打开的 Combo。继续吗?", "quickNav": "跳转到区块", "navPool": "卡池", "navHand": "手卡", "navSteps": "步骤", "navBoard": "场面", "navTest": "测试"}};
         Object.entries(EXTRA_TRANSLATIONS_BAR).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        // Ramas ante interrupciones
+        const EXTRA_TRANSLATIONS_BRANCH = {"es": {"branchAdd": "Añadir rama (si te interrumpen)", "branchDefaultTitle": "Si me interrumpen aquí", "branchIf": "Si usan", "branchTitleLabel": "Nombre de la rama", "branchFromStep": "desde el paso {n}", "branchRemove": "Quitar rama", "branchAddStep": "+ Paso de la rama", "branchView": "Ver rama", "branchBack": "Volver a la línea principal", "branchLabel": "Rama"}, "en": {"branchAdd": "Add branch (if interrupted)", "branchDefaultTitle": "If I get interrupted here", "branchIf": "If they use", "branchTitleLabel": "Branch name", "branchFromStep": "from step {n}", "branchRemove": "Remove branch", "branchAddStep": "+ Branch step", "branchView": "View branch", "branchBack": "Back to the main line", "branchLabel": "Branch"}, "pt": {"branchAdd": "Adicionar ramo (se interromperem)", "branchDefaultTitle": "Se me interromperem aqui", "branchIf": "Se usarem", "branchTitleLabel": "Nome do ramo", "branchFromStep": "a partir do passo {n}", "branchRemove": "Remover ramo", "branchAddStep": "+ Passo do ramo", "branchView": "Ver ramo", "branchBack": "Voltar à linha principal", "branchLabel": "Ramo"}, "fr": {"branchAdd": "Ajouter une variante (si interrompu)", "branchDefaultTitle": "Si je suis interrompu ici", "branchIf": "S'ils utilisent", "branchTitleLabel": "Nom de la variante", "branchFromStep": "depuis l'étape {n}", "branchRemove": "Supprimer la variante", "branchAddStep": "+ Étape de la variante", "branchView": "Voir la variante", "branchBack": "Revenir à la ligne principale", "branchLabel": "Variante"}, "it": {"branchAdd": "Aggiungi ramo (se interrotto)", "branchDefaultTitle": "Se vengo interrotto qui", "branchIf": "Se usano", "branchTitleLabel": "Nome del ramo", "branchFromStep": "dal passo {n}", "branchRemove": "Rimuovi ramo", "branchAddStep": "+ Passo del ramo", "branchView": "Vedi ramo", "branchBack": "Torna alla linea principale", "branchLabel": "Ramo"}, "de": {"branchAdd": "Abzweigung hinzufügen (bei Unterbrechung)", "branchDefaultTitle": "Falls ich hier unterbrochen werde", "branchIf": "Falls sie nutzen", "branchTitleLabel": "Name der Abzweigung", "branchFromStep": "ab Schritt {n}", "branchRemove": "Abzweigung entfernen", "branchAddStep": "+ Schritt der Abzweigung", "branchView": "Abzweigung ansehen", "branchBack": "Zurück zur Hauptlinie", "branchLabel": "Abzweigung"}, "ru": {"branchAdd": "Добавить ветку (если прервут)", "branchDefaultTitle": "Если меня прервут здесь", "branchIf": "Если используют", "branchTitleLabel": "Название ветки", "branchFromStep": "с шага {n}", "branchRemove": "Удалить ветку", "branchAddStep": "+ Шаг ветки", "branchView": "Смотреть ветку", "branchBack": "Вернуться к основной линии", "branchLabel": "Ветка"}, "ja": {"branchAdd": "分岐を追加 (妨害された場合)", "branchDefaultTitle": "ここで妨害されたら", "branchIf": "相手が使ったら:", "branchTitleLabel": "分岐の名前", "branchFromStep": "ステップ {n} から", "branchRemove": "分岐を削除", "branchAddStep": "+ 分岐のステップ", "branchView": "分岐を見る", "branchBack": "メインのルートに戻る", "branchLabel": "分岐"}, "ko": {"branchAdd": "분기 추가 (방해받을 경우)", "branchDefaultTitle": "여기서 방해받으면", "branchIf": "상대가 사용하면", "branchTitleLabel": "분기 이름", "branchFromStep": "{n}단계부터", "branchRemove": "분기 삭제", "branchAddStep": "+ 분기 단계", "branchView": "분기 보기", "branchBack": "메인 루트로 돌아가기", "branchLabel": "분기"}, "zh": {"branchAdd": "添加分支(被干扰时)", "branchDefaultTitle": "如果在这里被干扰", "branchIf": "如果对方使用", "branchTitleLabel": "分支名称", "branchFromStep": "从第 {n} 步开始", "branchRemove": "删除分支", "branchAddStep": "+ 分支步骤", "branchView": "查看分支", "branchBack": "返回主线", "branchLabel": "分支"}};
+        Object.entries(EXTRA_TRANSLATIONS_BRANCH).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
         const YGOPRODECK_API_BASE_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
@@ -1728,6 +1731,12 @@
                                     {step.targetCards.length > 0 && (
                                         <div className="flex flex-wrap justify-center items-center gap-1 w-full mt-2 relative z-10">
                                             {step.targetCards.map(target => <ExportCard key={`target-${target.instanceId}`} card={findCard(target.instanceId)} size="tiny" quantity={target.quantity} />)}
+                                        </div>
+                                    )}
+                                    {step.branch && step.branch.steps && step.branch.steps.length > 0 && (
+                                        <div className="w-full mt-2 text-left rounded border-l-4 border-red-500 bg-red-900/20 p-2">
+                                            <p className="text-red-300 text-xs font-bold break-all">↳ {nbsp(step.branch.title || t('branchLabel'))}</p>
+                                            {step.branch.steps.map((bs, bi) => { const bc = findCard(bs.mainCardInstanceId); const bact = bs.actionType === 'Other' ? (bs.customActionText || trTerm('Other')) : trTerm(bs.actionType); return <p key={bs.id} className="text-slate-200 text-xs mt-1 break-all">{nbsp(`${stepNumber}.${bi + 1} ${bact}: ${bc ? bc.name : '?'}${bs.actionDescription ? ' — ' + bs.actionDescription : ''}`)}</p>; })}
                                         </div>
                                     )}
                                 </div>
@@ -2757,18 +2766,28 @@
             const [score, setScore] = useState({ ok: 0, wrong: [] });
             const listRef = useRef(null);
 
+            // Rama elegida: la línea principal hasta ese paso y luego los pasos de la rama
+            const [branchFrom, setBranchFrom] = useState(null);
+            const timeline = useMemo(() => {
+                const main = comboSteps || [];
+                if (!branchFrom) return main;
+                const idx = main.findIndex(s => s && s.id === branchFrom);
+                const src = idx >= 0 ? main[idx] : null;
+                if (!src || !src.branch) return main;
+                return [...main.slice(0, idx + 1), { type: 'group', id: 'branch-' + src.id, title: '↳ ' + (src.branch.title || t('branchLabel')) }, ...(src.branch.steps || []).map(bs => ({ ...bs, type: 'step', vulnerability: { text: '', cards: [] }, targetCards: bs.targetCards || [] }))];
+            }, [branchFrom, comboSteps, t]);
             // Línea de tiempo: solo los pasos de verdad avanzan; las notas se muestran con el paso anterior y los grupos como títulos.
             const { steps, notesAt, groupAt, rows } = useMemo(() => {
                 const steps = [], notesAt = [[]], groupAt = [null], rows = [];
                 let group = null;
-                (comboSteps || []).forEach((e, i) => {
+                timeline.forEach((e, i) => {
                     if (!e) return;
                     if (e.type === 'group') { group = e.title || ''; rows.push({ kind: 'group', key: e.id || 'g' + i, text: e.title || '' }); }
                     else if (e.type === 'note') { if (e.text) { notesAt[steps.length].push(e.text); rows.push({ kind: 'note', key: e.id || 'n' + i, text: e.text }); } }
                     else if (e.type === 'step') { steps.push(e); notesAt.push([]); groupAt.push(group); rows.push({ kind: 'step', key: e.id || 's' + i, step: e, pos: steps.length }); }
                 });
                 return { steps, notesAt, groupAt, rows };
-            }, [comboSteps]);
+            }, [timeline]);
             const total = steps.length;
 
             // boards[k] = estado tras k pasos, calculado siempre desde el inicio: avanzar y retroceder dan el mismo tablero.
@@ -2899,6 +2918,7 @@
                     <header className="shrink-0 flex flex-wrap items-center gap-2 px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
                         <i className="fas fa-play text-amber-500"></i>
                         <h2 className="font-bold truncate flex-1 min-w-0">{comboTitle || t('untitledCombo')} <span className="hidden sm:inline font-normal text-[var(--color-text-muted)]">· {t('playCombo')}</span></h2>
+                        {branchFrom && <button type="button" onClick={() => setBranchFrom(null)} className="px-3 py-2 rounded-md bg-red-600 text-white text-sm font-semibold"><i className="fas fa-undo mr-1"></i>{t('branchBack')}</button>}
                         {handOptions.length > 1 && (
                             <div className="flex flex-wrap gap-1 order-last sm:order-none w-full sm:w-auto">
                                 {handOptions.map((_, i) => (
@@ -2974,6 +2994,9 @@
                                             {board.last && board.last.dest && <span className="text-[var(--color-text-muted)]">→ {playDestLabel(board.last.dest, t)}</span>}
                                         </div>
                                         {curStep.actionDescription && <p className="text-sm mt-1 whitespace-pre-wrap break-words" dangerouslySetInnerHTML={{ __html: sanitizeHTML(curStep.actionDescription) }}></p>}
+                                        {curStep.branch && curStep.branch.steps && curStep.branch.steps.length > 0 && !branchFrom && (
+                                            <button type="button" onClick={() => setBranchFrom(curStep.id)} className="mt-2 px-3 py-2 rounded-md bg-red-600/80 hover:bg-red-600 text-white text-sm font-semibold"><i className="fas fa-code-branch mr-2"></i>{t('branchView')}: {curStep.branch.title || t('branchLabel')}</button>
+                                        )}
                                         {curStep.vulnerability && (() => { const vNames = (curStep.vulnerability.cards || []).map(vc => (vc.card || cardById[vc.instanceId] || {}).name).filter(Boolean).join(', '); if (vNames) return <p className="text-xs mt-1 text-red-500">⚠️ {vNames}</p>; return curStep.vulnerability.text ? <p className="text-xs mt-1 text-red-500">⚠️ <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(curStep.vulnerability.text) }}></span></p> : null; })()}
                                     </React.Fragment>
                                 ) : (
@@ -3550,6 +3573,24 @@
             };
 
             const updateStep = (stepId, updatedData) => { const newSteps = comboSteps.map(step => step.id === stepId ? { ...step, ...updatedData } : step); setComboState({ ...comboState, comboSteps: newSteps }, `Updated step`); };
+            // Ramas: un paso puede tener una línea alternativa («si me interrumpen aquí…») con sus propios pasos
+            const setBranch = (stepId, branch) => updateStep(stepId, { branch });
+            const branchTitleFor = (step) => {
+                const v = step.vulnerability || {};
+                const names = (v.cards || []).map(vc => (vc.card && vc.card.name) || (findCard(vc.instanceId) || {}).name).filter(Boolean);
+                if (names.length) return `${t('branchIf')} ${names.join(' / ')}`;
+                if (v.text && v.text !== 'Disrupción') return v.text;
+                return t('branchDefaultTitle');
+            };
+            const addBranch = (step) => { if (!step.branch) setBranch(step.id, { title: branchTitleFor(step), steps: [] }); };
+            const removeBranch = (step) => updateStep(step.id, { branch: null });
+            const addBranchStep = (step, card) => {
+                if (!card || card.isNote) return;
+                const b = step.branch || { title: branchTitleFor(step), steps: [] };
+                setBranch(step.id, { ...b, steps: [...(b.steps || []), { type: 'step', id: generateId(), mainCardInstanceId: card.instanceId, actionType: getDefaultAction(card.type), customActionText: '', actionDescription: '', targetCards: [], location: null }] });
+            };
+            const updateBranchStep = (step, bsId, data) => setBranch(step.id, { ...step.branch, steps: step.branch.steps.map(s => s.id === bsId ? { ...s, ...data } : s) });
+            const removeBranchStep = (step, bsId) => setBranch(step.id, { ...step.branch, steps: step.branch.steps.filter(s => s.id !== bsId) });
             const duplicateStep = (stepId) => {
                 const i = comboSteps.findIndex(s => s.id === stepId);
                 if (i < 0) return;
@@ -3925,6 +3966,14 @@
                     if (v && (v.text || (v.cards || []).length)) {
                         const vNames = (v.cards || []).map(vc => (vc.card && vc.card.name) || nameOf(vc.instanceId));
                         lines.push(`   ⚠ ${t('vulnerableTo')}: ${[...vNames, v.cards && v.cards.length ? '' : v.text].filter(Boolean).join(', ')}`);
+                    }
+                    if (s.branch && s.branch.steps && s.branch.steps.length) {
+                        lines.push(`   ↳ ${s.branch.title || t('branchLabel')}:`);
+                        s.branch.steps.forEach((bs, bi) => {
+                            const bact = bs.actionType === 'Other' ? (bs.customActionText || trTerm('Other')) : trTerm(bs.actionType);
+                            const bdesc = htmlToText(bs.actionDescription);
+                            lines.push(`      ${n}.${bi + 1} ${bact}: ${nameOf(bs.mainCardInstanceId)}${bdesc ? ' — ' + bdesc : ''}`);
+                        });
                     }
                 });
                 if (finalBoardCards.length) {
@@ -4422,6 +4471,7 @@
                                                 const isVulnerable = step.vulnerability?.text || (step.vulnerability?.cards && step.vulnerability.cards.length > 0); 
                                                 const stepNumber = actualSteps.findIndex(s => s.id === step.id);
                                                 return (
+                                                <React.Fragment key={step.id}>
                                                 <div 
                                                     key={step.id}
                                                     data-step-box="1"
@@ -4440,6 +4490,7 @@
                                                             {openStepMenuId === step.id && (
                                                                 <div className="step-menu absolute right-0 top-full mt-1 w-60 rounded-lg shadow-xl py-1 text-sm" role="menu">
                                                                     <button onClick={() => { duplicateStep(step.id); setOpenStepMenuId(null); }} className="step-menu-item" role="menuitem"><i className="fas fa-clone w-5 text-center"></i>{t('duplicateStep')}</button>
+                                                                <button onClick={() => { addBranch(step); setOpenStepMenuId(null); }} disabled={!!step.branch} className="step-menu-item" role="menuitem"><i className="fas fa-code-branch w-5 text-center"></i>{t('branchAdd')}</button>
                                                                     <button onClick={() => moveStep(step.id, -1)} disabled={index === 0} className="step-menu-item" role="menuitem"><i className="fas fa-arrow-up w-5 text-center"></i>{t('moveStepUp')}</button>
                                                                     <button onClick={() => moveStep(step.id, 1)} disabled={index === comboSteps.length - 1} className="step-menu-item" role="menuitem"><i className="fas fa-arrow-down w-5 text-center"></i>{t('moveStepDown')}</button>
                                                                     <CardSelector cardPool={cardPool} onCardSelected={item => { handleAddStepOrNote(item, index + 1); setOpenStepMenuId(null); }} allowNote={true} displayAs="menu-item" buttonText={t('insertStepBelow')} t={t} preferredDirection="side" />
@@ -4457,6 +4508,7 @@
                                                     <div className="step-main flex justify-center my-2 relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />{step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (<div className="absolute -right-4 -top-2 z-10 flex flex-col items-end gap-1">{step.vulnerability.cards.map((vCard) => (<CardDisplay key={vCard.instanceId} card={vCard.card || findCard(vCard.instanceId)} size="tiny" useCropped={true} onRemove={!step.isLocked ? () => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); } : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove}><span className="absolute top-0 right-0 text-xl z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span></CardDisplay>))}</div>)}</div>
                                                     <button onClick={() => setZonePickerStepId(step.id)} className="btn text-xs py-1 px-2 bg-slate-600 hover:bg-slate-500 mb-2">{step.location ? (ZONE_ABBREVIATIONS[step.location] || trTerm(step.location)) : t('location')}</button>
                                                     {isVulnerable && (<div className="flex items-center gap-2 w-full">{(!step.vulnerability.cards || step.vulnerability.cards.length === 0) && (<input type="text" value={step.vulnerability.text} onChange={e => updateStep(step.id, { vulnerability: {...step.vulnerability, text: sanitizeHTML(e.target.value)} })} disabled={step.isLocked} placeholder="Vulnerable a..." className="flex-grow bg-red-900/50 border border-red-500/50 text-red-300 placeholder-red-400 rounded p-1 text-xs text-center disabled:opacity-50"/>)}<CardSelector cardPool={cardPool} mode="all" onCardSelected={card => { const currentVCards = step.vulnerability?.cards || []; const idOf = (vc) => (vc.card ? vc.card.ygoprodeck_id : (findCard(vc.instanceId) || {}).ygoprodeck_id); if (!currentVCards.some(vc => vc.instanceId === card.instanceId || (card.ygoprodeck_id && idOf(vc) === card.ygoprodeck_id))) { updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: [...currentVCards, { instanceId: card.instanceId, card }] } }); } }} displayAs="small-button" t={t} preferredDirection="side" /></div>)}
+                                                    {isVulnerable && !step.branch && <button type="button" onClick={() => addBranch(step)} className="self-start text-xs font-semibold text-red-300 hover:text-red-200 px-2 py-1 rounded bg-red-900/30"><i className="fas fa-code-branch mr-1"></i>{t('branchAdd')}</button>}
                                                     <div className="flex flex-wrap justify-center gap-1 border-t border-[var(--color-border)] pt-2 min-h-[4.5rem]">{step.targetCards.map(target => (<CardDisplay key={`target-${target.instanceId}`} card={findCard(target.instanceId)} size="tiny" isHighlighted={highlightedCardIds.includes(target.instanceId)} onRemove={!step.isLocked ? () => removeTargetCardFromStep(step.id, target.instanceId) : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />))}<CardSelector wrapperClassName="tutorial-add-target-btn" cardPool={cardPool} onCardSelected={card => updateStep(step.id, { targetCards: [...step.targetCards, {instanceId: card.instanceId, quantity: 1}]})} displayAs="small-button" t={t} preferredDirection="side" /></div>
                                                     <AutoResizeTextarea
                                                         value={step.actionDescription}
@@ -4467,6 +4519,28 @@
                                                         className="tutorial-description-input w-full bg-transparent mt-auto p-1 border-b border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-xs text-center disabled:opacity-50 resize-none break-all"
                                                     />
                                                 </div>
+                                                {step.branch && (
+                                                    <div className="branch-box col-span-full ml-4 md:ml-10 border-l-4 border-red-500 bg-red-900/15 rounded-r-lg p-3 flex flex-col gap-2">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <i className="fas fa-code-branch text-red-400"></i>
+                                                            <input value={step.branch.title || ''} onChange={e => setBranch(step.id, { ...step.branch, title: sanitizeHTML(e.target.value) })} aria-label={t('branchTitleLabel')} placeholder={t('branchDefaultTitle')} className="flex-1 min-w-[10rem] bg-transparent font-semibold text-red-200 outline-none focus:bg-black/20 rounded px-1" />
+                                                            <span className="text-xs text-[var(--color-text-muted)]">{t('branchFromStep', { n: stepNumber + 1 })}</span>
+                                                            <button onClick={() => removeBranch(step)} aria-label={t('branchRemove')} data-tooltip={t('branchRemove')} className="step-icon-btn text-slate-400 hover:text-red-500"><i className="fas fa-trash"></i></button>
+                                                        </div>
+                                                        {(step.branch.steps || []).map((bs, bi) => { const bc = findCard(bs.mainCardInstanceId); return (
+                                                            <div key={bs.id} className="flex flex-wrap items-center gap-2 bg-black/20 rounded p-2">
+                                                                <span className="font-bold text-red-300 w-10 text-right">{stepNumber + 1}.{bi + 1}</span>
+                                                                {bc && <CardDisplay card={bc} size="tiny" onClick={c => setSelectedCardForZoom(c)} />}
+                                                                <span className="text-sm font-semibold min-w-0 max-w-[11rem] truncate">{bc ? bc.name : '?'}</span>
+                                                                <select value={bs.actionType} onChange={e => updateBranchStep(step, bs.id, { actionType: e.target.value })} className="bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs">{YGO_ACTIONS.map(act => <option key={act.name} value={act.name}>{act.emoji} {trTerm(act.name)}</option>)}</select>
+                                                                <input value={bs.actionDescription || ''} onChange={e => updateBranchStep(step, bs.id, { actionDescription: sanitizeHTML(e.target.value) })} placeholder={t('stepDescribeAction')} className="flex-1 min-w-[8rem] bg-transparent border-b border-[var(--color-border)] text-xs p-1 outline-none" />
+                                                                <button onClick={() => removeBranchStep(step, bs.id)} aria-label={t('delete')} className="step-icon-btn text-slate-400 hover:text-red-500"><i className="fas fa-times"></i></button>
+                                                            </div>
+                                                        ); })}
+                                                        <div className="max-w-xs"><CardSelector cardPool={cardPool} onCardSelected={card => addBranchStep(step, card)} displayAs="button" buttonText={t('branchAddStep')} t={t} /></div>
+                                                    </div>
+                                                )}
+                                                </React.Fragment>
                                             )})}
                                             <div className="steps-add-slot flex items-center justify-center w-full min-h-[10rem]" onDragOver={(e) => {e.preventDefault(); setDragOverIndex(comboSteps.length);}}><CardSelector cardPool={cardPool} onCardSelected={handleAddStepOrNote} allowNote={true} displayAs="card-placeholder" t={t} preferredDirection="side" /></div>
                                         </div>
