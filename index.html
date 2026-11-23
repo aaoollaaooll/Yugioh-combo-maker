@@ -453,6 +453,40 @@
     <div id="touch-drag-ghost-container"></div>
     <div id="app-tooltip"></div>
 
+    <script>
+    // Muestra el texto de data-tooltip al pasar el mouse (solo con mouse, no en pantallas táctiles)
+    (function(){
+      var tip = document.getElementById('app-tooltip');
+      if (!tip) return;
+      var current = null;
+      function hide(){ current = null; tip.classList.remove('visible'); }
+      function show(el){
+        var text = el.getAttribute('data-tooltip');
+        if (!text) return hide();
+        current = el;
+        tip.textContent = text;
+        var r = el.getBoundingClientRect();
+        var w = tip.offsetWidth, h = tip.offsetHeight;
+        var left = Math.max(6, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 6));
+        var top = r.bottom + 8;
+        if (top + h > window.innerHeight - 6) top = Math.max(6, r.top - h - 8);
+        tip.style.left = left + 'px';
+        tip.style.top = top + 'px';
+        tip.classList.add('visible');
+      }
+      document.addEventListener('pointerover', function(e){
+        if (e.pointerType !== 'mouse') return;
+        var el = e.target.closest ? e.target.closest('[data-tooltip]') : null;
+        if (el === current) return;
+        if (el) show(el); else hide();
+      });
+      document.addEventListener('pointerdown', hide, true);
+      document.addEventListener('scroll', hide, true);
+      document.addEventListener('keydown', hide, true);
+      window.addEventListener('blur', hide);
+    })();
+    </script>
+
     <footer id="app-footer" class="text-center text-slate-400 py-8 px-4 space-y-4">
         <div class="max-w-2xl mx-auto space-y-4">
             <details class="bg-[var(--color-surface)] p-4 rounded-lg text-left shadow-md">
@@ -470,19 +504,8 @@
                 <div class="p-2 border-t border-[var(--color-border)] mt-2">
                   <div class="space-y-3">
                     <p class="text-sm">
-                      ¿Tienes un bug o sugerencia? Envíalo como <strong>Issue de GitHub</strong> en tu repositorio.
+                      ¿Encontraste un error o tienes una idea? Escríbelo aquí y pulsa el botón: se abrirá GitHub con tu mensaje listo para enviar (necesitas una cuenta de GitHub).
                     </p>
-
-                    <div class="grid gap-3 md:grid-cols-2">
-                      <div>
-                        <label class="text-xs block mb-1">Repo Owner</label>
-                        <input id="gh-owner" class="w-full p-2 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none text-sm" placeholder="ej. aaoollaaooll"/>
-                      </div>
-                      <div>
-                        <label class="text-xs block mb-1">Repo Name</label>
-                        <input id="gh-repo" class="w-full p-2 bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none text-sm" placeholder="ej. yugioh-combo-maker"/>
-                      </div>
-                    </div>
 
                     <div class="grid gap-3 md:grid-cols-2">
                       <div>
@@ -519,92 +542,31 @@
                 </div>
                 <script>
                 (function(){
-                  var GH_DEFAULT_OWNER = '';
-                  var GH_DEFAULT_REPO  = '';
-
-                  function detectFromURL(){
-                    try {
-                      var host = location.hostname || '';
-                      var parts = (location.pathname || '/').split('/').filter(Boolean);
-                      if (host.endsWith('github.io') && parts.length > 0) {
-                        var owner = host.split('.')[0];
-                        var repo  = parts[0];
-                        return { owner: owner, repo: repo };
-                      }
-                    } catch(e){}
-                    return null;
-                  }
-                  function loadStored(){
-                    try {
-                      var owner = localStorage.getItem('ygo_gh_owner') || '';
-                      var repo  = localStorage.getItem('ygo_gh_repo')  || '';
-                      if (owner || repo) return { owner: owner, repo: repo };
-                    } catch(e){}
-                    return null;
-                  }
-                  function saveStored(owner, repo){
-                    try {
-                      localStorage.setItem('ygo_gh_owner', owner || '');
-                      localStorage.setItem('ygo_gh_repo',  repo  || '');
-                    } catch(e){}
-                  }
+                  var GH_ISSUES = 'https://github.com/aaoollaaooll/Yugioh-combo-maker/issues';
                   function enc(s){ return encodeURIComponent(s || ''); }
+                  function val(id){ var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
                   function buildTitle(){
-                    var title = document.getElementById('gh-title')?.value || '';
-                    var type = document.getElementById('gh-type')?.value || '';
-                    if (!title) title = (type ? '[' + type + '] ' : '') + 'Nuevo reporte';
-                    return title;
+                    var title = val('gh-title');
+                    var type = val('gh-type');
+                    return title || ((type ? '[' + type + '] ' : '') + 'Nuevo reporte');
                   }
                   function buildBody(){
-                    var body = (document.getElementById('gh-body')?.value || '').trim();
-                    var meta = [
-                      '',
-                      '---',
-                      'App: YGOH Combo Maker',
-                      'URL: ' + location.href,
-                      'User-Agent: ' + navigator.userAgent
-                    ].join('\n');
+                    var body = val('gh-body');
+                    // Sin "?combo=..." para que el reporte no aparezca en la galería de Comunidad
+                    var meta = ['', '---', 'App: YGOH Combo Maker', 'URL: ' + location.origin + location.pathname, 'User-Agent: ' + navigator.userAgent].join('\n');
                     return (body ? body + '\n' : '') + meta;
                   }
-                  function updateIssuesLink(owner, repo){
-                    var view = document.getElementById('gh-view-issues');
-                    if (view && owner && repo) {
-                      view.href = 'https://github.com/' + owner + '/' + repo + '/issues';
-                    }
-                  }
                   window.YGOH_GH_OPEN_ISSUE = function(){
-                    var owner = (document.getElementById('gh-owner')?.value || '').trim();
-                    var repo  = (document.getElementById('gh-repo')?.value  || '').trim();
-                    var type  = (document.getElementById('gh-type')?.value  || '').trim();
-                    if (!owner || !repo){
-                      var s = document.getElementById('gh-status');
-                      if (s) s.textContent = 'Completa Owner y Repo.';
-                      return;
-                    }
-                    saveStored(owner, repo);
-                    var labels = type ? type : '';
-                    var url = 'https://github.com/' + owner + '/' + repo + '/issues/new'
-                              + '?title=' + enc(buildTitle())
-                              + '&body=' + enc(buildBody())
-                              + (labels ? '&labels=' + enc(labels) : '');
+                    var type = val('gh-type');
+                    var url = GH_ISSUES + '/new?title=' + enc(buildTitle()) + '&body=' + enc(buildBody()) + (type ? '&labels=' + enc(type) : '');
                     window.open(url, '_blank', 'noopener');
-                    updateIssuesLink(owner, repo);
                   };
                   document.addEventListener('DOMContentLoaded', function(){
-                    var $owner = document.getElementById('gh-owner');
-                    var $repo  = document.getElementById('gh-repo');
-                    var fromStore = loadStored();
-                    var fromURL   = detectFromURL();
-                    var owner = (fromStore && fromStore.owner) || (fromURL && fromURL.owner) || GH_DEFAULT_OWNER || '';
-                    var repo  = (fromStore && fromStore.repo)  || (fromURL && fromURL.repo)  || GH_DEFAULT_REPO  || '';
-                    if ($owner && !$owner.value) $owner.value = owner;
-                    if ($repo  && !$repo.value)  $repo.value  = repo;
-                    updateIssuesLink(owner, repo);
+                    var view = document.getElementById('gh-view-issues');
+                    if (view) { view.href = GH_ISSUES; view.rel = 'noopener'; }
                   });
                 })();
                 </script>
-
-                    </form>
                 </div>
             </details>
         </div>
@@ -1075,10 +1037,10 @@
             
             return (
                 <div className={`fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50 p-4 ${isClosing ? 'modal-exit' : 'modal-enter'}`} onClick={handleClose}>
-                    <div className="modal-content bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-xl p-6 max-w-4xl w-full relative" onClick={e => e.stopPropagation()}>
-                        <button onClick={handleClose} className="absolute top-3 right-3 text-gray-400 hover:text-white text-2xl font-bold">×</button>
+                    <div className="modal-content bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-xl p-6 max-w-4xl w-full relative max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <button onClick={handleClose} aria-label="Cerrar" className="absolute top-2 right-2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/30 text-gray-300 hover:text-white text-2xl font-bold">×</button>
                         <div className="flex flex-col md:flex-row gap-6">
-                            <div className="flex-shrink-0 flex justify-center"><img src={displayImageSrc} alt={card?.name} className="w-full max-w-[300px] h-auto rounded-lg shadow-lg" crossOrigin="anonymous" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/300x450/1e293b/a78bfa?text=Error'; }} /></div>
+                            <div className="flex-shrink-0 flex justify-center"><img src={displayImageSrc} alt={card?.name} className="w-full max-w-[200px] md:max-w-[300px] h-auto rounded-lg shadow-lg" crossOrigin="anonymous" onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/300x450/1e293b/a78bfa?text=Error'; }} /></div>
                             <div className="flex-grow text-[var(--color-text)] flex flex-col">
                                 <h2 className="text-3xl font-bold mb-2 text-[var(--color-secondary)]">{card?.name}</h2>
                                 <p className="text-lg mb-1"><span className="font-semibold text-[var(--color-text-muted)]">{t('cardType')}:</span> {card?.type}</p>
@@ -1345,9 +1307,9 @@
                             ref={inputRef}
                             autoFocus
                             onKeyDown={e => { if (e.key === 'Enter' && filteredPool.length > 0) { e.preventDefault(); handleSelect(filteredPool[0]); } }}
-                            className="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                            className="w-full min-w-0 flex-1 p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:outline-none"
                         />
-                        <button onClick={() => setIsOpen(false)} className="p-3 bg-red-600 text-white rounded-full"><i className="fas fa-times"></i></button>
+                        <button onClick={() => setIsOpen(false)} aria-label="Cerrar" className="flex-shrink-0 p-3 bg-red-600 text-white rounded-full"><i className="fas fa-times"></i></button>
                     </div>
                     <div className="flex-shrink-0 mb-2">
                         <button
@@ -2052,7 +2014,7 @@
         );
 
         const RestoreNotification = ({ onRestore, onDismiss, t }) => (
-            <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-600 text-white font-bold px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-4 animate-fadeInUp">
+            <div className="fixed bottom-5 inset-x-0 mx-auto bg-slate-800 border border-slate-600 text-white font-bold px-6 py-3 rounded-lg shadow-lg z-50 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 w-max max-w-[calc(100vw-1.5rem)] animate-fadeInUp">
                 <span>{t('autosaveRestore')}</span>
                 <button onClick={onRestore} className="btn text-sm bg-green-600 px-3 py-1 rounded-md hover:bg-green-700">{t('restore')}</button>
                 <button onClick={onDismiss} className="btn text-sm bg-slate-600 px-3 py-1 rounded-md hover:bg-slate-500">{t('dismiss')}</button>
@@ -2066,7 +2028,7 @@
             }, [onClose]);
 
             return (
-                <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-600 text-white font-bold px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-4 animate-fadeInUp">
+                <div className="fixed bottom-5 inset-x-0 mx-auto bg-slate-800 border border-slate-600 text-white font-bold px-6 py-3 rounded-lg shadow-lg z-50 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 w-max max-w-[calc(100vw-1.5rem)] animate-fadeInUp">
                     <span>{message}</span>
                     <button onClick={onUndo} className="btn text-sm text-amber-300 hover:underline">{t('undo')}</button>
                     <button onClick={onClose} className="text-slate-400 hover:text-white">&times;</button>
@@ -3615,9 +3577,9 @@
 
                         <main className={`transition-all duration-300 p-4 lg:p-6 ${isSearchPanelOpen ? 'lg:ml-96' : 'ml-0'}`}>
                             <div className="flex flex-col h-full">
-                                <header className="flex flex-col md:flex-row items-center gap-4 mb-2">
-                                    <input type="text" value={comboTitle} onChange={(e) => setComboState({...comboState, comboTitle: sanitizeHTML(e.target.value)}, "Changed title")} className="w-full md:w-auto flex-grow p-2 text-3xl font-bold bg-transparent text-[var(--color-secondary)] placeholder-[var(--color-text-muted)] focus:bg-[var(--color-surface)]/50 rounded-lg outline-none font-yugioh" placeholder={t('comboTitlePlaceholder')} />
-                                    <div className="flex flex-wrap justify-center md:justify-end items-center gap-2 md:flex-shrink-0 main-actions">
+                                <header className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
+                                    <input type="text" value={comboTitle} onChange={(e) => setComboState({...comboState, comboTitle: sanitizeHTML(e.target.value)}, "Changed title")} className="w-full min-w-0 flex-grow basis-64 p-2 text-3xl font-bold bg-transparent text-[var(--color-secondary)] placeholder-[var(--color-text-muted)] focus:bg-[var(--color-surface)]/50 rounded-lg outline-none font-yugioh" placeholder={t('comboTitlePlaceholder')} />
+                                    <div className="flex flex-wrap justify-center md:justify-end items-center gap-2 max-w-full mx-auto md:mr-0 main-actions">
                                         <button onClick={toggleTheme} data-tooltip={t('themeTooltip')} className="btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)]"><i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i></button>
                                         <select value={language} onChange={(e) => chooseLanguage(e.target.value)} data-tooltip={t('languageTooltip')} aria-label={t('languageTooltip')} className="btn p-2 bg-[var(--color-surface)] text-[var(--color-text)] rounded-md hover:bg-[var(--color-surface-light)] text-sm font-semibold cursor-pointer">{LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select>
                                         <button onClick={() => setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' })} data-tooltip="Ayuda" className="btn p-3 bg-[var(--color-surface)] rounded-md hover:bg-[var(--color-surface-light)]"><i className="fas fa-question-circle"></i></button>
@@ -3648,7 +3610,7 @@
                                             <div className="p-4 pt-0">
                                                 <div className="p-4 bg-black/20 rounded-lg min-h-[11rem] relative">
                                                     {cardPool.length > 0 ? (
-                                                        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]">
+                                                        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] max-h-[34rem] overflow-y-auto pt-2 pr-2">
                                                             {cardPool.map((card) => <CardDisplay key={card.instanceId} card={card} size="small" onClick={(c) => setSelectedCardForZoom(c)} onRemove={() => removeCardFromPool(card.instanceId)} onEdit={() => { setEditingCustomCard(card); setShowCustomCardModal(true); }} draggable={true} onDragStart={(e) => handleDragStart(e, 'pool-card', card)} onTouchStart={(e) => handleTouchStart(e, 'pool-card', card)} onDragEnd={handleDragEnd} onContextMenu={(c, e) => handleContextMenu(c, e, 'pool')} isHighlighted={highlightedCardIds.includes(card.instanceId)} isNew={card.instanceId === justAddedCardId} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />)}
                                                         </div>
                                                     ) : (
