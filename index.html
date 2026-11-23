@@ -466,15 +466,15 @@
         }
         /* === Pasos en lista numerada === */
         .steps-list { grid-template-columns: minmax(0, 1fr) !important; max-width: 46rem; margin-left: auto; margin-right: auto; row-gap: 1.6rem !important; }
-        .steps-list > .combo-step-card { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); column-gap: 1rem; row-gap: .45rem; align-items: start; }
-        .steps-list > .combo-step-card > *:not(.step-main):not(.step-corner) { grid-column: 2; }
+        .steps-list > .combo-step-card { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 1rem; row-gap: .45rem; align-items: start; }
+        .steps-list > .combo-step-card > *:not(.step-body):not(.step-corner) { grid-column: 2; }
         .steps-list > .combo-step-card > .step-main { grid-column: 1; grid-row: 1 / span 9; margin: 0; align-self: start; }
         .steps-list > .combo-step-card > .step-label { font-size: 1.3rem; color: var(--color-accent); padding-right: 7.5rem; }
         .steps-list .step-main .card-display { width: 100%; max-width: 8.5rem; }
         .steps-list > .combo-step-card::after { content: '↓'; position: absolute; left: 50%; bottom: -1.45rem; transform: translateX(-50%); font-size: 1.1rem; line-height: 1; color: var(--color-accent); opacity: .85; pointer-events: none; }
         .steps-list > .steps-add-slot { min-height: 7rem !important; }
         @media (max-width: 480px) {
-            .steps-list > .combo-step-card { grid-template-columns: 6rem minmax(0, 1fr); column-gap: .6rem; }
+            .steps-list > .combo-step-card { grid-template-columns: auto minmax(0, 1fr); column-gap: .6rem; }
             .steps-list > .combo-step-card > .step-label { padding-right: 6.2rem; font-size: 1.1rem; }
         }
         /* === Campo final dibujado como tablero === */
@@ -509,12 +509,60 @@
         html { background-color: #020617; }
         html[data-theme="light"] { background-color: #f1f5f9; }
         body::before, body::after { content: ''; position: fixed; top: -400px; left: 0; right: 0; bottom: 0; z-index: -10; pointer-events: none; background-repeat: repeat; will-change: transform; }
-        body::before { background-image: radial-gradient(1.6px 1.6px at 20px 30px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1.1px 1.1px at 120px 80px, rgba(255,255,255,.7), transparent 70%), radial-gradient(1.3px 1.3px at 200px 170px, rgba(255,255,255,.8), transparent 70%), radial-gradient(1px 1px at 70px 220px, rgba(255,255,255,.6), transparent 70%), radial-gradient(1.2px 1.2px at 240px 250px, rgba(255,255,255,.7), transparent 70%); background-size: 260px 260px; animation: ygo-stars-a 40s linear infinite; }
-        body::after { background-image: radial-gradient(2px 2px at 50px 120px, rgba(196,181,253,.85), transparent 70%), radial-gradient(1.6px 1.6px at 300px 40px, rgba(255,255,255,.9), transparent 70%), radial-gradient(2px 2px at 190px 300px, rgba(147,197,253,.75), transparent 70%); background-size: 380px 380px; animation: ygo-stars-b 70s linear infinite; opacity: .85; }
+        body::before { background-image: radial-gradient(1.6px 1.6px at 165px 77px, rgba(255,255,255,.6), transparent 70%), radial-gradient(1px 1px at 24px 37px, rgba(255,255,255,.7), transparent 70%), radial-gradient(1.1px 1.1px at 29px 259px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1.6px 1.6px at 44px 222px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1.6px 1.6px at 123px 46px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1px 1px at 63px 114px, rgba(255,255,255,.6), transparent 70%), radial-gradient(1.1px 1.1px at 203px 25px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1.6px 1.6px at 68px 148px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1.1px 1.1px at 60px 157px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1px 1px at 96px 190px, rgba(255,255,255,.6), transparent 70%); background-size: 260px 260px; animation: ygo-stars-a 22s linear infinite; }
+        body::after { background-image: radial-gradient(1.6px 1.6px at 231px 286px, rgba(255,255,255,.9), transparent 70%), radial-gradient(1.1px 1.1px at 260px 300px, rgba(196,181,253,.85), transparent 70%), radial-gradient(2px 2px at 262px 243px, rgba(196,181,253,.85), transparent 70%), radial-gradient(1.3px 1.3px at 48px 228px, rgba(196,181,253,.85), transparent 70%), radial-gradient(1px 1px at 46px 275px, rgba(147,197,253,.75), transparent 70%), radial-gradient(2px 2px at 202px 231px, rgba(147,197,253,.75), transparent 70%); background-size: 380px 380px; animation: ygo-stars-b 40s linear infinite; opacity: .85; }
         @keyframes ygo-stars-a { from { transform: translateY(0); } to { transform: translateY(260px); } }
         @keyframes ygo-stars-b { from { transform: translateY(0); } to { transform: translateY(380px); } }
         html[data-theme="light"] body::before, html[data-theme="light"] body::after { filter: invert(1); opacity: .35; }
         html.bg-static body::before, html.bg-static body::after { animation-play-state: paused; }
+
+        /* ===== Paso: vulnerable (izq.) · carta principal · cartas afectadas (der.) ===== */
+        .steps-size-s { --main-w: 5.25rem; --side-w: 2.1rem; }
+        .steps-size-m { --main-w: 7rem; --side-w: 2.6rem; }
+        .steps-size-l { --main-w: 9.5rem; --side-w: 3.2rem; }
+        .combo-step-card .step-main .card-display { width: var(--main-w, 7rem) !important; }
+        .steps-size-s .combo-step-card { padding: .5rem !important; gap: .3rem !important; }
+        .step-body { position: relative; display: grid; grid-template-columns: minmax(var(--side-w, 2.6rem), auto) auto minmax(var(--side-w, 2.6rem), auto); align-items: start; justify-content: center; column-gap: .55rem; width: 100%; margin: .2rem 0; }
+        .step-side { display: flex; flex-direction: column; flex-wrap: wrap; max-height: calc(var(--main-w, 7rem) * 1.6); gap: .4rem .5rem; align-items: center; align-content: center; min-width: var(--side-w, 2.6rem); }
+        .step-side-left { grid-column: 1; } .step-main { grid-column: 2; } .step-side-right { grid-column: 3; }
+        .side-thumb { position: relative; width: var(--side-w, 2.6rem); height: var(--side-w, 2.6rem); flex: 0 0 auto; }
+        .side-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: .35rem; border: 1px solid var(--color-border); cursor: zoom-in; display: block; }
+        .side-thumb.side-hl img { box-shadow: 0 0 0 2px #fbbf24; }
+        .side-remove { position: absolute; left: -7px; top: -7px; width: 18px; height: 18px; border-radius: 9999px; background: #dc2626; color: #fff; font-size: 12px; line-height: 18px; text-align: center; display: none; z-index: 3; }
+        .side-thumb:hover .side-remove, .side-thumb:focus-within .side-remove { display: block; }
+        .side-qty { position: absolute; left: -4px; bottom: -4px; background: rgba(0,0,0,.8); color: #fff; font-size: 10px; padding: 0 3px; border-radius: 4px; }
+        .side-add-btn { width: var(--side-w, 2.6rem); height: var(--side-w, 2.6rem); border: 2px dashed var(--color-border); border-radius: .35rem; color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; font-size: .8rem; }
+        .side-add-btn:hover { border-color: var(--color-primary); color: var(--color-text); }
+        .side-add-vuln .side-add-btn { border-color: rgba(239,68,68,.45); color: #f87171; }
+        .side-tab { display: none; }
+        .side-close { display: none; }
+        .step-side.side-open .side-close { display: block; position: absolute; top: 4px; right: 8px; font-size: 18px; line-height: 1; color: var(--color-text-muted); }
+        .mv-badge { position: absolute; right: -7px; bottom: -7px; width: 22px; height: 22px; border-radius: 9999px; border: 2px solid #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; z-index: 2; line-height: 1; }
+        .mv-badge .mv-mod { position: absolute; right: -6px; top: -6px; font-size: 7px; width: 13px; height: 13px; display: inline-flex; align-items: center; justify-content: center; background: #111827; color: #fff; border-radius: 9999px; border: 1px solid #fff; }
+        .mv-clickable { cursor: pointer; transition: transform .12s ease; }
+        .mv-clickable:hover { transform: scale(1.15); }
+        .mv-inline { position: relative; right: auto; bottom: auto; flex: 0 0 auto; margin-right: 4px; }
+        .mv-export { right: -6px; bottom: -6px; }
+        .mv-hand { background: #0072B2; } .mv-gy { background: #6b5bb5; } .mv-ban { background: #D55E00; } .mv-deck { background: #8a6d1d; }
+        .mv-extra { background: #b45309; } .mv-summon { background: #009E73; } .mv-field { background: #CC79A7; } .mv-other { background: #475569; } .mv-warn { background: #dc2626; }
+        @keyframes mv-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-16deg) scale(1.2); } 40% { transform: rotate(14deg) scale(1.2); } 60% { transform: rotate(-10deg) scale(1.1); } 80% { transform: rotate(6deg); } }
+        .mv-wiggle { animation: mv-wiggle .45s ease-in-out 2; }
+        @media (prefers-reduced-motion: reduce) { .mv-wiggle { animation: none; box-shadow: 0 0 0 3px #fbbf24; } }
+        .move-picker { position: fixed; z-index: 80; width: 300px; max-height: 380px; overflow-y: auto; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 10px; padding: 8px; box-shadow: 0 12px 30px rgba(0,0,0,.45); }
+        .move-picker .mv-badge { width: 20px; height: 20px; font-size: 9px; }
+        /* Lista: la fila de vulnerable · carta · afectadas a la izquierda, lo demás a la derecha */
+        .steps-list > .combo-step-card > .step-body { grid-column: 1; grid-row: 1 / span 9; margin: 0; align-self: start; width: auto; }
+        /* Celular: los lados se guardan en pestañas y se abren encima de la carta */
+        @media (max-width: 640px) {
+            .step-body { grid-template-columns: 1.6rem auto 1.6rem; }
+            .step-side { display: none; }
+            .step-side.side-open { grid-column: auto !important; grid-row: auto !important; display: flex; flex-direction: row; flex-wrap: wrap; position: absolute; top: 0; bottom: 0; z-index: 6; background: var(--color-surface); border: 1px solid var(--color-border-strong, var(--color-border)); border-radius: 10px; padding: 10px; width: 78%; max-height: none; align-content: flex-start; justify-content: flex-start; gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+            .step-side-left.side-open { left: 0; } .step-side-right.side-open { right: 0; }
+            .side-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; align-self: center; height: 4rem; width: 1.6rem; font-size: .7rem; font-weight: 700; }
+            .side-tab-left { grid-column: 1; grid-row: 1; background: rgba(220,38,38,.25); color: #fca5a5; border-radius: 0 8px 8px 0; }
+            .side-tab-right { grid-column: 3; grid-row: 1; background: rgba(0,114,178,.3); color: #93c5fd; border-radius: 8px 0 0 8px; }
+            .side-remove { display: block; }
+        }
     </style>
 </head>
 <body
@@ -906,6 +954,22 @@
         Object.entries({"es": {"Hand": "Mano", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Péndulo izq.", "Pendulum Right": "Péndulo der."}, "pt": {"Hand": "Mão", "Deck": "Deck", "Extra Deck": "Deck Adicional", "Pendulum Left": "Pêndulo esq.", "Pendulum Right": "Pêndulo dir."}, "fr": {"Hand": "Main", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Pendule gauche", "Pendulum Right": "Pendule droite"}, "it": {"Hand": "Mano", "Deck": "Deck", "Extra Deck": "Extra Deck", "Pendulum Left": "Pendulum sin.", "Pendulum Right": "Pendulum des."}, "de": {"Hand": "Hand", "Deck": "Deck", "Extra Deck": "Extra-Deck", "Pendulum Left": "Pendel links", "Pendulum Right": "Pendel rechts"}, "ru": {"Hand": "Рука", "Deck": "Колода", "Extra Deck": "Доп. колода", "Pendulum Left": "Маятник (лев.)", "Pendulum Right": "Маятник (прав.)"}, "ja": {"Hand": "手札", "Deck": "デッキ", "Extra Deck": "エクストラデッキ", "Pendulum Left": "左ペンデュラム", "Pendulum Right": "右ペンデュラム"}, "ko": {"Hand": "패", "Deck": "덱", "Extra Deck": "엑스트라 덱", "Pendulum Left": "왼쪽 펜듈럼", "Pendulum Right": "오른쪽 펜듈럼"}, "zh": {"Hand": "手卡", "Deck": "卡组", "Extra Deck": "额外卡组", "Pendulum Left": "左灵摆区", "Pendulum Right": "右灵摆区"}}).forEach(([l, d]) => { YGO_TERMS[l] = Object.assign(YGO_TERMS[l] || {}, d); });
         let CURRENT_LANG = 'en';
         const trTerm = (name) => (name && YGO_TERMS[CURRENT_LANG] && YGO_TERMS[CURRENT_LANG][name]) || name;
+        // Íconos de movimiento de las cartas afectadas: ícono del lugar + flecha/modificador (origen → destino)
+        const MOVES = {draw: { base: 'fa-hand', mod: 'fa-arrow-down', group: 'hand', es: "Robar", en: "Draw" }, search: { base: 'fa-hand', mod: 'fa-magnifying-glass', group: 'hand', es: "Buscar (del Deck a la mano)", en: "Search (Deck to hand)" }, recover: { base: 'fa-hand', mod: 'fa-recycle', group: 'hand', es: "Recuperar a la mano", en: "Add back to hand" }, bounce: { base: 'fa-hand', mod: 'fa-arrow-rotate-left', group: 'hand', es: "Devolver a la mano", en: "Return to hand" }, toGy: { base: 'fa-skull', mod: 'fa-arrow-down', group: 'gy', es: "Mandar al Cementerio", en: "Send to the GY" }, mill: { base: 'fa-skull', mod: 'fa-layer-group', group: 'gy', es: "Del Deck al Cementerio", en: "Mill (Deck to GY)" }, discard: { base: 'fa-skull', mod: 'fa-hand', group: 'gy', es: "Descartar", en: "Discard" }, destroy: { base: 'fa-skull', mod: 'fa-burst', group: 'gy', es: "Destruir", en: "Destroy" }, tribute: { base: 'fa-skull', mod: 'fa-hand-holding', group: 'gy', es: "Sacrificar", en: "Tribute" }, material: { base: 'fa-skull', mod: 'fa-plus', group: 'gy', es: "Usar como material", en: "Use as material" }, detach: { base: 'fa-skull', mod: 'fa-link-slash', group: 'gy', es: "Desacoplar material", en: "Detach material" }, banish: { base: 'fa-ban', mod: 'fa-arrow-down', group: 'ban', es: "Desterrar", en: "Banish" }, banishFd: { base: 'fa-ban', mod: 'fa-eye-slash', group: 'ban', es: "Desterrar boca abajo", en: "Banish face-down" }, shuffle: { base: 'fa-layer-group', mod: 'fa-shuffle', group: 'deck', es: "Barajar en el Deck", en: "Shuffle into the Deck" }, deckTop: { base: 'fa-layer-group', mod: 'fa-arrows-up-to-line', group: 'deck', es: "Al tope del Deck", en: "Top of the Deck" }, deckBottom: { base: 'fa-layer-group', mod: 'fa-arrows-down-to-line', group: 'deck', es: "Al fondo del Deck", en: "Bottom of the Deck" }, excavate: { base: 'fa-layer-group', mod: 'fa-eye', group: 'deck', es: "Excavar", en: "Excavate" }, toExtra: { base: 'fa-box-archive', mod: 'fa-arrow-down', group: 'extra', es: "Devolver al Deck Extra", en: "Return to the Extra Deck" }, pendExtra: { base: 'fa-box-archive', mod: 'fa-eye', group: 'extra', es: "Al Deck Extra boca arriba", en: "To the Extra Deck face-up" }, ssHand: { base: 'fa-hand', mod: 'fa-arrow-up', group: 'summon', es: "Invocar de la mano", en: "Summon from the hand" }, ssDeck: { base: 'fa-layer-group', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Deck", en: "Summon from the Deck" }, revive: { base: 'fa-skull', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Cementerio", en: "Summon from the GY" }, ssBanish: { base: 'fa-ban', mod: 'fa-arrow-up', group: 'summon', es: "Invocar de desterradas", en: "Summon from banished" }, ssExtra: { base: 'fa-box-archive', mod: 'fa-arrow-up', group: 'summon', es: "Invocar del Deck Extra", en: "Summon from the Extra Deck" }, set: { base: 'fa-hand', mod: 'fa-eye-slash', group: 'field', es: "Colocar", en: "Set" }, attach: { base: 'fa-link', mod: 'fa-arrow-down', group: 'field', es: "Acoplar como material Xyz", en: "Attach as Xyz material" }, equip: { base: 'fa-shield-halved', mod: 'fa-link', group: 'field', es: "Equipar", en: "Equip" }, control: { base: 'fa-hand-holding', mod: 'fa-rotate', group: 'field', es: "Tomar el control", en: "Take control" }, effect: { base: 'fa-wand-sparkles', mod: null, group: 'other', es: "Afectada por el efecto", en: "Affected by the effect" }, negate: { base: 'fa-wand-sparkles', mod: 'fa-xmark', group: 'other', es: "Negar", en: "Negate" }, reveal: { base: 'fa-eye', mod: null, group: 'other', es: "Revelar", en: "Reveal" }};
+        const MOVE_GROUPS = [['hand', 'groupHand'], ['gy', 'groupGy'], ['ban', 'groupBanish'], ['deck', 'groupDeck'], ['extra', 'groupExtra'], ['summon', 'groupSummon'], ['field', 'groupField'], ['other', 'groupOther']];
+        const moveLabel = (k) => { const m = MOVES[k] || MOVES.effect; return CURRENT_LANG === 'es' ? m.es : m.en; };
+        const defaultMoveFor = (action) => ({ 'Search': 'search', 'Add to Hand': 'search', 'Send to GY': 'toGy', 'Discard': 'discard', 'Banish': 'banish', 'Fusion Summon': 'material', 'Synchro Summon': 'material', 'Link Summon': 'material', 'Xyz Summon': 'attach', 'Pendulum Summon': 'ssHand', 'Set': 'set' }[action] || 'effect');
+        const targetMove = (step, target) => (target && target.move) || defaultMoveFor(step && step.actionType);
+        const MoveBadge = ({ k, className = '', onClick, title, wiggle }) => {
+            const m = MOVES[k] || MOVES.effect;
+            const Tag = onClick ? 'button' : 'span';
+            return (
+                <Tag type={onClick ? 'button' : undefined} onClick={onClick} title={title || moveLabel(k)} aria-label={title || moveLabel(k)} className={`mv-badge mv-${m.group} ${wiggle ? 'mv-wiggle' : ''} ${onClick ? 'mv-clickable' : ''} ${className}`}>
+                    <i className={`fas ${m.base}`} aria-hidden="true"></i>
+                    {m.mod && <i className={`fas ${m.mod} mv-mod`} aria-hidden="true"></i>}
+                </Tag>
+            );
+        };
         const YGO_ACTIONS = [ { name: "Normal Summon", emoji: "⬆️" }, { name: "Special Summon", emoji: "⭐" }, { name: "Set", emoji: "⬇️" }, { name: "Activate Spell/Trap", emoji: "🌀" }, { name: "Activate Effect", emoji: "⚡" }, { name: "Attack", emoji: "⚔️" }, { name: "Send to GY", emoji: "🪦" }, { name: "Discard", emoji: "👋" }, { name: "Banish", emoji: "🌌" }, { name: "Add to Hand", emoji: "✋" }, { name: "Search", emoji: "🔍" }, { name: "Fusion Summon", emoji: "⚛️" }, { name: "Synchro Summon", emoji: "🟢" }, { name: "Xyz Summon", emoji: "💫" }, { name: "Pendulum Summon", emoji: "⚖️" }, { name: "Link Summon", emoji: "🔻" }, { name: "Other", emoji: "..." } ];
         
         const Spinner = () => <div className="spinner"></div>;
@@ -1251,8 +1315,8 @@
 
 
             const filteredPool = cardPool.filter(card => card.name.toLowerCase().includes(filter.toLowerCase()));
-            const buttonClasses = { 'menu-item': "step-menu-item", 'button': "w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed", 'small-button': "p-2 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed flex items-center justify-center", 'card-placeholder': "w-24 h-[8.5rem] flex items-center justify-center border-2 border-dashed border-slate-600 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors" };
-            const buttonContent = { 'menu-item': <><i className="fas fa-plus w-5 text-center"></i>{buttonText}</>, 'button': buttonText || t('addStep'), 'small-button': <i className="fas fa-plus"></i>, 'card-placeholder': <i className="fas fa-plus"></i> };
+            const buttonClasses = { 'side-add': "side-add-btn", 'menu-item': "step-menu-item", 'button': "w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed", 'small-button': "p-2 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed flex items-center justify-center", 'card-placeholder': "w-24 h-[8.5rem] flex items-center justify-center border-2 border-dashed border-slate-600 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors" };
+            const buttonContent = { 'side-add': <i className="fas fa-plus"></i>, 'menu-item': <><i className="fas fa-plus w-5 text-center"></i>{buttonText}</>, 'button': buttonText || t('addStep'), 'small-button': <i className="fas fa-plus"></i>, 'card-placeholder': <i className="fas fa-plus"></i> };
             
             const handleSelect = (card) => {
                 if (!card) return;
@@ -1607,7 +1671,7 @@
                                     {step.vulnerability?.text && <p className="text-red-400 text-xs font-bold mt-1">{nbsp(step.vulnerability.text)}</p>}
                                     {step.targetCards.length > 0 && (
                                         <div className="flex flex-wrap justify-center items-center gap-1 w-full mt-2 relative z-10">
-                                            {step.targetCards.map(target => <ExportCard key={`target-${target.instanceId}`} card={findCard(target.instanceId)} size="tiny" quantity={target.quantity} />)}
+                                            {step.targetCards.map((target, ti) => <ExportCard key={`target-${target.instanceId}-${ti}`} card={findCard(target.instanceId)} size="tiny" quantity={target.quantity}><MoveBadge k={targetMove(step, target)} className="mv-export" /></ExportCard>)}
                                         </div>
                                     )}
                                     {step.branch && step.branch.steps && step.branch.steps.length > 0 && (
@@ -2241,7 +2305,7 @@
                         <span>Popular Cards</span>
                         <i className={`fas fa-chevron-down transition-transform duration-300 ${isCarouselOpen ? '' : '-rotate-90'}`}></i>
                     </h4>
-                    <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isCarouselOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className={`transition-all duration-200 ease-out overflow-hidden ${isCarouselOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
                         <div className="relative pt-2">
                             <button onClick={() => scroll(-1)} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-slate-700/50 hover:bg-slate-600 rounded-full p-1 text-white">
                                 <i className="fas fa-chevron-left"></i>
@@ -2652,6 +2716,20 @@
                 default: // Activate Effect, Attack, Other…
                     highlight(mainId, true);
                     targetIds.forEach(id => highlight(id, false));
+            }
+            // Movimientos elegidos a mano en las cartas afectadas (pasos cuya acción no mueve las afectadas)
+            const MOVE_DEST = { draw: 'hand', search: 'hand', recover: 'hand', bounce: 'hand', toGy: 'gy', mill: 'gy', discard: 'gy', destroy: 'gy', tribute: 'gy', material: 'gy', detach: 'gy', banish: 'banish', banishFd: 'banish', shuffle: 'deck', deckTop: 'deck', deckBottom: 'deck', toExtra: 'extra', pendExtra: 'extra' };
+            const MOVE_SUMMON = { ssHand: 'hand', ssDeck: 'deck', revive: 'gy', ssBanish: 'banish', ssExtra: 'extra' };
+            if (['Activate Effect', 'Activate Spell/Trap', 'Special Summon', 'Normal Summon', 'Set', 'Attack', 'Other'].includes(step.actionType)) {
+                (step.targetCards || []).forEach(tc => {
+                    if (!tc.moveSet || !known(tc.instanceId)) return;
+                    if (MOVE_DEST[tc.move]) {
+                        const { card } = playTake(s, tc.instanceId, ['field', 'hand', 'deck', 'gy', 'banish', 'extra']);
+                        if (card) { mark(card, false); playPut(s, card, MOVE_DEST[tc.move]); }
+                    } else if (MOVE_SUMMON[tc.move]) {
+                        summon(tc.instanceId, [MOVE_SUMMON[tc.move], 'hand', 'deck', 'gy', 'banish', 'extra'], tc.move === 'ssExtra' ? 'extra' : 'monster', { isMain: false });
+                    }
+                });
             }
             return s;
         };
@@ -3161,6 +3239,19 @@
             const [openStepMenuId, setOpenStepMenuId] = useState(null);
             const [showTokenPicker, setShowTokenPicker] = useState(false);
             const [showMoreMenu, setShowMoreMenu] = useState(false);
+            const [wiggleKeys, setWiggleKeys] = useState(() => new Set());
+            const [movePicker, setMovePicker] = useState(null); // { stepId, instanceId, top, left }
+            const [openSide, setOpenSide] = useState(null); // 'stepId:left' | 'stepId:right' (celular)
+            const [stepSize, setStepSize] = useState(() => { try { const v = localStorage.getItem('ygo_step_size'); return ['s', 'm', 'l'].includes(v) ? v : 'm'; } catch (e) { return 'm'; } });
+            useEffect(() => { try { localStorage.setItem('ygo_step_size', stepSize); } catch (e) {} }, [stepSize]);
+            useEffect(() => {
+                if (!movePicker) return;
+                const onDown = (e) => { if (!(e.target.closest && e.target.closest('[data-move-picker]'))) setMovePicker(null); };
+                const onKey = (e) => { if (e.key === 'Escape') setMovePicker(null); };
+                document.addEventListener('pointerdown', onDown);
+                document.addEventListener('keydown', onKey);
+                return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
+            }, [movePicker]);
             const [showShortcuts, setShowShortcuts] = useState(false);
             const [showImportDeck, setShowImportDeck] = useState(false);
             const [inspectorOn, setInspectorOn] = useState(() => { try { return localStorage.getItem('ygo_inspector') === '1'; } catch (e) { return false; } });
@@ -3177,8 +3268,8 @@
             const scrollToSection = (sel) => { const el = document.querySelector(sel); if (!el) return; el.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(() => { if (Math.abs(el.getBoundingClientRect().top) > 60) el.scrollIntoView({ block: 'start' }); }, 700); };
             const [showWelcome, setShowWelcome] = useState(false);
             const [bgAnimated, setBgAnimated] = useState(window.__ygoBgAnimated !== false);
-            const [stepsView, setStepsView] = useState(() => { try { const v = localStorage.getItem('ygo_steps_view'); return (v === 'grid' || v === 'compact') ? v : 'list'; } catch (e) { return 'list'; } });
-            useEffect(() => { try { localStorage.setItem('ygo_steps_view', stepsView); } catch (e) {} }, [stepsView]);
+            const [stepsView, setStepsView] = useState(() => { try { const v = localStorage.getItem('ygo_steps_view2'); return (v === 'list' || v === 'compact') ? v : 'grid'; } catch (e) { return 'grid'; } });
+            useEffect(() => { try { localStorage.setItem('ygo_steps_view2', stepsView); } catch (e) {} }, [stepsView]);
             const [isStartingHandOpen, setIsStartingHandOpen] = useState(true);
             const [isFinalBoardOpen, setIsFinalBoardOpen] = useState(true);
             const [showSaveModal, setShowSaveModal] = useState(false);
@@ -3615,6 +3706,37 @@
 
             const updateStep = (stepId, updatedData) => { const newSteps = comboSteps.map(step => step.id === stepId ? { ...step, ...updatedData } : step); setComboState({ ...comboState, comboSteps: newSteps }, `Updated step`); };
             const updateMeta = (key, value) => setComboState({ ...comboState, meta: { ...(comboState.meta || {}), [key]: value } }, 'Updated combo info');
+            // Cartas afectadas (derecha) y a las que es vulnerable (izquierda)
+            const addTargetCard = (step, card) => {
+                if (!card || card.isNote) return;
+                updateStep(step.id, { targetCards: [...(step.targetCards || []), { instanceId: card.instanceId, quantity: 1, move: defaultMoveFor(step.actionType) }] });
+                const key = step.id + ':' + card.instanceId;
+                setWiggleKeys(prev => { const n = new Set(prev); n.add(key); return n; });
+                setTimeout(() => setWiggleKeys(prev => { const n = new Set(prev); n.delete(key); return n; }), 1400);
+            };
+            const addVulnCard = (step, card) => {
+                if (!card || card.isNote) return;
+                const v = step.vulnerability || { text: '', cards: [] };
+                const current = v.cards || [];
+                const idOf = (vc) => (vc.card ? vc.card.ygoprodeck_id : (findCard(vc.instanceId) || {}).ygoprodeck_id);
+                if (current.some(vc => vc.instanceId === card.instanceId || (card.ygoprodeck_id && idOf(vc) === card.ygoprodeck_id))) return;
+                updateStep(step.id, { vulnerability: { ...v, cards: [...current, { instanceId: card.instanceId, card }] } });
+            };
+            const setTargetMove = (stepId, instanceId, move) => {
+                const step = comboSteps.find(s => s.id === stepId);
+                if (!step) return;
+                updateStep(stepId, { targetCards: step.targetCards.map(tc => tc.instanceId === instanceId ? { ...tc, move, moveSet: true } : tc) });
+                setMovePicker(null);
+            };
+            const openMovePicker = (e, stepId, instanceId) => {
+                e.stopPropagation();
+                const z = parseFloat(getComputedStyle(document.body).zoom) || 1;
+                const r = e.currentTarget.getBoundingClientRect();
+                const w = 300 * z, h = 380 * z;
+                let left = Math.min(Math.max(8, r.left - w / 2), window.innerWidth - w - 8);
+                let top = r.bottom + 6; if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+                setMovePicker({ stepId, instanceId, top: top / z, left: left / z });
+            };
             // Ramas: un paso puede tener una línea alternativa («si me interrumpen aquí…») con sus propios pasos
             const setBranch = (stepId, branch) => updateStep(stepId, { branch });
             const branchTitleFor = (step) => {
@@ -4003,7 +4125,7 @@
                     n++;
                     const act = s.actionType === 'Other' ? (s.customActionText || trTerm('Other')) : trTerm(s.actionType);
                     let line = `${n}. ${act}: ${nameOf(s.mainCardInstanceId)}`;
-                    const targets = (s.targetCards || []).map(tc => nameOf(tc.instanceId));
+                    const targets = (s.targetCards || []).map(tc => `${nameOf(tc.instanceId)} (${moveLabel(targetMove(s, tc))})`);
                     if (targets.length) line += ` → ${targets.join(', ')}`;
                     if (s.location) line += ` [${ZONE_ABBREVIATIONS[s.location] || trTerm(s.location)}]`;
                     lines.push(line);
@@ -4378,6 +4500,29 @@
                                 ) : <p className="text-xs text-[var(--color-text-muted)]">{t('inspectorEmpty')}</p>}
                             </aside>
                         )}
+                        {movePicker && (() => {
+                            const st = comboSteps.find(s => s.id === movePicker.stepId);
+                            const tg = st && st.targetCards.find(x => x.instanceId === movePicker.instanceId);
+                            const current = st && tg ? targetMove(st, tg) : null;
+                            return (
+                                <div data-move-picker="1" className="move-picker" style={{ top: movePicker.top, left: movePicker.left }} role="menu">
+                                    <div className="text-xs font-semibold text-[var(--color-text-muted)] px-1 pb-1">{t('movePickerTitle')}</div>
+                                    {MOVE_GROUPS.map(([g, label]) => (
+                                        <div key={g} className="mb-1">
+                                            <div className="text-[11px] uppercase tracking-wide text-[var(--color-text-muted)] px-1">{t(label)}</div>
+                                            <div className="grid grid-cols-1 gap-0.5">
+                                                {Object.keys(MOVES).filter(k => MOVES[k].group === g).map(k => (
+                                                    <button key={k} type="button" role="menuitem" onClick={() => setTargetMove(movePicker.stepId, movePicker.instanceId, k)} className={`flex items-center gap-2 px-1 py-1 rounded text-sm text-left hover:bg-[var(--color-surface-light)] ${current === k ? 'bg-[var(--color-surface-light)] font-semibold' : ''}`}>
+                                                        <MoveBadge k={k} className="mv-inline" />
+                                                        <span>{moveLabel(k)}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                         <TokenPickerModal show={showTokenPicker} tokens={allTokens} onPick={(tk) => { addCardToPool(tk); setShowTokenPicker(false); }} onClose={() => setShowTokenPicker(false)} t={t} />
                         <CustomCardModal show={showCustomCardModal} onClose={() => { setShowCustomCardModal(false); setEditingCustomCard(null); }} onSave={handleSaveCustomCard} t={t} existingCard={editingCustomCard} />
 
@@ -4553,7 +4698,7 @@
                                             </span>
                                             <i className={`fas fa-chevron-down transition-transform duration-300 ${isCardPoolOpen ? '' : '-rotate-90'}`}></i>
                                         </h3>
-                                        <div className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${isCardPoolOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
+                                        <div className={`transition-[max-height] duration-200 ease-out overflow-hidden ${isCardPoolOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
                                             <div className="p-4 pt-0">
                                                 <div className="p-4 bg-black/20 rounded-lg min-h-[9.5rem] relative">
                                                     {cardPool.length > 0 ? (
@@ -4572,7 +4717,7 @@
                                             <span>{t('comboStatsTitle')}</span>
                                             <i className={`fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`}></i>
                                         </h3>
-                                        <div className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${isStatsOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
+                                        <div className={`transition-[max-height] duration-200 ease-out overflow-hidden ${isStatsOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
                                             <ComboStats stats={comboStats} t={t} />
                                         </div>
                                     </section>
@@ -4581,7 +4726,7 @@
                                             <span className="flex items-center">{t('startingHandTitle')} <span data-tooltip={t('helpStartingHand')}><i className="fas fa-question-circle ml-2"></i></span></span>
                                             <i className={`fas fa-chevron-down transition-transform duration-300 ${isStartingHandOpen ? '' : '-rotate-90'}`}></i>
                                         </h3>
-                                        <div className={`transition-[max-height] duration-500 ease-in-out overflow-hidden ${isStartingHandOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
+                                        <div className={`transition-[max-height] duration-200 ease-out overflow-hidden ${isStartingHandOpen ? 'max-h-[40rem]' : 'max-h-0'}`}>
                                             <div className="p-4 pt-0">
                                                 <div className="flex flex-row flex-wrap items-start gap-3 pb-3">
                                                     {startingHand.map((group, groupIndex) => (
@@ -4605,7 +4750,7 @@
                                     <section id="combo-steps-section" className="bg-[var(--color-surface)]/30 p-4 rounded-lg border border-[var(--color-border)]/30 combo-steps">
                                         <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
                                             <h3 className="text-xl font-semibold text-[var(--color-secondary)]">{t('comboStepsTitle')}</h3>
-                                            <div className="flex items-center"><div className="inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2" role="group"><button onClick={() => setStepsView('list')} aria-pressed={stepsView === 'list'} aria-label={t('stepsViewList')} data-tooltip={t('stepsViewList')} className={`px-3 py-1 text-sm ${stepsView === 'list' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-list-ol"></i></button><button onClick={() => setStepsView('grid')} aria-pressed={stepsView === 'grid'} aria-label={t('stepsViewGrid')} data-tooltip={t('stepsViewGrid')} className={`px-3 py-1 text-sm ${stepsView === 'grid' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-th-large"></i></button><button onClick={() => setStepsView('compact')} aria-pressed={stepsView === 'compact'} aria-label={t('stepsViewCompact')} data-tooltip={t('stepsViewCompact')} className={`px-3 py-1 text-sm ${stepsView === 'compact' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-align-left"></i></button></div>
+                                            <div className="flex items-center"><div className="inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2" role="group"><button onClick={() => setStepsView('grid')} aria-pressed={stepsView === 'grid'} aria-label={t('stepsViewGrid')} data-tooltip={t('stepsViewGrid')} className={`px-3 py-1 text-sm ${stepsView === 'grid' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-th-large"></i></button><button onClick={() => setStepsView('list')} aria-pressed={stepsView === 'list'} aria-label={t('stepsViewList')} data-tooltip={t('stepsViewList')} className={`px-3 py-1 text-sm ${stepsView === 'list' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-list-ol"></i></button><button onClick={() => setStepsView('compact')} aria-pressed={stepsView === 'compact'} aria-label={t('stepsViewCompact')} data-tooltip={t('stepsViewCompact')} className={`px-3 py-1 text-sm ${stepsView === 'compact' ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className="fas fa-align-left"></i></button></div><div className="inline-flex rounded-lg overflow-hidden border border-[var(--color-border)] mr-2" role="group">{[['s', 'fa-magnifying-glass-minus', 'sizeSmall'], ['m', 'fa-magnifying-glass', 'sizeNormal'], ['l', 'fa-magnifying-glass-plus', 'sizeLarge']].map(([k, ic, lb]) => <button key={k} onClick={() => setStepSize(k)} aria-pressed={stepSize === k} aria-label={t(lb)} data-tooltip={t(lb)} className={`px-2.5 py-1 text-sm ${stepSize === k ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}><i className={`fas ${ic}`}></i></button>)}</div>
                                                 <button onClick={() => setComboState({...comboState, comboSteps: [...comboSteps, { type: 'group', id: generateId(), title: 'New Group' }]}, 'Added group')} className="btn px-3 py-1 bg-slate-600 text-white text-sm font-semibold rounded-lg hover:bg-slate-500 mr-2">{t('addGroup')}</button>
                                             </div>
                                         </div>
@@ -4627,7 +4772,8 @@
                                                                 {c && <img src={c.image_url_small} alt="" className="w-6 h-9 object-cover rounded-sm shrink-0" />}
                                                                 <span className="min-w-0">
                                                                     <span className="text-[var(--color-accent)]">{act.emoji} {s.actionType === 'Other' ? (s.customActionText || trTerm('Other')) : trTerm(s.actionType)}</span> <b>{c ? c.name : '?'}</b>
-                                                                    {targets.length ? <span className="text-[var(--color-text-muted)]"> → {targets.join(', ')}</span> : null}
+                                                                    {(s.targetCards || []).length ? <span className="text-[var(--color-text-muted)]"> → {(s.targetCards || []).map((tc, ti) => { const c2 = findCard(tc.instanceId); return c2 ? <span key={ti} className="inline-flex items-center gap-1 mr-2"><MoveBadge k={targetMove(s, tc)} className="mv-inline" />{c2.name}</span> : null; })}</span> : null}
+                                                                    {(s.vulnerability && (s.vulnerability.cards || []).length) ? <span className="text-red-400"> ⚠ {(s.vulnerability.cards || []).map(vc => (vc.card || findCard(vc.instanceId) || {}).name).filter(Boolean).join(', ')}</span> : null}
                                                                     {s.location ? <span className="text-[var(--color-text-muted)]"> [{ZONE_ABBREVIATIONS[s.location] || trTerm(s.location)}]</span> : null}
                                                                     {vul ? ' ⚠️' : ''}{s.branch && s.branch.steps && s.branch.steps.length ? ' ⑂' : ''}
                                                                     {s.actionDescription ? <span className="block text-xs text-[var(--color-text-muted)] break-words">{stripMentions(htmlToText(s.actionDescription))}</span> : null}
@@ -4638,7 +4784,7 @@
                                                 }); })()}
                                             </ol>
                                         )}
-                                        <div className={`grid gap-4 grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] ${stepsView === 'list' ? 'steps-list' : ''} ${stepsView === 'compact' ? 'hidden' : ''}`} data-drop-area="comboSteps" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, 'comboSteps')}>
+                                        <div style={{ gridTemplateColumns: `repeat(auto-fill,minmax(${stepSize === 's' ? '13rem' : stepSize === 'l' ? '22rem' : '17rem'},1fr))` }} className={`grid gap-4 steps-size-${stepSize} ${stepsView === 'list' ? 'steps-list' : ''} ${stepsView === 'compact' ? 'hidden' : ''}`} data-drop-area="comboSteps" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, 'comboSteps')}>
                                             {comboSteps.map((step, index) => { 
                                                 if (step.type === 'group') {
                                                     return (
@@ -4721,11 +4867,35 @@
                                                     <span className="step-label font-bold text-[var(--color-text-muted)] self-start">{(language === 'en' ? 'Step' : t('stepLabel'))} {stepNumber + 1}</span>
                                                     <select value={step.actionType} onChange={e => updateStep(step.id, { actionType: e.target.value })} disabled={step.isLocked} className="tutorial-action-select bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-sm font-semibold text-[var(--color-accent)] w-full disabled:opacity-50 disabled:cursor-not-allowed">{YGO_ACTIONS.map(act => <option key={act.name} value={act.name}>{act.emoji} {trTerm(act.name)}</option>)}</select>
                                                     {step.actionType === 'Other' && ( <input type="text" value={step.customActionText || ''} onChange={e => updateStep(step.id, { customActionText: sanitizeHTML(e.target.value) })} disabled={step.isLocked} placeholder="Especificar acción..." className="w-full bg-[var(--color-surface-light)] border border-[var(--color-border)] rounded p-1 text-xs text-center mt-1" /> )}
-                                                    <div className="step-main flex justify-center my-2 relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />{step.vulnerability?.cards && step.vulnerability.cards.length > 0 && (<div className="absolute -right-4 -top-2 z-10 flex flex-col items-end gap-1">{step.vulnerability.cards.map((vCard) => (<CardDisplay key={vCard.instanceId} card={vCard.card || findCard(vCard.instanceId)} size="tiny" useCropped={true} onRemove={!step.isLocked ? () => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); } : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove}><span className="absolute top-0 right-0 text-xl z-10 -mt-1 -mr-1" style={{textShadow: '0 0 3px black'}}>⚠️</span></CardDisplay>))}</div>)}</div>
+                                                    <div className="step-body">
+                                                        <button type="button" className="side-tab side-tab-left" onClick={() => setOpenSide(o => o === step.id + ':left' ? null : step.id + ':left')} aria-label={t('sideVuln')}><i className="fas fa-triangle-exclamation"></i><span>{(step.vulnerability?.cards || []).length}</span></button>
+                                                        <div className={`step-side step-side-left ${openSide === step.id + ':left' ? 'side-open' : ''}`} aria-label={t('sideVuln')}><button type="button" className="side-close" onClick={() => setOpenSide(null)} aria-label={t('closeLabel')}>×</button>
+                                                            {(step.vulnerability?.cards || []).map(vCard => { const vc = vCard.card || findCard(vCard.instanceId); if (!vc) return null; return (
+                                                                <div key={vCard.instanceId} className="side-thumb" title={vc.name}>
+                                                                    <img src={vc.image_url_cropped || vc.image_url_small} alt={vc.name} onClick={() => setSelectedCardForZoom(vc)} onMouseEnter={() => handleCardMouseEnter(vc)} onMouseLeave={handleCardMouseLeave} crossOrigin="anonymous" />
+                                                                    <span className="mv-badge mv-warn" aria-hidden="true"><i className="fas fa-triangle-exclamation"></i></span>
+                                                                    {!step.isLocked && <button type="button" className="side-remove" aria-label={t('delete')} onClick={() => { const newVCards = step.vulnerability.cards.filter(c => c.instanceId !== vCard.instanceId); updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: newVCards } }); }}>×</button>}
+                                                                </div>
+                                                            ); })}
+                                                            {!step.isLocked && <CardSelector cardPool={cardPool} mode="all" onCardSelected={card => addVulnCard(step, card)} displayAs="side-add" t={t} preferredDirection="side" wrapperClassName="side-add-vuln" />}
+                                                        </div>
+                                                        <div className="step-main flex justify-center relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} /></div>
+                                                        <div className={`step-side step-side-right ${openSide === step.id + ':right' ? 'side-open' : ''}`} aria-label={t('sideTargets')}><button type="button" className="side-close" onClick={() => setOpenSide(null)} aria-label={t('closeLabel')}>×</button>
+                                                            {(step.targetCards || []).map((target, ti) => { const tc = findCard(target.instanceId); if (!tc) return null; const mk = targetMove(step, target); return (
+                                                                <div key={`target-${target.instanceId}-${ti}`} className={`side-thumb ${highlightedCardIds.includes(target.instanceId) ? 'side-hl' : ''}`} title={`${tc.name} — ${moveLabel(mk)}`}>
+                                                                    <img src={tc.image_url_cropped || tc.image_url_small} alt={tc.name} onClick={() => setSelectedCardForZoom(tc)} onMouseEnter={() => handleCardMouseEnter(tc)} onMouseLeave={handleCardMouseLeave} crossOrigin="anonymous" />
+                                                                    <MoveBadge k={mk} wiggle={wiggleKeys.has(step.id + ':' + target.instanceId)} title={`${moveLabel(mk)} (${t('moveChange')})`} onClick={step.isLocked ? undefined : (e) => openMovePicker(e, step.id, target.instanceId)} />
+                                                                    {target.quantity > 1 && <span className="side-qty">×{target.quantity}</span>}
+                                                                    {!step.isLocked && <button type="button" className="side-remove" aria-label={t('delete')} onClick={() => removeTargetCardFromStep(step.id, target.instanceId)}>×</button>}
+                                                                </div>
+                                                            ); })}
+                                                            {!step.isLocked && <CardSelector wrapperClassName="tutorial-add-target-btn" cardPool={cardPool} onCardSelected={card => addTargetCard(step, card)} displayAs="side-add" t={t} preferredDirection="side" />}
+                                                        </div>
+                                                        <button type="button" className="side-tab side-tab-right" onClick={() => setOpenSide(o => o === step.id + ':right' ? null : step.id + ':right')} aria-label={t('sideTargets')}><span>{(step.targetCards || []).length}</span><i className="fas fa-clone"></i></button>
+                                                    </div>
                                                     <button onClick={() => setZonePickerStepId(step.id)} className="btn text-xs py-1 px-2 bg-slate-600 hover:bg-slate-500 mb-2">{step.location ? (ZONE_ABBREVIATIONS[step.location] || trTerm(step.location)) : t('location')}</button>
-                                                    {isVulnerable && (<div className="flex items-center gap-2 w-full">{(!step.vulnerability.cards || step.vulnerability.cards.length === 0) && (<input type="text" value={step.vulnerability.text} onChange={e => updateStep(step.id, { vulnerability: {...step.vulnerability, text: sanitizeHTML(e.target.value)} })} disabled={step.isLocked} placeholder="Vulnerable a..." className="flex-grow bg-red-900/50 border border-red-500/50 text-red-300 placeholder-red-400 rounded p-1 text-xs text-center disabled:opacity-50"/>)}<CardSelector cardPool={cardPool} mode="all" onCardSelected={card => { const currentVCards = step.vulnerability?.cards || []; const idOf = (vc) => (vc.card ? vc.card.ygoprodeck_id : (findCard(vc.instanceId) || {}).ygoprodeck_id); if (!currentVCards.some(vc => vc.instanceId === card.instanceId || (card.ygoprodeck_id && idOf(vc) === card.ygoprodeck_id))) { updateStep(step.id, { vulnerability: { ...step.vulnerability, cards: [...currentVCards, { instanceId: card.instanceId, card }] } }); } }} displayAs="small-button" t={t} preferredDirection="side" /></div>)}
+                                                    {isVulnerable && (!step.vulnerability.cards || step.vulnerability.cards.length === 0) && (<input type="text" value={step.vulnerability.text} onChange={e => updateStep(step.id, { vulnerability: {...step.vulnerability, text: sanitizeHTML(e.target.value)} })} disabled={step.isLocked} placeholder={t('sideVuln') + '...'} className="w-full bg-red-900/50 border border-red-500/50 text-red-300 placeholder-red-400 rounded p-1 text-xs text-center disabled:opacity-50"/>)}
                                                     {isVulnerable && !step.branch && <button type="button" onClick={() => addBranch(step)} className="self-start text-xs font-semibold text-red-300 hover:text-red-200 px-2 py-1 rounded bg-red-900/30"><i className="fas fa-code-branch mr-1"></i>{t('branchAdd')}</button>}
-                                                    <div className="flex flex-wrap justify-center gap-1 border-t border-[var(--color-border)] pt-2 min-h-[4.5rem]">{step.targetCards.map(target => (<CardDisplay key={`target-${target.instanceId}`} card={findCard(target.instanceId)} size="tiny" isHighlighted={highlightedCardIds.includes(target.instanceId)} onRemove={!step.isLocked ? () => removeTargetCardFromStep(step.id, target.instanceId) : null} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />))}<CardSelector wrapperClassName="tutorial-add-target-btn" cardPool={cardPool} onCardSelected={card => updateStep(step.id, { targetCards: [...step.targetCards, {instanceId: card.instanceId, quantity: 1}]})} displayAs="small-button" t={t} preferredDirection="side" /></div>
                                                     <AutoResizeTextarea
                                                         value={step.actionDescription}
                                                         onChange={e => updateStep(step.id, { actionDescription: sanitizeHTML(e.target.value) })}
@@ -4772,7 +4942,7 @@
                                                 </span>
                                                 <i className={`fas fa-chevron-down transition-transform duration-300 ${isFinalBoardOpen ? '' : '-rotate-90'}`}></i>
                                             </h3>
-                                             <div className={`transition-[max-height] duration-500 ease-in-out ${isFinalBoardOpen ? 'max-h-[90rem] overflow-visible' : 'max-h-0 overflow-hidden'}`}>
+                                             <div className={`transition-[max-height] duration-200 ease-out ${isFinalBoardOpen ? 'max-h-[90rem] overflow-visible' : 'max-h-0 overflow-hidden'}`}>
                                                 {finalBoardCards.length > 0 && <FinalBoardMini items={finalBoardCards} className="mb-4" onCardClick={c => setSelectedCardForZoom(c)} />}
                                                 <div data-drop-area="finalBoard" onDragOver={(e) => {e.preventDefault(); e.currentTarget.classList.add('drag-over')}} onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')} onDrop={(e) => handleDrop(e, 'finalBoard')} className={`drop-zone p-4 bg-black/20 rounded-lg min-h-[9.5rem] flex flex-wrap gap-3 border-2 border-dashed border-[var(--color-border)] ${finalBoardCards.length === 0 ? 'justify-center items-center' : 'justify-start items-start'}`}>
                                                     {finalBoardCards.map(item => (
