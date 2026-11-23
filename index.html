@@ -15,9 +15,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
         :root {
@@ -29,7 +26,7 @@
             --color-surface: #ffffff; /* white */
             --color-surface-light: #f8fafc; /* slate-50 */
             --color-text: #0f172a; /* slate-900 */
-            --color-text-muted: #64748b; /* slate-500 */
+            --color-text-muted: #475569; /* slate-600: más contraste sobre blanco */
             --color-danger: #ef4444; /* red-500 */
             --color-warning: #f59e0b; /* amber-500 */
         }
@@ -43,7 +40,7 @@
             --color-surface: #1e293b; /* slate-800 */
             --color-surface-light: #334155; /* slate-700 */
             --color-text: #e2e8f0; /* slate-200 */
-            --color-text-muted: #94a3b8; /* slate-400 */
+            --color-text-muted: #a9b6c8; /* un poco más claro: más contraste sobre oscuro */
             --color-danger: #ef4444; /* red-500 */
             --color-warning: #fcd34d; /* amber-300 */
         }
@@ -952,6 +949,7 @@
         // Ramas ante interrupciones
         const EXTRA_TRANSLATIONS_BRANCH = {"es": {"branchAdd": "Añadir rama (si te interrumpen)", "branchDefaultTitle": "Si me interrumpen aquí", "branchIf": "Si usan", "branchTitleLabel": "Nombre de la rama", "branchFromStep": "desde el paso {n}", "branchRemove": "Quitar rama", "branchAddStep": "+ Paso de la rama", "branchView": "Ver rama", "branchBack": "Volver a la línea principal", "branchLabel": "Rama"}, "en": {"branchAdd": "Add branch (if interrupted)", "branchDefaultTitle": "If I get interrupted here", "branchIf": "If they use", "branchTitleLabel": "Branch name", "branchFromStep": "from step {n}", "branchRemove": "Remove branch", "branchAddStep": "+ Branch step", "branchView": "View branch", "branchBack": "Back to the main line", "branchLabel": "Branch"}, "pt": {"branchAdd": "Adicionar ramo (se interromperem)", "branchDefaultTitle": "Se me interromperem aqui", "branchIf": "Se usarem", "branchTitleLabel": "Nome do ramo", "branchFromStep": "a partir do passo {n}", "branchRemove": "Remover ramo", "branchAddStep": "+ Passo do ramo", "branchView": "Ver ramo", "branchBack": "Voltar à linha principal", "branchLabel": "Ramo"}, "fr": {"branchAdd": "Ajouter une variante (si interrompu)", "branchDefaultTitle": "Si je suis interrompu ici", "branchIf": "S'ils utilisent", "branchTitleLabel": "Nom de la variante", "branchFromStep": "depuis l'étape {n}", "branchRemove": "Supprimer la variante", "branchAddStep": "+ Étape de la variante", "branchView": "Voir la variante", "branchBack": "Revenir à la ligne principale", "branchLabel": "Variante"}, "it": {"branchAdd": "Aggiungi ramo (se interrotto)", "branchDefaultTitle": "Se vengo interrotto qui", "branchIf": "Se usano", "branchTitleLabel": "Nome del ramo", "branchFromStep": "dal passo {n}", "branchRemove": "Rimuovi ramo", "branchAddStep": "+ Passo del ramo", "branchView": "Vedi ramo", "branchBack": "Torna alla linea principale", "branchLabel": "Ramo"}, "de": {"branchAdd": "Abzweigung hinzufügen (bei Unterbrechung)", "branchDefaultTitle": "Falls ich hier unterbrochen werde", "branchIf": "Falls sie nutzen", "branchTitleLabel": "Name der Abzweigung", "branchFromStep": "ab Schritt {n}", "branchRemove": "Abzweigung entfernen", "branchAddStep": "+ Schritt der Abzweigung", "branchView": "Abzweigung ansehen", "branchBack": "Zurück zur Hauptlinie", "branchLabel": "Abzweigung"}, "ru": {"branchAdd": "Добавить ветку (если прервут)", "branchDefaultTitle": "Если меня прервут здесь", "branchIf": "Если используют", "branchTitleLabel": "Название ветки", "branchFromStep": "с шага {n}", "branchRemove": "Удалить ветку", "branchAddStep": "+ Шаг ветки", "branchView": "Смотреть ветку", "branchBack": "Вернуться к основной линии", "branchLabel": "Ветка"}, "ja": {"branchAdd": "分岐を追加 (妨害された場合)", "branchDefaultTitle": "ここで妨害されたら", "branchIf": "相手が使ったら:", "branchTitleLabel": "分岐の名前", "branchFromStep": "ステップ {n} から", "branchRemove": "分岐を削除", "branchAddStep": "+ 分岐のステップ", "branchView": "分岐を見る", "branchBack": "メインのルートに戻る", "branchLabel": "分岐"}, "ko": {"branchAdd": "분기 추가 (방해받을 경우)", "branchDefaultTitle": "여기서 방해받으면", "branchIf": "상대가 사용하면", "branchTitleLabel": "분기 이름", "branchFromStep": "{n}단계부터", "branchRemove": "분기 삭제", "branchAddStep": "+ 분기 단계", "branchView": "분기 보기", "branchBack": "메인 루트로 돌아가기", "branchLabel": "분기"}, "zh": {"branchAdd": "添加分支(被干扰时)", "branchDefaultTitle": "如果在这里被干扰", "branchIf": "如果对方使用", "branchTitleLabel": "分支名称", "branchFromStep": "从第 {n} 步开始", "branchRemove": "删除分支", "branchAddStep": "+ 分支步骤", "branchView": "查看分支", "branchBack": "返回主线", "branchLabel": "分支"}};
         Object.entries(EXTRA_TRANSLATIONS_BRANCH).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
+        Object.entries({"es": {"localSaveActive": "Guardado local activado"}, "en": {"localSaveActive": "Local saving on"}, "pt": {"localSaveActive": "Salvamento local ativado"}, "fr": {"localSaveActive": "Sauvegarde locale activée"}, "it": {"localSaveActive": "Salvataggio locale attivo"}, "de": {"localSaveActive": "Lokales Speichern aktiv"}, "ru": {"localSaveActive": "Локальное сохранение включено"}, "ja": {"localSaveActive": "ローカル保存オン"}, "ko": {"localSaveActive": "로컬 저장 사용 중"}, "zh": {"localSaveActive": "已启用本地保存"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // Notas del combo de ejemplo real
         Object.entries({"es": {"exampleNotes": "Combo real de ejemplo (Rikka con Predaplant, 1 carta). Pruébalo en el tablero (▶) o en modo práctica."}, "en": {"exampleNotes": "Real example combo (Rikka with Predaplant, 1 card). Try it on the board (▶) or in practice mode."}, "pt": {"exampleNotes": "Combo real de exemplo (Rikka com Predaplant, 1 carta). Teste no tabuleiro (▶) ou no modo prática."}, "fr": {"exampleNotes": "Vrai combo d'exemple (Rikka avec Predaplant, 1 carte). Essayez-le sur le plateau (▶) ou en mode entraînement."}, "it": {"exampleNotes": "Vera combo di esempio (Rikka con Predaplant, 1 carta). Provala sul tabellone (▶) o in modalità allenamento."}, "de": {"exampleNotes": "Echte Beispiel-Combo (Rikka mit Predaplant, 1 Karte). Probiere sie auf dem Spielfeld (▶) oder im Übungsmodus aus."}, "ru": {"exampleNotes": "Реальное комбо-пример (Rikka с Predaplant, 1 карта). Попробуйте его на поле (▶) или в режиме тренировки."}, "ja": {"exampleNotes": "実際のサンプルコンボ (六花 + 捕食植物、1枚初動)。盤面 (▶) や練習モードで試してみてください。"}, "ko": {"exampleNotes": "실제 예시 콤보 (리카 + 포식식물, 1장 전개). 보드(▶)나 연습 모드에서 사용해 보세요."}, "zh": {"exampleNotes": "真实的示例 Combo(六花 + 捕食植物,1 卡起手)。可在棋盘(▶)或练习模式中试试。"}}).forEach(([lang, dict]) => { if (translations[lang]) Object.assign(translations[lang], dict); });
         // YGOPRODeck ya permite llamadas directas desde el navegador; no hace falta el proxy de Vercel.
@@ -1535,16 +1533,6 @@
         const PngPreviewModal = ({ imageUrl, onDownload, onClose, t, onShare, comboTitle, shareUrl }) => {
             if (!imageUrl) return null;
             
-            const twitterShareUrl = useMemo(() => {
-                const text = encodeURIComponent(`Check out this Yu-Gi-Oh! combo I made: "${comboTitle || 'Awesome Combo'}"!`);
-                const url = encodeURIComponent(shareUrl);
-                return `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
-            }, [comboTitle, shareUrl]);
-
-            const facebookShareUrl = useMemo(() => {
-                const url = encodeURIComponent(shareUrl);
-                return `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-            }, [shareUrl]);
 
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -2377,81 +2365,6 @@
             );
         };
 
-        const TemplatesModal = ({ show, onClose, onSelect, t }) => {
-            const [confirmLoad, setConfirmLoad] = useState(null);
-            
-            const templates = [
-                {
-                    name: "Basic Salamangreat Combo",
-                    description: "A simple 1-card combo using Salamangreat Gazelle.",
-                    state: {
-                        cardPool: [ { instanceId: "sg_1", ygoprodeck_id: 27348498, name: "Salamangreat Gazelle", type: "Effect Monster", image_url_small: "https://images.weserv.nl/?url=images.ygoprodeck.com/images/cards_small/27348498.jpg" }, { instanceId: "sb_1", ygoprodeck_id: 50122884, name: "Salamangreat Balelynx", type: "Link Monster", image_url_small: "https://images.weserv.nl/?url=images.ygoprodeck.com/images/cards_small/50122884.jpg" }, { instanceId: "ss_1", ygoprodeck_id: 86438692, name: "Salamangreat Sunlight Wolf", type: "Link Monster", image_url_small: "https://images.weserv.nl/?url=images.ygoprodeck.com/images/cards_small/86438692.jpg" } ],
-                        startingHand: [[{ instanceId: "sg_1", quantity: 1 }]],
-                        comboSteps: [
-                            { type: "step", id: generateId(), mainCardInstanceId: "sg_1", actionType: "Normal Summon", actionDescription: "Summon Gazelle" },
-                            { type: "step", id: generateId(), mainCardInstanceId: "sg_1", actionType: "Link Summon", actionDescription: "Link into Balelynx", targetCards: [{instanceId: "sb_1"}] },
-                        ],
-                        finalBoardCards: [{ id: generateId(), card: { instanceId: "ss_1", name: "Salamangreat Sunlight Wolf" }, zone: "Extra Monster 1", isDisruption: true }],
-                        comboTitle: "Basic Salamangreat Combo",
-                        notes: "This is a foundational combo for the deck."
-                    }
-                },
-                 {
-                    name: "Kashtira Zone Lock",
-                    description: "A standard line to end on Arise-Heart and lock zones.",
-                    state: {
-                        cardPool: [ { instanceId: "kash_1", ygoprodeck_id: 21534435, name: "Kashtira Unicorn", type: "Effect Monster", image_url_small: "https://images.weserv.nl/?url=images.ygoprodeck.com/images/cards_small/21534435.jpg" }, { instanceId: "kash_2", ygoprodeck_id: 95308449, name: "Kashtira Fenrir", type: "Effect Monster", image_url_small: "https://images.weserv.nl/?url=images.ygoprodeck.com/images/cards_small/95308449.jpg" }, { instanceId: "kash_3", ygoprodeck_id: 59683162, name: "Kashtira Arise-Heart", type: "Xyz Monster", image_url_small: "https://images.weserv.nl/?url=images.ygoprodeck.com/images/cards_small/59683162.jpg" } ],
-                        startingHand: [[{ instanceId: "kash_1", quantity: 1 }]],
-                        comboSteps: [
-                             { type: "step", id: generateId(), mainCardInstanceId: "kash_1", actionType: "Special Summon", actionDescription: "Summon Unicorn" },
-                             { type: "step", id: generateId(), mainCardInstanceId: "kash_1", actionType: "Activate Effect", actionDescription: "Search for Kashtira Birth" },
-                        ],
-                        finalBoardCards: [{ id: generateId(), card: { instanceId: "kash_3", name: "Kashtira Arise-Heart" }, zone: "Extra Monster 1", isDisruption: true }],
-                        comboTitle: "Kashtira Zone Lock",
-                        notes: "Requires no opponent interaction."
-                    }
-                }
-            ];
-
-            if (!show) return null;
-            
-            const handleSelect = (template) => {
-                setConfirmLoad(template);
-            };
-
-            const handleConfirm = () => {
-                onSelect(confirmLoad.state);
-                setConfirmLoad(null);
-            };
-
-            return (
-                 <div className="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-6 max-w-lg w-full relative">
-                        <h3 className="text-xl font-bold mb-6 text-violet-300 text-center">{t('loadTemplate')}</h3>
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {templates.map(template => (
-                                <div key={template.name} className="p-4 bg-slate-800 rounded-lg hover:bg-slate-700/50">
-                                    <h4 className="font-bold text-amber-300">{template.name}</h4>
-                                    <p className="text-sm text-slate-300 mt-1">{template.description}</p>
-                                    <button onClick={() => handleSelect(template)} className="btn mt-2 px-3 py-1 text-sm bg-violet-600 text-white font-semibold rounded-md hover:bg-violet-700">Load</button>
-                                </div>
-                            ))}
-                        </div>
-                         <div className="flex justify-end mt-6">
-                            <button onClick={onClose} className="px-5 py-2 bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-700">{t('cancel')}</button>
-                        </div>
-                    </div>
-                    <ConfirmationModal
-                        show={!!confirmLoad}
-                        title={t('loadTemplate')}
-                        message={t('templateConfirm')}
-                        onConfirm={handleConfirm}
-                        onCancel={() => setConfirmLoad(null)}
-                        t={t}
-                    />
-                 </div>
-            );
-        };
 
         const AutoResizeTextarea = ({ value, ...props }) => {
             const textareaRef = useRef(null);
@@ -4408,7 +4321,7 @@
                                     </div>
                                 </header>
                                 <div className="w-full text-center text-xs text-slate-400 mb-4 h-4">
-                                    {isOnlineSaveEnabled ? (user ? `${t('loggedInAs')} ${user.uid}` : t('connecting')) : 'Guardado local activado'}
+                                    {isOnlineSaveEnabled ? (user ? `${t('loggedInAs')} ${user.uid}` : t('connecting')) : t('localSaveActive')}
                                 </div>
                                 {showWelcome && (
                                     <div className="mb-4 p-4 rounded-lg border border-violet-500/40 bg-violet-900/20 flex flex-wrap items-center gap-3 justify-between">
