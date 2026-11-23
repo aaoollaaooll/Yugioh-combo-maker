@@ -5529,17 +5529,9 @@ const App = () => {
   }, [language]);
   const tutorialSteps = useMemo(() => ({
     main: [{
-      targetSelector: '#search-panel',
-      title: t('tutorialTitleSearch'),
-      content: t('tutorialContentSearch')
-    }, {
       targetSelector: '.popular-cards-carousel',
       title: t('tutorialTitlePopularCards'),
       content: t('tutorialContentPopularCards')
-    }, {
-      targetSelector: '.card-pool',
-      title: t('tutorialTitlePool'),
-      content: t('tutorialContentPool')
     }, {
       targetSelector: '.starting-hand',
       title: t('tutorialTitleHand'),
@@ -7510,7 +7502,7 @@ const App = () => {
     "aria-label": t('quickNav')
   }, React.createElement("button", {
     type: "button",
-    onClick: () => scrollToSection('#card-pool-section')
+    onClick: () => setIsFlyoutPoolOpen(true)
   }, React.createElement("i", {
     className: "fas fa-layer-group"
   }), React.createElement("span", null, t('navPool'))), React.createElement("button", {
@@ -7699,14 +7691,7 @@ const App = () => {
       closeContextMenu();
     },
     className: "w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-violet-600"
-  }, option.label)))), React.createElement("button", {
-    onClick: () => setIsSearchPanelOpen(true),
-    className: `fixed top-1/2 -translate-y-1/2 left-0 z-30 bg-violet-700/80 backdrop-blur-sm text-white p-2 rounded-r-lg shadow-lg transition-all duration-300 hover:bg-violet-600 ${isSearchPanelOpen ? 'opacity-0 -translate-x-full' : 'opacity-100 translate-x-0'}`,
-    "aria-label": "Abrir B\xFAsqueda",
-    "data-tooltip": "Abrir B\xFAsqueda"
-  }, React.createElement("i", {
-    className: "fas fa-search"
-  })), isFlyoutButtonVisible && !isFlyoutPoolOpen && React.createElement("button", {
+  }, option.label)))), cardPool.length > 0 && !isFlyoutPoolOpen && React.createElement("button", {
     onClick: () => setIsFlyoutPoolOpen(true),
     className: "fixed top-1/2 -translate-y-1/2 right-0 z-30 bg-amber-600/80 backdrop-blur-sm text-white p-2 rounded-l-lg shadow-lg transition-all duration-300 hover:bg-amber-500",
     "aria-label": t('cardPoolTitle'),
@@ -7719,7 +7704,16 @@ const App = () => {
     className: "flex justify-between items-center mb-4"
   }, React.createElement("h3", {
     className: "text-xl font-semibold text-amber-300"
-  }, t('cardPoolTitle')), React.createElement("button", {
+  }, t('cardPoolTitle')), React.createElement("div", {
+    className: "flex gap-2 ml-auto mr-3"
+  }, React.createElement("button", {
+    onClick: () => setShowCustomCardModal(true),
+    className: "btn px-2 py-1 text-xs bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"
+  }, t('createCustomCard')), React.createElement("button", {
+    onClick: handleAddToken,
+    disabled: allTokens.length === 0 || isAddingToken,
+    className: "btn px-2 py-1 text-xs bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50"
+  }, t('addToken'))), React.createElement("button", {
     onClick: () => setIsFlyoutPoolOpen(false),
     className: "text-amber-200 hover:text-white",
     "aria-label": "Cerrar",
@@ -8078,6 +8072,24 @@ const App = () => {
     className: "step-menu-item",
     onClick: () => {
       setShowMoreMenu(false);
+      setShowCustomCardModal(true);
+    }
+  }, React.createElement("i", {
+    className: "fas fa-pen-ruler w-5 text-center"
+  }), t('createCustomCard')), React.createElement("button", {
+    role: "menuitem",
+    className: "step-menu-item",
+    onClick: () => {
+      setShowMoreMenu(false);
+      handleAddToken();
+    }
+  }, React.createElement("i", {
+    className: "fas fa-coins w-5 text-center"
+  }), t('addToken')), React.createElement("button", {
+    role: "menuitem",
+    className: "step-menu-item",
+    onClick: () => {
+      setShowMoreMenu(false);
       setShowWelcome(true);
     }
   }, React.createElement("i", {
@@ -8288,74 +8300,6 @@ const App = () => {
   }, t('guideStart'))))), React.createElement("div", {
     className: "flex-grow space-y-6"
   }, React.createElement("section", {
-    id: "card-pool-section",
-    ref: cardPoolSectionRef,
-    className: "bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30 card-pool"
-  }, React.createElement("h3", {
-    onClick: () => setIsCardPoolOpen(!isCardPoolOpen),
-    className: "text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors"
-  }, React.createElement("span", {
-    className: "flex items-center gap-4"
-  }, t('cardPoolTitle'), React.createElement("button", {
-    onClick: e => {
-      e.stopPropagation();
-      setShowCustomCardModal(true);
-    },
-    className: "btn px-3 py-1 text-sm bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"
-  }, t('createCustomCard')), React.createElement("button", {
-    onClick: e => {
-      e.stopPropagation();
-      handleAddToken();
-    },
-    disabled: allTokens.length === 0 || isAddingToken,
-    className: "btn px-3 py-1 text-sm bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50 flex items-center gap-2"
-  }, isAddingToken && React.createElement(Spinner, null), " ", t('addToken'))), React.createElement("i", {
-    className: `fas fa-chevron-down transition-transform duration-300 ${isCardPoolOpen ? '' : '-rotate-90'}`
-  })), React.createElement("div", {
-    className: `collapse-box ${isCardPoolOpen ? 'is-open' : ''}`
-  }, React.createElement("div", {
-    className: "p-4 pt-0"
-  }, React.createElement("div", {
-    className: "p-4 bg-black/20 rounded-lg min-h-[9.5rem] relative"
-  }, cardPool.length > 0 ? React.createElement("div", {
-    className: "grid gap-3 grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] max-h-[34rem] overflow-y-auto pt-2 pr-2"
-  }, cardPool.map(card => React.createElement(CardDisplay, {
-    key: card.instanceId,
-    card: card,
-    size: "small",
-    onClick: c => setSelectedCardForZoom(c),
-    onRemove: () => removeCardFromPool(card.instanceId),
-    onEdit: () => {
-      setEditingCustomCard(card);
-      setShowCustomCardModal(true);
-    },
-    draggable: true,
-    onDragStart: e => handleDragStart(e, 'pool-card', card),
-    onTouchStart: e => handleTouchStart(e, 'pool-card', card),
-    onDragEnd: handleDragEnd,
-    onContextMenu: (c, e) => handleContextMenu(c, e, 'pool'),
-    isHighlighted: highlightedCardIds.includes(card.instanceId),
-    isNew: card.instanceId === justAddedCardId,
-    onMouseEnter: handleCardMouseEnter,
-    onMouseLeave: handleCardMouseLeave,
-    onMouseMove: handleCardMouseMove
-  }))) : React.createElement(EmptyState, {
-    icon: "fa-layer-group",
-    title: t('emptyPoolTitle'),
-    message: t('emptyPoolMessage')
-  }))))), React.createElement("section", {
-    className: "bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30"
-  }, React.createElement("h3", {
-    onClick: () => setIsStatsOpen(!isStatsOpen),
-    className: "text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors"
-  }, React.createElement("span", null, t('comboStatsTitle')), React.createElement("i", {
-    className: `fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`
-  })), React.createElement("div", {
-    className: `collapse-box ${isStatsOpen ? 'is-open' : ''}`
-  }, React.createElement(ComboStats, {
-    stats: comboStats,
-    t: t
-  }))), React.createElement("section", {
     id: "starting-hand-section",
     className: "bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30 starting-hand"
   }, React.createElement("h3", {
@@ -9182,7 +9126,19 @@ const App = () => {
         className: "w-4 h-6 object-cover rounded-sm"
       }), nm);
     }));
-  })())))))));
+  })()), React.createElement("section", {
+    className: "bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30"
+  }, React.createElement("h3", {
+    onClick: () => setIsStatsOpen(!isStatsOpen),
+    className: "text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors"
+  }, React.createElement("span", null, t('comboStatsTitle')), React.createElement("i", {
+    className: `fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`
+  })), React.createElement("div", {
+    className: `collapse-box ${isStatsOpen ? 'is-open' : ''}`
+  }, React.createElement(ComboStats, {
+    stats: comboStats,
+    t: t
+  })))))))));
 };
 const root = createRoot(document.getElementById('app-container'));
 root.render(React.createElement(App, null));

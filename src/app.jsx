@@ -2713,7 +2713,7 @@
             const chooseLanguage = (lang) => { setLanguage(lang); try { localStorage.setItem('ygo_lang', lang); } catch (e) {} };
             CURRENT_LANG = language;
             const t = useCallback((key, params = {}) => { let str = (translations[language] && translations[language][key]) || translations['en'][key] || key; for (const param in params) { str = str.replace(`{${param}}`, params[param]); } return str; }, [language]);
-            const tutorialSteps = useMemo(() => ({ main: [ { targetSelector: '#search-panel', title: t('tutorialTitleSearch'), content: t('tutorialContentSearch') }, { targetSelector: '.popular-cards-carousel', title: t('tutorialTitlePopularCards'), content: t('tutorialContentPopularCards') }, { targetSelector: '.card-pool', title: t('tutorialTitlePool'), content: t('tutorialContentPool') }, { targetSelector: '.starting-hand', title: t('tutorialTitleHand'), content: t('tutorialContentHand') }, { targetSelector: '.combo-steps', title: t('tutorialTitleSteps'), content: t('tutorialContentSteps') }, { targetSelector: '.final-board', title: t('tutorialTitleFinalBoard'), content: t('tutorialContentFinalBoard') }, { targetSelector: '.notes-section', title: t('tutorialTitleNotes'), content: t('tutorialContentNotes') }, { targetSelector: '.main-actions', title: t('tutorialTitleActions'), content: t('tutorialContentActions') }, ], stepActions: [ { targetSelector: '.combo-step-card .tutorial-action-select', title: t('tutorialTitleStepActionSelect'), content: t('tutorialContentStepActionSelect') }, { targetSelector: '.combo-step-card .tutorial-vulnerability-btn', title: t('tutorialTitleStepVulnerability'), content: t('tutorialContentStepVulnerability') }, { targetSelector: '.combo-step-card .tutorial-add-target-btn', title: t('tutorialTitleStepAffectedCards'), content: t('tutorialContentStepAffectedCards') }, { targetSelector: '.combo-step-card .tutorial-description-input', title: t('tutorialTitleStepDescription'), content: t('tutorialContentStepDescription') }, ] }), [t]);
+            const tutorialSteps = useMemo(() => ({ main: [ { targetSelector: '.popular-cards-carousel', title: t('tutorialTitlePopularCards'), content: t('tutorialContentPopularCards') }, { targetSelector: '.starting-hand', title: t('tutorialTitleHand'), content: t('tutorialContentHand') }, { targetSelector: '.combo-steps', title: t('tutorialTitleSteps'), content: t('tutorialContentSteps') }, { targetSelector: '.final-board', title: t('tutorialTitleFinalBoard'), content: t('tutorialContentFinalBoard') }, { targetSelector: '.notes-section', title: t('tutorialTitleNotes'), content: t('tutorialContentNotes') }, { targetSelector: '.main-actions', title: t('tutorialTitleActions'), content: t('tutorialContentActions') }, ], stepActions: [ { targetSelector: '.combo-step-card .tutorial-action-select', title: t('tutorialTitleStepActionSelect'), content: t('tutorialContentStepActionSelect') }, { targetSelector: '.combo-step-card .tutorial-vulnerability-btn', title: t('tutorialTitleStepVulnerability'), content: t('tutorialContentStepVulnerability') }, { targetSelector: '.combo-step-card .tutorial-add-target-btn', title: t('tutorialTitleStepAffectedCards'), content: t('tutorialContentStepAffectedCards') }, { targetSelector: '.combo-step-card .tutorial-description-input', title: t('tutorialTitleStepDescription'), content: t('tutorialContentStepDescription') }, ] }), [t]);
             const IMAGE_PROXY = 'https://images.weserv.nl/?url=';
 
             // Firebase Initialization Effect
@@ -3851,7 +3851,7 @@
                         <SaveComboModal show={showSaveModal} onClose={() => setShowSaveModal(false)} onSave={handleSaveCombo} onDownload={handleDownloadComboFile} t={t} isOnlineSaveEnabled={isOnlineSaveEnabled} />
                         <LoadComboModal show={showLoadModal} onClose={() => setShowLoadModal(false)} onSelect={handleLoadCombo} onDelete={handleDeleteCombo} onOpenFile={handleOpenComboFile} t={t} db={db} user={user} appId={appId} isOnlineSaveEnabled={isOnlineSaveEnabled}/>
                         <nav className="mobile-tabbar" aria-label={t('quickNav')}>
-                            <button type="button" onClick={() => scrollToSection('#card-pool-section')}><i className="fas fa-layer-group"></i><span>{t('navPool')}</span></button>
+                            <button type="button" onClick={() => setIsFlyoutPoolOpen(true)}><i className="fas fa-layer-group"></i><span>{t('navPool')}</span></button>
                             <button type="button" onClick={() => scrollToSection('#starting-hand-section')}><i className="fas fa-hand-paper"></i><span>{t('navHand')}</span></button>
                             <button type="button" onClick={() => scrollToSection('#combo-steps-section')}><i className="fas fa-list-ol"></i><span>{t('navSteps')}</span></button>
                             <button type="button" onClick={() => scrollToSection('.final-board')}><i className="fas fa-chess-board"></i><span>{t('navBoard')}</span></button>
@@ -3928,9 +3928,7 @@
                         })()}
                         {contextMenu.card && <div className="fixed inset-0 z-50" onClick={closeContextMenu} onContextMenu={e => { e.preventDefault(); closeContextMenu(); }}><div style={{ position: 'fixed', top: `${contextMenu.y / getBodyZoom()}px`, left: `${contextMenu.x / getBodyZoom()}px` }} className="bg-slate-800 border border-slate-600 rounded-md shadow-lg py-2 w-48">{contextMenu.options.map(option => (<button key={option.label} onClick={() => { option.action(); closeContextMenu(); }} className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-violet-600">{option.label}</button>))}</div></div>}
 
-                        <button onClick={() => setIsSearchPanelOpen(true)} className={`fixed top-1/2 -translate-y-1/2 left-0 z-30 bg-violet-700/80 backdrop-blur-sm text-white p-2 rounded-r-lg shadow-lg transition-all duration-300 hover:bg-violet-600 ${isSearchPanelOpen ? 'opacity-0 -translate-x-full' : 'opacity-100 translate-x-0'}`} aria-label="Abrir Búsqueda" data-tooltip="Abrir Búsqueda"><i className="fas fa-search"></i></button>
-
-                        {isFlyoutButtonVisible && !isFlyoutPoolOpen && (
+                        {cardPool.length > 0 && !isFlyoutPoolOpen && (
                             <button onClick={() => setIsFlyoutPoolOpen(true)} className="fixed top-1/2 -translate-y-1/2 right-0 z-30 bg-amber-600/80 backdrop-blur-sm text-white p-2 rounded-l-lg shadow-lg transition-all duration-300 hover:bg-amber-500" aria-label={t('cardPoolTitle')} data-tooltip={t('cardPoolTitle')}>
                                 <i className="fas fa-layer-group"></i>
                             </button>
@@ -3939,6 +3937,10 @@
                         <aside className={`fixed top-0 right-0 w-full max-w-sm h-full bg-amber-900/90 backdrop-blur-sm p-4 border-l border-amber-700/50 z-40 transition-transform duration-300 flex flex-col ${isFlyoutPoolOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                             <header className="flex justify-between items-center mb-4">
                                 <h3 className="text-xl font-semibold text-amber-300">{t('cardPoolTitle')}</h3>
+                                <div className="flex gap-2 ml-auto mr-3">
+                                    <button onClick={() => setShowCustomCardModal(true)} className="btn px-2 py-1 text-xs bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">{t('createCustomCard')}</button>
+                                    <button onClick={handleAddToken} disabled={allTokens.length === 0 || isAddingToken} className="btn px-2 py-1 text-xs bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50">{t('addToken')}</button>
+                                </div>
                                 <button onClick={() => setIsFlyoutPoolOpen(false)} className="text-amber-200 hover:text-white" aria-label="Cerrar" data-tooltip="Cerrar"><i className="fas fa-times"></i></button>
                             </header>
                             <div className="flex-grow overflow-y-auto bg-black/20 p-2 rounded-lg">
@@ -4019,6 +4021,8 @@
                                                     <label className="step-menu-item"><i className="fas fa-globe w-5 text-center"></i><select value={language} onChange={(e) => chooseLanguage(e.target.value)} aria-label={t('languageTooltip')} className="flex-1 min-w-0 bg-[var(--color-surface-light)] text-[var(--color-text)] rounded p-1 text-sm">{LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select></label>
                                                     <button role="menuitem" className="step-menu-item hidden lg:flex" onClick={toggleInspector} aria-pressed={inspectorOn}><i className={`fas fa-id-card w-5 text-center ${inspectorOn ? 'text-amber-300' : ''}`}></i>{t('inspectorToggle')}{inspectorOn ? ' ✓' : ''}</button>
                                                     <button role="menuitem" className="step-menu-item hidden lg:flex" onClick={() => { setShowMoreMenu(false); setShowShortcuts(true); }}><i className="fas fa-keyboard w-5 text-center"></i>{t('shortcutsTitle')} (?)</button>
+                                                    <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setShowCustomCardModal(true); }}><i className="fas fa-pen-ruler w-5 text-center"></i>{t('createCustomCard')}</button>
+                                                    <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); handleAddToken(); }}><i className="fas fa-coins w-5 text-center"></i>{t('addToken')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setShowWelcome(true); }}><i className="fas fa-book-open w-5 text-center"></i>{t('guideMenu')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setTutorialState({ active: true, steps: tutorialSteps.main, key: 'main' }); }}><i className="fas fa-question-circle w-5 text-center"></i>{t('welcomeTutorial')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); loadExampleCombo(); }}><i className="fas fa-magic w-5 text-center"></i>{t('welcomeExample')}</button>
@@ -4079,37 +4083,6 @@
                                     </div>
                                 )}
                                 <div className="flex-grow space-y-6">
-                                    <section id="card-pool-section" ref={cardPoolSectionRef} className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30 card-pool">
-                                        <h3 onClick={() => setIsCardPoolOpen(!isCardPoolOpen)} className="text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors">
-                                            <span className="flex items-center gap-4">{t('cardPoolTitle')}
-                                                <button onClick={(e) => { e.stopPropagation(); setShowCustomCardModal(true); }} className="btn px-3 py-1 text-sm bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">{t('createCustomCard')}</button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleAddToken(); }} disabled={allTokens.length === 0 || isAddingToken} className="btn px-3 py-1 text-sm bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50 flex items-center gap-2">{isAddingToken && <Spinner />} {t('addToken')}</button>
-                                            </span>
-                                            <i className={`fas fa-chevron-down transition-transform duration-300 ${isCardPoolOpen ? '' : '-rotate-90'}`}></i>
-                                        </h3>
-                                        <div className={`collapse-box ${isCardPoolOpen ? 'is-open' : ''}`}>
-                                            <div className="p-4 pt-0">
-                                                <div className="p-4 bg-black/20 rounded-lg min-h-[9.5rem] relative">
-                                                    {cardPool.length > 0 ? (
-                                                        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] max-h-[34rem] overflow-y-auto pt-2 pr-2">
-                                                            {cardPool.map((card) => <CardDisplay key={card.instanceId} card={card} size="small" onClick={(c) => setSelectedCardForZoom(c)} onRemove={() => removeCardFromPool(card.instanceId)} onEdit={() => { setEditingCustomCard(card); setShowCustomCardModal(true); }} draggable={true} onDragStart={(e) => handleDragStart(e, 'pool-card', card)} onTouchStart={(e) => handleTouchStart(e, 'pool-card', card)} onDragEnd={handleDragEnd} onContextMenu={(c, e) => handleContextMenu(c, e, 'pool')} isHighlighted={highlightedCardIds.includes(card.instanceId)} isNew={card.instanceId === justAddedCardId} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />)}
-                                                        </div>
-                                                    ) : (
-                                                        <EmptyState icon="fa-layer-group" title={t('emptyPoolTitle')} message={t('emptyPoolMessage')} />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </section>
-                                    <section className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30">
-                                        <h3 onClick={() => setIsStatsOpen(!isStatsOpen)} className="text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors">
-                                            <span>{t('comboStatsTitle')}</span>
-                                            <i className={`fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`}></i>
-                                        </h3>
-                                        <div className={`collapse-box ${isStatsOpen ? 'is-open' : ''}`}>
-                                            <ComboStats stats={comboStats} t={t} />
-                                        </div>
-                                    </section>
                                     <section id="starting-hand-section" className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30 starting-hand">
                                         <h3 onClick={() => setIsStartingHandOpen(!isStartingHandOpen)} className="text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors">
                                             <span className="flex items-center">{t('startingHandTitle')} <span data-tooltip={t('helpStartingHand')}><i className="fas fa-question-circle ml-2"></i></span></span>
@@ -4364,6 +4337,15 @@
                                                     </div>
                                                 );
                                             })()}
+                                        </section>
+                                        <section className="bg-[var(--color-surface)]/30 rounded-lg border border-[var(--color-border)]/30">
+                                            <h3 onClick={() => setIsStatsOpen(!isStatsOpen)} className="text-xl font-semibold text-[var(--color-secondary)] p-4 flex justify-between items-center cursor-pointer hover:bg-[var(--color-surface)]/50 transition-colors">
+                                                <span>{t('comboStatsTitle')}</span>
+                                                <i className={`fas fa-chevron-down transition-transform duration-300 ${isStatsOpen ? '' : '-rotate-90'}`}></i>
+                                            </h3>
+                                            <div className={`collapse-box ${isStatsOpen ? 'is-open' : ''}`}>
+                                                <ComboStats stats={comboStats} t={t} />
+                                            </div>
                                         </section>
                                     </div>
                                 </div>
