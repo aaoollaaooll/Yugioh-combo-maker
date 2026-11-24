@@ -1839,6 +1839,333 @@
             );
         };
 
+        // ===================== Importar combo desde texto (Beta) =====================
+        // Dos formas de entrada:
+        //  1) Pegado desde Master Duel Meta: el portapapeles trae HTML con <img alt="Carta"> y los íconos (Search, Summon…).
+        //     Lo paso a texto con [[Carta]] y {Ícono}, una línea por paso, y eso sí se lee casi exacto.
+        //  2) Texto libre (Reddit, Discord, YouTube): adivino cartas por nombre y la acción por palabras clave. Ahí avisa más.
+        const IMPORT_ICONS = {
+            'graveyard': 'Send to GY', 'gy': 'Send to GY', 'send to gy': 'Send to GY', 'tribute': 'Send to GY', 'destroy': 'Send to GY',
+            'search': 'Search', 'deck': 'Search', 'summon': 'Special Summon', 'special summon': 'Special Summon', 'normal summon': 'Normal Summon',
+            'banish': 'Banish', 'banished': 'Banish', 'discard': 'Discard', 'set': 'Set', 'set s/t': 'Set', 'set monster': 'Set',
+            'attack': 'Attack', 'effect': '@activate', 'activate': '@activate', 'hand': '@hand', 'move': '@move', 'attach': '@move',
+            'chain': '@chain', 'draw': '@draw', 'generic any card': '@any', 'any card': '@any',
+        };
+        const importIcon = (name) => IMPORT_ICONS[String(name || '').trim().toLowerCase()];
+
+        // HTML pegado → texto con [[Carta]] y {Ícono}
+        const importHtmlToText = (html) => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            doc.querySelectorAll('script,style').forEach(n => n.remove());
+            doc.querySelectorAll('img').forEach(img => {
+                const alt = (img.getAttribute('alt') || img.getAttribute('title') || '').trim();
+                img.replaceWith(doc.createTextNode(alt ? (importIcon(alt) ? ` {${alt}} ` : ` [[${alt}]] `) : ' '));
+            });
+            doc.querySelectorAll('br').forEach(b => b.replaceWith(doc.createTextNode('\n')));
+            doc.querySelectorAll('p,li,div,h1,h2,h3,h4,tr').forEach(b => b.appendChild(doc.createTextNode(' ')));
+            let txt = (doc.body.textContent || '').replace(/ /g, ' ').replace(/[ \t]+/g, ' ');
+            if (/\[\[/.test(txt)) {
+                // un renglón por paso: «8.» o «1.1» empiezan línea; «Endboard» también
+                txt = txt.replace(/\s+(\d{1,2}\.(?:\d{1,2})?)(?=\s)/g, '\n$1').replace(/\s+(End ?board|Final board)\b/gi, '\n$1');
+            }
+            return txt.split('\n').map(l => l.trim()).filter(Boolean).join('\n');
+        };
+
+        // Nombres de cartas → datos de la API (exactos en tandas; si una tanda falla, de una en una)
+        const importLookupExact = async (names) => {
+            const out = {};
+            const list = [...new Set(names.map(n => n.trim()).filter(Boolean))];
+            const grab = (j) => (j && j.data || []).forEach(c => { out[c.name.toLowerCase()] = c; });
+            for (let i = 0; i < list.length; i += 15) {
+                const chunk = list.slice(i, i + 15);
+                try {
+                    const r = await fetch(`${YGOPRODECK_API_BASE_URL}?name=${chunk.map(encodeURIComponent).join('|')}`);
+                    if (r.ok) { grab(await r.json()); }
+                    if (!r.ok || chunk.some(n => !out[n.toLowerCase()])) {
+                        for (const n of chunk.filter(n => !out[n.toLowerCase()])) { try { const r2 = await fetch(`${YGOPRODECK_API_BASE_URL}?name=${encodeURIComponent(n)}`); if (r2.ok) grab(await r2.json()); } catch (e) {} }
+                    }
+                } catch (e) {}
+            }
+            return out;
+        };
+        // Para texto libre: «Byblisp» → «Predaplant Byblisp» si solo hay una carta que lo contenga
+        const importLookupFuzzy = async (cands) => {
+            const out = {};
+            for (const c of cands.slice(0, 40)) {
+                try {
+                    const r = await fetch(`${YGOPRODECK_API_BASE_URL}?fname=${encodeURIComponent(c)}`);
+                    if (!r.ok) continue;
+                    const data = ((await r.json()).data || []);
+                    const lc = c.toLowerCase();
+                    const exact = data.find(x => x.name.toLowerCase() === lc);
+                    const word = data.filter(x => new RegExp(`(^|[^a-z])${lc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`, 'i').test(x.name));
+                    if (exact) out[lc] = { card: exact };
+                    else if (word.length === 1) out[lc] = { card: word[0] };
+                    else if (word.length > 1) out[lc] = { ambiguous: word.slice(0, 4).map(x => x.name) };
+                } catch (e) {}
+            }
+            return out;
+        };
+
+        const IMPORT_STOP = new Set('the a an of and or to from in into on with for by if then when while it its this that your my their his her you we i is are be as at all any each both either one two three four five deck gy graveyard hand field zone zones extra main monster monsters spell trap card cards normal special summon summons summoned link xyz synchro fusion ritual pendulum set activate activates effect effects use uses search searches add adds send sends banish banishes discard discards draw draws detach attach tribute cost starter end endboard board chain cl step turn opponent opponents player emz mmz s/t st note notes optional otherwise instead also can may must once per target targets negate destroy destroys equip flip attack battle phase standby draw first second third last next level rank atk def'.split(' '));
+        const importEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Candidatos a nombre de carta en texto libre: rachas de palabras con mayúscula (con «the», «of»… en medio)
+        const importCandidates = (line) => {
+            const words = line.replace(/[«»"“”()]/g, ' ').split(/\s+/).filter(Boolean);
+            const runs = []; let cur = [];
+            const flush = () => { while (cur.length && /^(the|of|and|&|in|with|from|to)$/i.test(cur[cur.length - 1])) cur.pop(); if (cur.length) runs.push(cur.join(' ')); cur = []; };
+            words.forEach(w0 => {
+                const w = w0.replace(/['’]s$/i, '').replace(/[.,;:!?]+$/, '');
+                const bare = w.toLowerCase();
+                if (/^[A-Z0-9]/.test(w) && !IMPORT_STOP.has(bare)) { cur.push(w); if (/[.,;:!?]$/.test(w0) || /['’]s$/i.test(w0)) flush(); }
+                else if (cur.length && /^(the|of|&|in|with)$/i.test(w)) cur.push(w);
+                else flush();
+            });
+            flush();
+            return runs.filter(r => r.length >= 3);
+        };
+
+        // Palabras clave → acción (para texto libre). El orden importa: primero lo más específico.
+        const IMPORT_KEYWORDS = [
+            [/\blink summon|\blink (?:climb|into)\b/, 'Link Summon'], [/\bxyz summon|\boverlay\b|\brank[- ]?up\b/, 'Xyz Summon'],
+            [/\bsynchro summon|\bsynchro\b/, 'Synchro Summon'], [/\bfusion summon|\bfuse\b/, 'Fusion Summon'], [/\bpendulum summon/, 'Pendulum Summon'],
+            [/\bnormal summon|\bns\b/, 'Normal Summon'], [/\bspecial summon|\bss\b|\brevive|\bsummons?\b|\bsummoned\b/, 'Special Summon'],
+            [/\bsearch(es)?\b/, 'Search'], [/\badds?\b|\bto (?:the |your )?hand\b|\bsalvage/, 'Add to Hand'],
+            [/\bsend(s)?\b.*\b(gy|graveyard)\b|\bto (?:the )?(gy|graveyard)\b|\bmill(s)?\b|\btribut/, 'Send to GY'],
+            [/\bdiscard/, 'Discard'], [/\bbanish/, 'Banish'], [/\bset(s)?\b/, 'Set'], [/\battack/, 'Attack'],
+            [/\bactivat|\beffect\b|\buse(s)?\b|\btrigger/, '@activate'],
+        ];
+        const IMPORT_EXTRA_SUMMON = (card) => {
+            const ty = ((card && card.type) || '').toLowerCase();
+            if (/link/.test(ty)) return 'Link Summon'; if (/xyz/.test(ty)) return 'Xyz Summon';
+            if (/synchro/.test(ty)) return 'Synchro Summon'; if (/fusion/.test(ty)) return 'Fusion Summon';
+            return 'Special Summon';
+        };
+        const importIsSpellTrap = (card) => /spell|trap/i.test((card && card.type) || '');
+
+        // Lee el texto y arma los pasos. Devuelve { items, warnings, endboard }:
+        //  items: [{ kind:'group', title } | { kind:'step', action, main, targets, desc, chainRole, warn:[], branch? }]
+        //  main/targets son nombres de carta (o '@any' para «cualquier carta")
+        const importParse = async (text) => {
+            const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
+            const warnings = [];
+            const structured = lines.some(l => /\[\[[^\]]+\]\]/.test(l));
+            // 1) buscar cartas
+            const explicit = []; lines.forEach(l => { (l.match(/\[\[([^\]]+)\]\]/g) || []).forEach(m => { const n = m.slice(2, -2).trim(); if (!importIcon(n)) explicit.push(n); }); });
+            const found = await importLookupExact(explicit);
+            let fuzzy = {};
+            const plainLines = lines.filter(l => !/\[\[/.test(l));
+            if (plainLines.length) {
+                const cands = [...new Set(plainLines.flatMap(importCandidates))].filter(c => !found[c.toLowerCase()]);
+                fuzzy = await importLookupFuzzy(cands);
+                Object.values(fuzzy).forEach(v => { if (v.card) found[v.card.name.toLowerCase()] = v.card; });
+                if (cands.length > 40) warnings.push({ key: 'importWarnTooManyNames' });
+            }
+            const cardOf = (name) => name === '@any' ? { name: '@any' } : found[String(name).toLowerCase()];
+
+            const items = [];
+            let endboard = null, alt = null, altTitle = '';
+            const seen = {}; // número de paso → índice del primer paso que generó
+            const pushStep = (target, st) => { (target || items).push(st); return st; };
+
+            lines.forEach(raw => {
+                let line = raw;
+                if (/^(end ?board|final board)\b/i.test(line)) { endboard = []; line = line.replace(/^(end ?board|final board)\s*:?\s*/i, ''); if (!line) return; }
+                if (endboard) { endboard.push(line.replace(/\[\[([^\]]+)\]\]/g, '$1').replace(/\{[^}]+\}/g, '').trim()); return; }
+                const numM = line.match(/^(?:step\s*)?(\d{1,2})(?:\.(\d{1,2}))?[.):]?\s+/i);
+                const key = numM ? numM[1] + (numM[2] ? '.' + numM[2] : '') : null;
+                if (numM) line = line.slice(numM[0].length);
+                // número repetido (p. ej. 1.1 otra vez): es otra línea alternativa → va como rama
+                if (key && seen[key] !== undefined && !alt) { alt = { at: seen[key], steps: [] }; }
+                else if (key && seen[key] === undefined && alt) { closeAlt(); }
+                const target = alt ? alt.steps : null;
+                const before = (target || items).length;
+
+                const tokens = [];
+                const re = /\[\[([^\]]+)\]\]|\{([^}]+)\}|(\+|=)|([^[\]{}+=]+)/g; let m;
+                while ((m = re.exec(line))) {
+                    if (m[1]) { const n = m[1].trim(); const ic = importIcon(n); tokens.push(ic ? { t: 'icon', v: ic, raw: n } : { t: 'card', v: n }); }
+                    else if (m[2]) { const ic = importIcon(m[2]); tokens.push(ic ? { t: 'icon', v: ic, raw: m[2] } : { t: 'icon', v: '@unknown', raw: m[2] }); }
+                    else if (m[3]) tokens.push({ t: 'op', v: m[3] });
+                    else if (m[4] && m[4].trim()) tokens.push({ t: 'text', v: m[4].trim() });
+                }
+                const hasCards = tokens.some(x => x.t === 'card');
+                if (structured && !hasCards && !tokens.some(x => x.t === 'icon')) {
+                    // renglón solo con texto: título de sección
+                    const title = tokens.map(x => x.v).join(' ').trim();
+                    if (title) { if (alt) altTitle = altTitle || title; else items.push({ kind: 'group', title }); }
+                    return;
+                }
+                if (hasCards || tokens.some(x => x.t === 'icon')) parseStructured(tokens, target);
+                else parseFree(raw.replace(/^(?:step\s*)?\d{1,2}(?:\.\d{1,2})?[.):]?\s+/i, ''), target);
+                if (key && seen[key] === undefined && (target || items).length > before) seen[key] = alt ? -1 : before;
+            });
+            closeAlt();
+
+            function closeAlt() {
+                if (!alt) return;
+                const host = items[alt.at];
+                if (host && host.kind === 'step' && alt.steps.length) {
+                    host.branch = { title: altTitle, steps: alt.steps };
+                    host.warn.push({ key: 'importWarnAltLine' });
+                }
+                alt = null; altTitle = '';
+            }
+
+            // Formato con [[Carta]] {Ícono}: «Actor {Effect} Carta {Search}», «A + B = C texto»
+            function parseStructured(tokens, target) {
+                const newStep = (action, main, targets = [], extra = {}) => pushStep(target, { kind: 'step', action, main, targets, desc: '', chainRole: undefined, warn: [], ...extra });
+                const lineSteps = [];
+                const add = (st) => { if (lineSteps.length && st.chainRole === undefined) st.chainRole = 'resolve'; lineSteps.push(st); return st; };
+                const appendDesc = (txt) => { const last = lineSteps[lineSteps.length - 1]; if (last) last.desc = (last.desc ? last.desc + ' ' : '') + txt; else pending.push(txt); };
+                const pending = [];
+                const eq = tokens.findIndex(x => x.t === 'op' && x.v === '=');
+                let start = 0;
+                if (eq !== -1) {
+                    const mats = tokens.slice(0, eq).filter(x => x.t === 'card').map(x => x.v);
+                    const resIdx = tokens.findIndex((x, i) => i > eq && x.t === 'card');
+                    if (resIdx === -1) { const st = add(newStep('Other', mats[0] || null, mats.slice(1))); st.warn.push({ key: 'importWarnOdd' }); return; }
+                    const res = tokens[resIdx].v;
+                    add(newStep(IMPORT_EXTRA_SUMMON(cardOf(res)), res, mats));
+                    start = resIdx + 1;
+                }
+                let actor = null, chainNext = null;
+                for (let i = start; i < tokens.length; i++) {
+                    const tk = tokens[i];
+                    if (tk.t === 'text') {
+                        if (/^\d+$/.test(tk.v) && chainNext === 'wait') { chainNext = Number(tk.v); const last = lineSteps[lineSteps.length - 1]; if (last) last.chainRole = chainNext > 1 ? 'link' : (lineSteps.length > 1 ? 'resolve' : undefined); continue; }
+                        appendDesc(tk.v); continue;
+                    }
+                    if (tk.t === 'op') continue;
+                    if (tk.t === 'icon') { if (tk.v === '@unknown') { const st = lineSteps[lineSteps.length - 1]; (st ? st.warn : warnings).push({ key: 'importWarnIcon', p: { x: tk.raw } }); } continue; }
+                    // carta: miro qué íconos la siguen
+                    const card = tk.v; const icons = [];
+                    let j = i + 1; while (j < tokens.length && tokens[j].t === 'icon') { icons.push(tokens[j]); j++; }
+                    const nextCard = tokens[j] && tokens[j].t === 'card' ? tokens[j].v : null;
+                    if (!icons.length) {
+                        // carta sin ícono = la que se activa; si justo antes ya hubo otra sin ícono, esta es parte de esa activación
+                        const prev = tokens[i - 1];
+                        const last = lineSteps[lineSteps.length - 1];
+                        if (prev && prev.t === 'card' && last && /^Activate/.test(last.action)) { last.targets.push(card); i = j - 1; continue; }
+                        const info = cardOf(card);
+                        add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card));
+                        actor = card; i = j - 1; continue;
+                    }
+                    icons.forEach(ic => {
+                        const v = ic.v;
+                        if (v === '@activate') { const info = cardOf(card); add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card)); actor = card; }
+                        else if (v === '@chain') { const info = cardOf(card); add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card)); actor = card; chainNext = 'wait'; }
+                        else if (v === '@hand') { if (nextCard && nextCard.toLowerCase() === card.toLowerCase()) actor = card; else add(newStep('Add to Hand', actor || card, actor ? [card] : [])); }
+                        else if (v === '@draw') add(newStep('Other', actor || card, [], { custom: 'Draw' }));
+                        else if (v === '@move') add(newStep('Other', card, [], { custom: 'Attach' }));
+                        else if (v === '@any') { /* nada */ }
+                        else if (v === 'Search') add(newStep('Search', actor || card, actor ? [card] : []));
+                        else add(newStep(v, card));
+                    });
+                    i = j - 1;
+                }
+                if (pending.length && lineSteps[0]) lineSteps[0].desc = pending.join(' ') + (lineSteps[0].desc ? ' ' + lineSteps[0].desc : '');
+                if (!lineSteps.length) { const st = newStep('Other', null); st.desc = pending.join(' '); st.warn.push({ key: 'importWarnNoCard' }); }
+                lineSteps.forEach(st => { [st.main, ...st.targets].forEach(n => { if (n && n !== '@any' && !cardOf(n)) st.warn.push({ key: 'importWarnNotFound', p: { x: n } }); }); });
+            }
+
+            // Texto libre: una línea = un paso
+            function parseFree(line, target) {
+                const st = { kind: 'step', action: 'Other', main: null, targets: [], desc: line, chainRole: undefined, warn: [] };
+                // cartas en orden de aparición
+                const hits = [];
+                const names = Object.keys(found).sort((a, b) => b.length - a.length);
+                let rest = ' ' + line + ' ';
+                names.forEach(n => { const re = new RegExp(`(^|[^a-z0-9])(${importEsc(n)})(?=[^a-z0-9]|$)`, 'ig'); let m; while ((m = re.exec(rest))) { hits.push({ at: m.index + m[1].length, name: found[n].name }); rest = rest.slice(0, m.index + m[1].length) + ' '.repeat(m[2].length) + rest.slice(m.index + m[1].length + m[2].length); } });
+                importCandidates(line).forEach(c => { const f = fuzzy[c.toLowerCase()]; if (!f) return; const i = rest.toLowerCase().indexOf(c.toLowerCase()); if (i === -1) return; const ctx = f.ambiguous && f.ambiguous.find(x => found[x.toLowerCase()]); // si en otra línea ya salió el nombre completo, es esa
+                    if (f.card || ctx) hits.push({ at: i, name: f.card ? f.card.name : ctx }); else st.warn.push({ key: 'importWarnAmbiguous', p: { x: c, y: f.ambiguous.join(', ') } }); rest = rest.slice(0, i) + ' '.repeat(c.length) + rest.slice(i + c.length); });
+                hits.sort((a, b) => a.at - b.at);
+                const cards = hits.map(h => h.name);
+                let low = rest.toLowerCase();
+                // cada palabra clave se «gasta» al encontrarla (así «Normal Summon» no cuenta también como «Summon»)
+                const acts = []; IMPORT_KEYWORDS.forEach(([re, a]) => { const m = low.match(re); if (m && !acts.find(x => x.a === a)) { acts.push({ a, at: m.index }); low = low.slice(0, m.index) + ' '.repeat(m[0].length) + low.slice(m.index + m[0].length); } });
+                low = rest.toLowerCase();
+                const real = acts.filter(x => x.a !== '@activate').sort((a, b) => a.at - b.at);
+                const pos = (name) => (hits.find(h => h.name === name) || {}).at;
+                if (real.length) {
+                    const a = real[0];
+                    st.action = a.a;
+                    if (/Summon$/.test(a.a)) { const after = hits.find(h => h.at > a.at); st.main = after ? after.name : (st.warn.some(w => w.key === 'importWarnAmbiguous') ? null : cards[cards.length - 1] || null); /* si el invocado es dudoso, mejor vacío que equivocado */ st.targets = /^(Link|Xyz|Synchro|Fusion) Summon$/.test(a.a) ? cards.filter(c => c !== st.main) : []; }
+                    else { const actorHit = hits.find(h => h.at < a.at); st.main = actorHit ? actorHit.name : (cards[0] || null); st.targets = cards.filter(c => c !== st.main && pos(c) > a.at); if (!actorHit && cards.length > 1) st.targets = cards.slice(1); }
+                    if (a.a === 'Add to Hand' && /\b(from )?(the )?deck\b/.test(low) && !/\b(gy|graveyard|banish)/.test(low)) st.action = 'Search';
+                    if (real.length > 1 && new Set(real.map(x => x.a)).size > 1) st.warn.push({ key: 'importWarnManyActions', p: { x: real.map(x => trTerm(x.a)).join(' + ') } });
+                } else if (acts.length && cards.length) { st.main = cards[0]; st.action = importIsSpellTrap(cardOf(cards[0])) ? 'Activate Spell/Trap' : 'Activate Effect'; st.targets = cards.slice(1); }
+                else { st.main = cards[0] || null; st.targets = cards.slice(1); if (cards.length) st.warn.push({ key: 'importWarnNoAction' }); }
+                if (!cards.length) st.warn.push({ key: 'importWarnNoCard' });
+                if (line.length > 170 || /\b(if|unless|otherwise|either|instead|depending|in case|optional(ly)?)\b/i.test(line)) st.warn.push({ key: 'importWarnComplex' });
+                importCandidates(line).forEach(c => { if (!fuzzy[c.toLowerCase()] && !found[c.toLowerCase()] && !cards.some(x => x.toLowerCase().includes(c.toLowerCase()))) st.warn.push({ key: 'importWarnUnknownName', p: { x: c } }); });
+                pushStep(target, st);
+            }
+
+            return { items, warnings, endboard: endboard && endboard.length ? endboard : null, found, structured };
+        };
+
+        const ImportTextModal = ({ show, onClose, onApply, t }) => {
+            const [text, setText] = useState('');
+            const [busy, setBusy] = useState(false);
+            const [res, setRes] = useState(null);
+            if (!show) return null;
+            const onPaste = (e) => {
+                const html = e.clipboardData && e.clipboardData.getData('text/html');
+                if (html && /<img/i.test(html)) { e.preventDefault(); const txt = importHtmlToText(html); setText(prev => (prev ? prev + '\n' : '') + txt); setRes(null); }
+            };
+            const analyze = async () => { setBusy(true); try { setRes(await importParse(text)); } catch (e) { console.error(e); setRes({ error: true }); } setBusy(false); };
+            const steps = res && res.items ? res.items.filter(x => x.kind === 'step') : [];
+            const flagged = steps.filter(s => s.warn.length).length;
+            const nameOf = (n) => n === '@any' ? t('anyCard') : n;
+            const W = ({ w }) => <li>{t(w.key, w.p || {})}</li>;
+            const act = (s) => { const a = YGO_ACTIONS.find(x => x.name === s.action) || {}; return `${a.emoji || ''} ${s.custom || trTerm(s.action)}`; };
+            let n = 0;
+            return (
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-3" onClick={onClose}>
+                    <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 px-5 pt-4 pb-2">
+                            <h3 className="text-lg font-bold text-violet-300 flex-1">{t('importText')} <span className="ml-1.5 px-1.5 py-0.5 rounded bg-slate-950 text-amber-300 text-[10px] font-bold uppercase tracking-wide align-middle">Beta</span></h3>
+                            <button onClick={onClose} aria-label={t('closeLabel')} className="w-10 h-10 rounded-full bg-black/30 text-gray-300 hover:text-white text-2xl">×</button>
+                        </div>
+                        <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-3 space-y-3">
+                            <div className="rounded-lg border border-amber-500/50 bg-amber-900/20 p-3 text-xs text-amber-100">
+                                <p className="font-bold mb-1"><i className="fas fa-flask mr-1"></i>{t('importBetaTitle')}</p>
+                                <ul className="list-disc pl-5 space-y-0.5">
+                                    <li>{t('importLimitEnglish')}</li><li>{t('importLimitReview')}</li><li>{t('importLimitChains')}</li><li>{t('importLimitZones')}</li><li>{t('importLimitCredit')}</li>
+                                </ul>
+                            </div>
+                            <p className="text-sm text-slate-300">{t('importTextHelp')}</p>
+                            <textarea value={text} onChange={e => { setText(e.target.value); setRes(null); }} onPaste={onPaste} rows="7" placeholder={t('importTextPlaceholder')} className="w-full p-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white font-mono" />
+                            {res && res.error && <p className="text-sm text-red-300">{t('importError')}</p>}
+                            {res && !res.error && (
+                                <div className="space-y-2">
+                                    <p className="text-sm font-semibold text-slate-200">{t('importPreview', { n: steps.length })}{flagged > 0 && <span className="text-amber-300"> · {t('importFlagged', { n: flagged })}</span>}</p>
+                                    {res.warnings.length > 0 && <ul className="text-xs text-amber-300 list-disc pl-5">{res.warnings.map((w, i) => <W key={i} w={w} />)}</ul>}
+                                    <ol className="space-y-1.5">
+                                        {res.items.map((it, i) => it.kind === 'group'
+                                            ? <li key={i} className="text-amber-400 font-bold text-xs uppercase pt-2">{it.title}</li>
+                                            : <li key={i} className={`rounded-md p-2 text-sm border ${it.warn.length ? 'border-amber-500/70 bg-amber-900/15' : 'border-slate-700 bg-slate-800/50'}`}>
+                                                <div><span className="font-bold text-slate-400 mr-1">{++n}.</span>{it.chainRole === 'resolve' && <span className="text-sky-300 mr-1">↳</span>}{it.chainRole === 'link' && <span className="text-sky-300 mr-1">⛓</span>}<span className="text-yellow-300 font-semibold">{act(it)}</span> <span className="font-semibold text-white">{it.main ? nameOf(it.main) : '—'}</span>{it.targets.length > 0 && <span className="text-slate-300"> → {it.targets.map(nameOf).join(', ')}</span>}</div>
+                                                {it.desc && <div className="text-xs text-slate-400 mt-0.5">{it.desc}</div>}
+                                                {it.branch && <div className="text-xs text-red-300 mt-0.5">↳ {t('branchLabel')}: {it.branch.steps.length}</div>}
+                                                {it.warn.length > 0 && <ul className="text-xs text-amber-300 list-disc pl-5 mt-1">{it.warn.map((w, k) => <W key={k} w={w} />)}</ul>}
+                                            </li>)}
+                                    </ol>
+                                    {res.endboard && <p className="text-xs text-slate-400"><b>{t('importEndboard')}:</b> {res.endboard.join(' · ')}</p>}
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-slate-700">
+                            <button onClick={onClose} className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-700">{t('cancel')}</button>
+                            <button onClick={analyze} disabled={busy || !text.trim()} className="px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50">{busy ? '…' : <><i className="fas fa-search mr-2"></i>{t('importAnalyze')}</>}</button>
+                            {res && !res.error && steps.length > 0 && <button onClick={() => { onApply(res); onClose(); setText(''); setRes(null); }} className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"><i className="fas fa-plus mr-2"></i>{t('importApply', { n: steps.length })}</button>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const TokenPickerModal = ({ show, tokens, onPick, onClose, t }) => {
             const [q, setQ] = useState('');
             if (!show) return null;
@@ -2710,6 +3037,7 @@
             }, [movePicker]);
             const [showShortcuts, setShowShortcuts] = useState(false);
             const [showImportDeck, setShowImportDeck] = useState(false);
+            const [showImportText, setShowImportText] = useState(false);
             const [inspectorOn, setInspectorOn] = useState(() => { try { return localStorage.getItem('ygo_inspector') === '1'; } catch (e) { return false; } });
             const [inspectCard, setInspectCard] = useState(null);
             const toggleInspector = () => setInspectorOn(v => { const nv = !v; try { localStorage.setItem('ygo_inspector', nv ? '1' : '0'); } catch (e) {} return nv; });
@@ -3782,6 +4110,31 @@
                 if (newCards.length) setComboState({ ...comboState, cardPool: [...cardPool, ...newCards] }, 'Imported deck');
                 return newCards.length;
             };
+            // Importar texto: convierto lo leído en pasos de verdad y agrego al pool las cartas que falten
+            const applyImport = (res) => {
+                const pool = [...cardPool];
+                const byName = (name) => pool.find(c => !c.isCustom && (c.name || '').toLowerCase() === String(name).toLowerCase());
+                let added = 0;
+                const idOf = (name) => {
+                    if (!name) return null;
+                    if (name === '@any') { let w = pool.find(c => c.isWildcard); if (!w) { w = makeWildcardCard(t('anyCard')); pool.push(w); } return w.instanceId; }
+                    let c = byName(name);
+                    if (!c) { const api = res.found[String(name).toLowerCase()]; if (!api) return null; c = createComboCardInstance(api, IMAGE_PROXY); pool.push(c); added++; }
+                    return c.instanceId;
+                };
+                const conv = (it) => it.kind === 'group' ? { type: 'group', id: generateId(), title: it.title } : {
+                    type: 'step', id: generateId(), mainCardInstanceId: idOf(it.main), actionType: it.action, customActionText: it.custom || '',
+                    actionDescription: it.desc || '', targetCards: it.targets.map(idOf).filter(Boolean).map(instanceId => ({ instanceId, quantity: 1 })),
+                    vulnerability: { text: '', cards: [] }, isLocked: false, location: null,
+                    ...(it.chainRole ? { chainRole: it.chainRole } : {}),
+                    ...(it.branch ? { branch: { title: it.branch.title || t('importAltLine'), steps: it.branch.steps.map(conv) } } : {}),
+                };
+                const newSteps = res.items.map(conv);
+                let newNotes = notes || '';
+                if (res.endboard) newNotes += (newNotes ? '<br><br>' : '') + `<b>${t('importEndboard')}:</b> ` + res.endboard.map(x => x.replace(/[<>&]/g, '')).join(' · ');
+                setComboState({ ...comboState, cardPool: pool, comboSteps: [...comboSteps, ...newSteps], notes: newNotes }, 'Imported text');
+                setNotification({ show: true, message: t('importDone', { n: newSteps.filter(x => x.type === 'step').length, c: added }) });
+            };
             const handleCopyText = async () => {
                 const text = buildComboText();
                 try { await navigator.clipboard.writeText(text); }
@@ -3969,6 +4322,7 @@
                             <button type="button" onClick={() => setIsPlayOpen(true)} className="text-amber-400"><i className="fas fa-play"></i><span>{t('navTest')} β</span></button>
                         </nav>
                         <ImportDeckModal show={showImportDeck} onClose={() => setShowImportDeck(false)} onImport={importDeckIds} t={t} />
+                        <ImportTextModal show={showImportText} onClose={() => setShowImportText(false)} onApply={applyImport} t={t} />
                         {showShortcuts && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowShortcuts(false)}>
                                 <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-5 w-full max-w-sm text-sm text-slate-200" onClick={e => e.stopPropagation()}>
@@ -4126,6 +4480,7 @@
                                                     <a role="menuitem" className="step-menu-item" href="community.html"><i className="fas fa-users w-5 text-center text-blue-400"></i>{t('publicCombosTitle')}</a>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); handleCopyText(); }}><i className="fas fa-copy w-5 text-center"></i>{t('copyText')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setShowImportDeck(true); }}><i className="fas fa-file-import w-5 text-center"></i>{t('importDeck')}</button>
+                                                    <button role="menuitem" className="step-menu-item" onClick={() => { setShowMoreMenu(false); setShowImportText(true); }}><i className="fas fa-paste w-5 text-center"></i>{t('importText')} <span className="ml-1 text-[10px] font-bold text-amber-300">BETA</span></button>
                                                     <div className="border-t border-[var(--color-border)] my-1"></div>
                                                     <button role="menuitem" className="step-menu-item" onClick={toggleTheme}><i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'} w-5 text-center`}></i>{t('themeTooltip')}</button>
                                                     <button role="menuitem" className="step-menu-item" onClick={toggleBgAnimation} aria-pressed={bgAnimated}><i className={`fas fa-star w-5 text-center ${bgAnimated ? 'text-amber-300' : 'opacity-50'}`}></i>{t('bgAnimation')}</button>
