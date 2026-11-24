@@ -4790,7 +4790,18 @@ const PlayComboBoard = ({
     const box = listRef.current;
     const row = box && box.querySelector('[data-active="true"]');
     if (!row || box.scrollHeight <= box.clientHeight) return;
-    if (row.offsetTop < box.scrollTop) box.scrollTop = row.offsetTop - 8;else if (row.offsetTop + row.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = row.offsetTop + row.offsetHeight - box.clientHeight + 8;
+    const top = row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2;
+    const want = Math.max(0, Math.min(top, box.scrollHeight - box.clientHeight));
+    try {
+      box.scrollTo({
+        top: want,
+        behavior: 'smooth'
+      });
+    } catch (e) {}
+    const tm = setTimeout(() => {
+      if (Math.abs(box.scrollTop - want) > 4) box.scrollTop = want;
+    }, 450);
+    return () => clearTimeout(tm);
   }, [p]);
   const hl = new Set(board.last && board.last.uids || []);
   const mainUid = board.last && board.last.mainUid;
@@ -4929,10 +4940,10 @@ const PlayComboBoard = ({
   }, React.createElement("i", {
     className: "fas fa-times"
   }))), React.createElement("div", {
-    className: "flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden"
+    className: "flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden"
   }, React.createElement("section", {
     "data-gif-capture": "1",
-    className: "flex-none lg:flex-1 lg:min-h-0 lg:overflow-y-auto p-3 flex flex-col items-center gap-3"
+    className: "flex-1 min-h-0 overflow-y-auto p-3 flex flex-col items-center gap-3"
   }, practice ? React.createElement("div", {
     className: "w-full max-w-[42rem] rounded-lg p-3 bg-[var(--color-surface)] border-2 border-amber-500/60"
   }, quizStep ? React.createElement(React.Fragment, null, React.createElement("div", {
@@ -5111,12 +5122,12 @@ const PlayComboBoard = ({
   }, cardButton(c))) : React.createElement("span", {
     className: "text-sm text-[var(--color-text-muted)] self-center"
   }, t('playEmpty'))))), React.createElement("aside", {
-    className: "flex-none lg:w-80 lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-[var(--color-border)] bg-[var(--color-surface)]"
+    className: "flex-none h-[30vh] min-h-[9rem] lg:h-auto lg:w-80 lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-[var(--color-border)] bg-[var(--color-surface)]"
   }, React.createElement("h3", {
-    className: "px-3 pt-3 pb-1 font-semibold text-[var(--color-secondary)]"
+    className: "hidden lg:block px-3 pt-3 pb-1 font-semibold text-[var(--color-secondary)]"
   }, t('playMoves')), React.createElement("div", {
     ref: listRef,
-    className: "relative px-2 pb-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto"
+    className: "play-lyrics relative px-2 py-2 lg:pt-0 pb-3 flex-1 min-h-0 overflow-y-auto"
   }, React.createElement("button", {
     type: "button",
     "data-active": p === 0,
@@ -6667,6 +6678,50 @@ const App = () => {
       }
     }
     setDraggedItem(null);
+  };
+  const touchDragRef = useRef(null);
+  const touchDragStart = (e, step) => {
+    if (step.isLocked) return;
+    const box = e.currentTarget.closest('[data-step-box]');
+    touchDragRef.current = {
+      step,
+      box,
+      target: null
+    };
+    if (box) box.classList.add('touch-dragging');
+  };
+  const touchDragMove = e => {
+    const d = touchDragRef.current;
+    if (!d) return;
+    const tch = e.touches[0];
+    const el = document.elementFromPoint(tch.clientX, tch.clientY);
+    const over = el && el.closest('[data-step-box]');
+    if (d.target && d.target !== over) d.target.classList.remove('touch-drop-target');
+    d.target = over && over !== d.box ? over : null;
+    if (d.target) d.target.classList.add('touch-drop-target');
+    if (tch.clientY < 90) window.scrollBy(0, -14);else if (tch.clientY > window.innerHeight - 120) window.scrollBy(0, 14);
+  };
+  const touchDragEnd = () => {
+    const d = touchDragRef.current;
+    touchDragRef.current = null;
+    if (!d) return;
+    if (d.box) d.box.classList.remove('touch-dragging');
+    if (d.target) {
+      d.target.classList.remove('touch-drop-target');
+      const tid = d.target.getAttribute('data-step-id');
+      const list = [...comboSteps];
+      const from = list.findIndex(x => x.id === d.step.id),
+        to0 = list.findIndex(x => x.id === tid);
+      if (from !== -1 && to0 !== -1 && from !== to0) {
+        const [moved] = list.splice(from, 1);
+        const to = list.findIndex(x => x.id === tid);
+        list.splice(from < to0 ? to + 1 : to, 0, moved);
+        setComboState({
+          ...comboState,
+          comboSteps: list
+        }, 'Reordered combo steps');
+      }
+    }
   };
   const handleReorder = (type, draggedItem, targetItem) => {
     if (type === 'hand') {
@@ -8826,7 +8881,7 @@ const App = () => {
       onDragLeave: e => {
         e.stopPropagation();
       },
-      className: `combo-step-card w-full bg-[var(--color-surface)]/50 rounded-lg p-3 flex flex-col gap-2 relative border ${isVulnerable ? 'step-vulnerable border-red-500/50' : 'border-transparent'} ${step.isLocked ? 'opacity-70' : ''}`,
+      className: `combo-step-card w-full bg-[var(--color-surface)]/50 rounded-lg p-3 flex flex-col gap-2 relative ${openStepMenuId === step.id ? 'z-30' : ''} border ${isVulnerable ? 'step-vulnerable border-red-500/50' : 'border-transparent'} ${step.isLocked ? 'opacity-70' : ''}`,
       onMouseEnter: () => setHighlightedCardIds([step.mainCardInstanceId, ...step.targetCards.map(c => c.instanceId)]),
       onMouseLeave: () => setHighlightedCardIds([])
     }, React.createElement("div", {
@@ -8844,7 +8899,7 @@ const App = () => {
     }, React.createElement("i", {
       className: "fas fa-exclamation-triangle"
     })), React.createElement("div", {
-      className: "cursor-move text-slate-400 step-icon-btn step-grip",
+      className: "cursor-move text-slate-400 step-icon-btn step-grip step-grip-touch",
       draggable: !step.isLocked,
       onDragStart: e => {
         e.stopPropagation();
@@ -8852,7 +8907,11 @@ const App = () => {
         if (box && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(box, 24, 24);
         handleDragStart(e, 'step', step);
       },
-      onDragEnd: handleDragEnd
+      onDragEnd: handleDragEnd,
+      onTouchStart: e => touchDragStart(e, step),
+      onTouchMove: touchDragMove,
+      onTouchEnd: touchDragEnd,
+      onTouchCancel: touchDragEnd
     }, React.createElement("i", {
       className: "fas fa-grip-vertical"
     })), React.createElement("div", {

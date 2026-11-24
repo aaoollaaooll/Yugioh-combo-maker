@@ -457,11 +457,16 @@
         .step-menu-item:hover:not(:disabled) { background: var(--color-primary); color: #fff; }
         .step-menu-item:disabled { opacity: .4; cursor: not-allowed; }
         .step-menu-item.danger { color: #f87171; }
+        .touch-dragging { opacity: .55; }
+        .touch-drop-target { outline: 3px dashed var(--color-accent); outline-offset: 3px; }
+        /* Probar combo: lo que ya pasó se ve más apagado, como letra sincronizada */
+        @media (max-width: 1023px) { .play-lyrics > button[data-active="false"] { opacity: .55; } }
         .step-menu-item.danger:hover:not(:disabled) { background: #dc2626; color: #fff; }
         .combo-step-card .step-label { min-height: 2rem; display: flex; align-items: center; }
         @media (pointer: coarse) {
             .step-icon-btn { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
-            .step-grip { display: none !important; }
+            .step-grip:not(.step-grip-touch) { display: none !important; }
+            .step-grip-touch { touch-action: none; }
             .combo-step-card .step-label { min-height: 2.75rem; }
             .step-menu-item { padding: .8rem 1rem; font-size: 1rem; }
             .touch-hit { position: relative; }

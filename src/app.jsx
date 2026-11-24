@@ -2363,13 +2363,16 @@
                 return () => { document.body.style.overflow = prev; };
             }, []);
 
-            // Que la jugada actual siempre se vea en la lista (solo en pantalla grande, donde tiene su barra)
+            // Lista como letra de karaoke: la jugada actual siempre queda en medio de su cuadro
             useEffect(() => {
                 const box = listRef.current;
                 const row = box && box.querySelector('[data-active="true"]');
                 if (!row || box.scrollHeight <= box.clientHeight) return;
-                if (row.offsetTop < box.scrollTop) box.scrollTop = row.offsetTop - 8;
-                else if (row.offsetTop + row.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = row.offsetTop + row.offsetHeight - box.clientHeight + 8;
+                const top = row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2;
+                const want = Math.max(0, Math.min(top, box.scrollHeight - box.clientHeight));
+                try { box.scrollTo({ top: want, behavior: 'smooth' }); } catch (e) {}
+                const tm = setTimeout(() => { if (Math.abs(box.scrollTop - want) > 4) box.scrollTop = want; }, 450); // por si el navegador no anima
+                return () => clearTimeout(tm);
             }, [p]);
 
             const hl = new Set((board.last && board.last.uids) || []);
@@ -2439,8 +2442,8 @@
                         <button type="button" onClick={onClose} title={t('playClose')} aria-label={t('playClose')} className="w-11 h-11 rounded-full flex items-center justify-center text-xl bg-[var(--color-surface-light)] hover:bg-red-600 hover:text-white"><i className="fas fa-times"></i></button>
                     </header>
 
-                    <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
-                        <section data-gif-capture="1" className="flex-none lg:flex-1 lg:min-h-0 lg:overflow-y-auto p-3 flex flex-col items-center gap-3">
+                    <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+                        <section data-gif-capture="1" className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col items-center gap-3">
                             {practice ? (
                             <div className="w-full max-w-[42rem] rounded-lg p-3 bg-[var(--color-surface)] border-2 border-amber-500/60">
                                 {quizStep ? (
@@ -2543,9 +2546,9 @@
                             </div>
                         </section>
 
-                        <aside className="flex-none lg:w-80 lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-[var(--color-border)] bg-[var(--color-surface)]">
-                            <h3 className="px-3 pt-3 pb-1 font-semibold text-[var(--color-secondary)]">{t('playMoves')}</h3>
-                            <div ref={listRef} className="relative px-2 pb-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+                        <aside className="flex-none h-[30vh] min-h-[9rem] lg:h-auto lg:w-80 lg:min-h-0 flex flex-col border-t lg:border-t-0 lg:border-l border-[var(--color-border)] bg-[var(--color-surface)]">
+                            <h3 className="hidden lg:block px-3 pt-3 pb-1 font-semibold text-[var(--color-secondary)]">{t('playMoves')}</h3>
+                            <div ref={listRef} className="play-lyrics relative px-2 py-2 lg:pt-0 pb-3 flex-1 min-h-0 overflow-y-auto">
                                 <button type="button" data-active={p === 0} onClick={() => { if (!practice) manualGo(0); }} className={rowClass(p === 0)}>
                                     <span className="w-7 shrink-0 text-right font-bold opacity-70">0.</span><span>{t('startingHandTitle')}</span>
                                 </button>
@@ -3422,6 +3425,40 @@
                 setDraggedItem(null);
             };
 
+            // Arrastrar pasos con el dedo (en celular el arrastre normal del navegador no funciona)
+            const touchDragRef = useRef(null);
+            const touchDragStart = (e, step) => {
+                if (step.isLocked) return;
+                const box = e.currentTarget.closest('[data-step-box]');
+                touchDragRef.current = { step, box, target: null };
+                if (box) box.classList.add('touch-dragging');
+            };
+            const touchDragMove = (e) => {
+                const d = touchDragRef.current; if (!d) return;
+                const tch = e.touches[0];
+                const el = document.elementFromPoint(tch.clientX, tch.clientY);
+                const over = el && el.closest('[data-step-box]');
+                if (d.target && d.target !== over) d.target.classList.remove('touch-drop-target');
+                d.target = over && over !== d.box ? over : null;
+                if (d.target) d.target.classList.add('touch-drop-target');
+                if (tch.clientY < 90) window.scrollBy(0, -14); else if (tch.clientY > window.innerHeight - 120) window.scrollBy(0, 14);
+            };
+            const touchDragEnd = () => {
+                const d = touchDragRef.current; touchDragRef.current = null; if (!d) return;
+                if (d.box) d.box.classList.remove('touch-dragging');
+                if (d.target) {
+                    d.target.classList.remove('touch-drop-target');
+                    const tid = d.target.getAttribute('data-step-id');
+                    const list = [...comboSteps];
+                    const from = list.findIndex(x => x.id === d.step.id), to0 = list.findIndex(x => x.id === tid);
+                    if (from !== -1 && to0 !== -1 && from !== to0) {
+                        const [moved] = list.splice(from, 1);
+                        const to = list.findIndex(x => x.id === tid);
+                        list.splice(from < to0 ? to + 1 : to, 0, moved); // bajando queda debajo del destino; subiendo, arriba
+                        setComboState({ ...comboState, comboSteps: list }, 'Reordered combo steps');
+                    }
+                }
+            };
             const handleReorder = (type, draggedItem, targetItem) => {
                 if (type === 'hand') {
                     const newHands = [...startingHand];
@@ -4297,13 +4334,13 @@
                                                     onDrop={e => { e.preventDefault(); e.stopPropagation(); const d = JSON.parse(e.dataTransfer.getData('text/plain')); if (d.type === 'step') handleReorder('step', d.data, step); setDragOverIndex(null); }}
                                                     onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOverIndex(index); }}
                                                     onDragLeave={e => { e.stopPropagation(); }}
-                                                    className={`combo-step-card w-full bg-[var(--color-surface)]/50 rounded-lg p-3 flex flex-col gap-2 relative border ${isVulnerable ? 'step-vulnerable border-red-500/50' : 'border-transparent'} ${step.isLocked ? 'opacity-70' : ''}`} 
+                                                    className={`combo-step-card w-full bg-[var(--color-surface)]/50 rounded-lg p-3 flex flex-col gap-2 relative ${openStepMenuId === step.id ? 'z-30' : ''} border ${isVulnerable ? 'step-vulnerable border-red-500/50' : 'border-transparent'} ${step.isLocked ? 'opacity-70' : ''}`} 
                                                     onMouseEnter={() => setHighlightedCardIds([step.mainCardInstanceId, ...step.targetCards.map(c => c.instanceId)])} 
                                                     onMouseLeave={() => setHighlightedCardIds([])}
                                                 >
                                                     <div className={`step-corner absolute top-2 right-2 flex items-center gap-1 ${openStepMenuId === step.id ? 'z-40' : 'z-20'}`}>
                                                         <button onClick={() => updateStep(step.id, { vulnerability: { text: isVulnerable ? '' : 'Disrupción', cards: [] } })} className={`tutorial-vulnerability-btn step-icon-btn rounded-full ${isVulnerable ? 'bg-red-500 text-white' : 'bg-slate-700 text-slate-400'} hover:bg-red-600`} data-tooltip={t('markVulnerable')} aria-label={t('markVulnerable')}><i className="fas fa-exclamation-triangle"></i></button>
-                                                        <div className="cursor-move text-slate-400 step-icon-btn step-grip" draggable={!step.isLocked} onDragStart={e => { e.stopPropagation(); const box = e.currentTarget.closest('[data-step-box]'); if (box && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(box, 24, 24); handleDragStart(e, 'step', step); }} onDragEnd={handleDragEnd}><i className="fas fa-grip-vertical"></i></div>
+                                                        <div className="cursor-move text-slate-400 step-icon-btn step-grip step-grip-touch" draggable={!step.isLocked} onDragStart={e => { e.stopPropagation(); const box = e.currentTarget.closest('[data-step-box]'); if (box && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(box, 24, 24); handleDragStart(e, 'step', step); }} onDragEnd={handleDragEnd} onTouchStart={e => touchDragStart(e, step)} onTouchMove={touchDragMove} onTouchEnd={touchDragEnd} onTouchCancel={touchDragEnd}><i className="fas fa-grip-vertical"></i></div>
                                                         <div className="relative" data-step-menu="1">
                                                             <button onClick={() => setOpenStepMenuId(id => id === step.id ? null : step.id)} className={`step-icon-btn rounded-full ${openStepMenuId === step.id ? 'bg-violet-600 text-white' : 'bg-slate-700 text-slate-300'} hover:bg-violet-600 hover:text-white`} aria-label={t('stepMoreActions')} aria-haspopup="menu" aria-expanded={openStepMenuId === step.id} data-tooltip={t('stepMoreActions')}><i className="fas fa-ellipsis-h"></i></button>
                                                             {openStepMenuId === step.id && (
