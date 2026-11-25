@@ -1414,6 +1414,13 @@ const CardDisplay = memo(({
     onRemove();
   } : null;
   const imageUrl = useCropped ? card.image_url_cropped : card.image_url_small || card.image_url;
+  const imgRef = useRef(null);
+  useEffect(() => {
+    const im = imgRef.current;
+    setIsImageLoaded(!!(im && im.complete && im.naturalWidth));
+    const tm = setTimeout(() => setIsImageLoaded(true), 4000);
+    return () => clearTimeout(tm);
+  }, [imageUrl]);
   return React.createElement("div", {
     ref: cardRef,
     draggable: draggable,
@@ -1456,6 +1463,7 @@ const CardDisplay = memo(({
   }, !isImageLoaded && React.createElement("div", {
     className: "absolute inset-0 card-skeleton"
   }), React.createElement("img", {
+    ref: imgRef,
     src: imageUrl,
     alt: card.name,
     className: `w-full object-cover rounded-md shadow-lg transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`,
@@ -1756,7 +1764,8 @@ const CardSelector = ({
   onMouseMove,
   preferredDirection = 'down',
   mode = 'pool',
-  allowNote = false
+  allowNote = false,
+  icon = 'fa-plus'
 }) => {
   const allMode = mode === 'all';
   const [isOpen, setIsOpen] = useState(false);
@@ -1886,6 +1895,7 @@ const CardSelector = ({
     'menu-item': "step-menu-item",
     'button': "w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed",
     'small-button': "p-2 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed flex items-center justify-center",
+    'pill': "px-2.5 py-1 text-xs font-semibold bg-violet-600 text-white rounded-full hover:bg-violet-700 shadow",
     'card-placeholder': "w-24 h-[8.5rem] flex items-center justify-center border-2 border-dashed border-slate-600 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors"
   };
   const buttonContent = {
@@ -1893,7 +1903,10 @@ const CardSelector = ({
       className: "fas fa-plus"
     }),
     'menu-item': React.createElement(React.Fragment, null, React.createElement("i", {
-      className: "fas fa-plus w-5 text-center"
+      className: `fas ${icon} w-5 text-center`
+    }), buttonText),
+    'pill': React.createElement(React.Fragment, null, React.createElement("i", {
+      className: `fas ${icon} mr-1`
     }), buttonText),
     'button': buttonText || t('addStep'),
     'small-button': React.createElement("i", {
@@ -4070,39 +4083,93 @@ const importIsTranscript = text => {
   const ls = String(text || '').split('\n').filter(l => l.trim());
   return ls.length >= 3 && ls.filter(l => IMPORT_TS.test(l)).length >= ls.length * 0.3 || /\[(music|applause|laughter|snorts?|música|musique|musik)\]/i.test(text);
 };
+const importTsSec = m => {
+  const p = m.replace(/[()\s]/g, '').split(/[.,]/)[0].split(':').map(Number);
+  return p.reduce((acc, x) => acc * 60 + x, 0);
+};
+const importVideoId = text => {
+  const m = String(text || '').match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|watch\/|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? m[1] : null;
+};
 const importCleanTranscript = text => {
   let title = '';
-  const body = [];
+  const parts = [];
+  let pendingTs = null;
   String(text).split('\n').forEach(l => {
     if (/^\s*#/.test(l)) {
       const tt = l.replace(/^\s*#+\s*/, '').trim();
       if (!title && tt && !/transcript|https?:\/\//i.test(tt)) title = tt;
       return;
     }
-    body.push(l.replace(IMPORT_TS, ''));
+    const m = l.match(IMPORT_TS);
+    const txt = l.replace(IMPORT_TS, '').replace(/\[[^\]]*\]/g, ' ').replace(/\((music|applause|laughter)\)/gi, ' ').replace(/\s+/g, ' ').trim();
+    const ts = m ? importTsSec(m[0]) : pendingTs;
+    if (!txt) {
+      if (m) pendingTs = ts;
+      return;
+    }
+    parts.push({
+      txt,
+      ts
+    });
+    pendingTs = null;
   });
-  const t = body.join(' ').replace(/\[[^\]]*\]/g, ' ').replace(/\((music|applause|laughter)\)/gi, ' ').replace(/\s+/g, ' ').trim();
-  const lines = t.split(/(?<=[.!?])\s+(?=\S)/).flatMap(s => s.split(/,?\s+(?:and\s+)?then\s+(?=[a-z])/i)).map(s => s.trim()).filter(s => /[a-z]/i.test(s));
+  let t = '';
+  const marks = [];
+  parts.forEach(pt => {
+    if (t) t += ' ';
+    marks.push({
+      at: t.length,
+      ts: pt.ts
+    });
+    t += pt.txt;
+  });
+  const tsAt = pos => {
+    let ts = null;
+    for (const mk of marks) {
+      if (mk.at > pos) break;
+      if (mk.ts !== null && mk.ts !== undefined) ts = mk.ts;
+    }
+    return ts;
+  };
+  const lines = [],
+    times = [];
+  let cursor = 0;
+  t.split(/(?<=[.!?])\s+(?=\S)/).forEach(sent => {
+    const at = t.indexOf(sent, cursor);
+    cursor = at + sent.length;
+    const ts = tsAt(at);
+    sent.split(/,?\s+(?:and\s+)?then\s+(?=[a-z])/i).map(x => x.trim()).filter(x => /[a-z]/i.test(x)).forEach(x => {
+      lines.push(x);
+      times.push(ts);
+    });
+  });
   return {
     title,
-    lines
+    lines,
+    times
   };
 };
-const importSplitHands = (lines, transcript) => {
+const importSplitHands = (lines, transcript, times = []) => {
   const hands = [];
   let cur = {
     title: '',
-    lines: []
+    lines: [],
+    times: [],
+    ts: null
   };
   const push = () => {
     if (cur.lines.length) hands.push(cur);
   };
-  lines.forEach(l => {
+  lines.forEach((l, i) => {
+    const ts = times[i] === undefined ? null : times[i];
     if (/^(?:-{3,}|={3,}|_{3,})$/.test(l)) {
       push();
       cur = {
         title: '',
-        lines: []
+        lines: [],
+        times: [],
+        ts: null
       };
       return;
     }
@@ -4110,7 +4177,9 @@ const importSplitHands = (lines, transcript) => {
       push();
       cur = {
         title: l.replace(/[:\s]+$/, ''),
-        lines: []
+        lines: [],
+        times: [],
+        ts
       };
       return;
     }
@@ -4118,16 +4187,22 @@ const importSplitHands = (lines, transcript) => {
       push();
       cur = {
         title: l,
-        lines: []
+        lines: [],
+        times: [],
+        ts
       };
       return;
     }
+    if (cur.ts === null) cur.ts = ts;
     cur.lines.push(l);
+    cur.times.push(ts);
   });
   push();
   return hands.length ? hands : [{
     title: '',
-    lines: []
+    lines: [],
+    times: [],
+    ts: null
   }];
 };
 const importBuildVocab = cards => {
@@ -4235,14 +4310,16 @@ const importPrepare = async (text, opts = {}) => {
   const structured = /\[\[[^\]]+\]\]/.test(raw);
   let lines,
     docTitle = '',
-    transcript = false;
+    transcript = false,
+    times = [];
   if (!structured && importIsTranscript(raw)) {
     const c = importCleanTranscript(raw);
     lines = c.lines;
+    times = c.times;
     docTitle = c.title;
     transcript = true;
   } else lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-  const hands = importSplitHands(lines, transcript);
+  const hands = importSplitHands(lines, transcript, times);
   const warnings = [];
   const explicit = [];
   lines.forEach(l => {
@@ -4305,6 +4382,7 @@ const importPrepare = async (text, opts = {}) => {
     structured,
     transcript,
     docTitle,
+    videoId: importVideoId(raw),
     memo: new Map()
   };
 };
@@ -4318,6 +4396,7 @@ const importBuild = (ctx, picks = {}) => {
   } = ctx;
   const warnings = [...ctx.warnings];
   const names = new Map();
+  let curTs = null;
   const cardOf = name => name === '@any' ? {
     name: '@any'
   } : found[String(name).toLowerCase()];
@@ -4336,7 +4415,8 @@ const importBuild = (ctx, picks = {}) => {
           options,
           auto,
           sure,
-          count: 0
+          count: 0,
+          ts: curTs
         };
         names.set(key, e);
       }
@@ -4449,7 +4529,8 @@ const importBuild = (ctx, picks = {}) => {
     found,
     names: [...names.values()],
     structured,
-    transcript
+    transcript,
+    videoId: ctx.videoId
   };
   function buildHand(hand) {
     const items = [];
@@ -4462,7 +4543,9 @@ const importBuild = (ctx, picks = {}) => {
       return st;
     };
     let lastCard = hand.title ? (findCards(hand.title, false).hits[0] || {}).name || null : null;
-    hand.lines.forEach(raw => {
+    hand.lines.forEach((raw, li) => {
+      curTs = (hand.times || [])[li];
+      if (curTs === undefined) curTs = null;
       let line = raw;
       if (/^(end ?board|final board)\b/i.test(line) || transcript && /\b(this|the|our|your|final) end ?board\b/i.test(line)) {
         endboard = endboard || [];
@@ -4537,6 +4620,7 @@ const importBuild = (ctx, picks = {}) => {
     closeAlt();
     return {
       title: hand.title,
+      ts: hand.ts,
       items,
       endboard: endboard && endboard.length ? endboard : null
     };
@@ -4692,7 +4776,8 @@ const importBuild = (ctx, picks = {}) => {
         targets: [],
         desc: line,
         chainRole: undefined,
-        warn: []
+        warn: [],
+        ts: curTs
       };
       const fc = findCards(line);
       const hits = fc.hits;
@@ -4794,6 +4879,19 @@ const importBuild = (ctx, picks = {}) => {
     }
   }
 };
+const importImg = c => {
+  if (!c) return null;
+  if (c.image_url_small) return c.image_url_small;
+  const u = c.card_images && c.card_images[0] && c.card_images[0].image_url_small;
+  return u ? 'https://images.weserv.nl/?url=' + u.replace(/^https?:\/\//, '') : null;
+};
+const importFmtTs = s => {
+  s = Math.max(0, Math.floor(s || 0));
+  const h = Math.floor(s / 3600),
+    m = Math.floor(s / 60) % 60,
+    x = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`;
+};
 const ImportTextModal = ({
   show,
   onClose,
@@ -4801,6 +4899,12 @@ const ImportTextModal = ({
   t,
   deckCards = []
 }) => {
+  const [videoLink, setVideoLink] = useState('');
+  const [showVideo, setShowVideo] = useState(false);
+  const [seek, setSeek] = useState({
+    s: 0,
+    n: 0
+  });
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [ctx, setCtx] = useState(null);
@@ -4888,6 +4992,25 @@ const ImportTextModal = ({
   const allSteps = hands.reduce((s, h) => s + stepsOf(h).length, 0);
   const flagged = steps.filter(s => s.warn.length).length;
   const nameOf = n => n === '@any' ? t('anyCard') : n;
+  const cardImg = n => n && n !== '@any' && res && res.found ? importImg(res.found[String(n).toLowerCase()]) : null;
+  const videoId = importVideoId(videoLink) || res && res.videoId || importVideoId(text);
+  const jump = ts => {
+    setShowVideo(true);
+    setSeek({
+      s: ts || 0,
+      n: Date.now()
+    });
+  };
+  const TsBtn = ({
+    ts
+  }) => videoId && ts !== null && ts !== undefined ? React.createElement("button", {
+    type: "button",
+    onClick: () => jump(ts),
+    title: t('importJump'),
+    className: "px-1.5 py-0.5 rounded bg-red-700/80 hover:bg-red-600 text-white text-[10px] font-bold whitespace-nowrap"
+  }, React.createElement("i", {
+    className: "fab fa-youtube mr-1"
+  }), importFmtTs(ts)) : null;
   const W = ({
     w
   }) => React.createElement("li", null, t(w.key, w.p || {}));
@@ -4928,7 +5051,7 @@ const ImportTextModal = ({
     className: "fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-3",
     onClick: onClose
   }, React.createElement("div", {
-    className: "bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden",
+    className: `bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full ${showVideo && videoId ? 'max-w-6xl' : 'max-w-3xl'} max-h-[92vh] flex flex-col overflow-hidden`,
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "flex items-center gap-3 px-5 pt-4 pb-2"
@@ -4941,6 +5064,28 @@ const ImportTextModal = ({
     "aria-label": t('closeLabel'),
     className: "w-10 h-10 rounded-full bg-black/30 text-gray-300 hover:text-white text-2xl"
   }, "\xD7")), React.createElement("div", {
+    className: "flex-1 min-h-0 flex flex-col lg:flex-row"
+  }, showVideo && videoId && React.createElement("div", {
+    className: "flex-none lg:order-2 lg:w-[440px] px-5 lg:pl-0 pb-2"
+  }, React.createElement("div", {
+    className: "relative w-full rounded-lg overflow-hidden bg-black",
+    style: {
+      aspectRatio: '16 / 9'
+    }
+  }, React.createElement("iframe", {
+    key: seek.n,
+    title: "YouTube",
+    className: "absolute inset-0 w-full h-full",
+    src: `https://www.youtube-nocookie.com/embed/${videoId}?start=${Math.floor(seek.s)}${seek.n ? '&autoplay=1' : ''}&rel=0`,
+    allow: "autoplay; encrypted-media; picture-in-picture; fullscreen",
+    allowFullScreen: true
+  })), React.createElement("button", {
+    type: "button",
+    onClick: () => setShowVideo(false),
+    className: "mt-1 text-xs text-slate-400 hover:text-white"
+  }, React.createElement("i", {
+    className: "fas fa-eye-slash mr-1"
+  }), t('importHideVideo'))), React.createElement("div", {
     className: "flex-1 min-h-0 overflow-y-auto px-5 pb-3 space-y-3"
   }, React.createElement("div", {
     className: "rounded-lg border border-amber-500/50 bg-amber-900/20 p-3 text-xs text-amber-100"
@@ -4962,7 +5107,22 @@ const ImportTextModal = ({
     rows: "7",
     placeholder: t('importTextPlaceholder'),
     className: "w-full p-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white font-mono"
-  }), deckCards.length > 0 && React.createElement("label", {
+  }), React.createElement("div", {
+    className: "flex flex-wrap items-center gap-2 text-xs"
+  }, React.createElement("i", {
+    className: "fab fa-youtube text-red-500 text-base"
+  }), React.createElement("input", {
+    value: videoLink,
+    onChange: e => setVideoLink(e.target.value),
+    placeholder: importVideoId(text) ? t('importVideoFound') : t('importVideoLink'),
+    className: "flex-1 min-w-[12rem] p-1.5 bg-slate-800 border border-slate-600 rounded text-white"
+  }), videoId && React.createElement("button", {
+    type: "button",
+    onClick: () => setShowVideo(v => !v),
+    className: "px-3 py-1.5 rounded bg-red-700 hover:bg-red-600 text-white font-semibold"
+  }, React.createElement("i", {
+    className: `fas ${showVideo ? 'fa-eye-slash' : 'fa-play'} mr-1`
+  }), showVideo ? t('importHideVideo') : t('importWatch'))), deckCards.length > 0 && React.createElement("label", {
     className: "flex items-start gap-2 text-xs text-slate-300 cursor-pointer"
   }, React.createElement("input", {
     type: "checkbox",
@@ -5013,9 +5173,19 @@ const ImportTextModal = ({
       className: "font-mono text-slate-200 min-w-[7rem]"
     }, "\xAB", nm.text, "\xBB", nm.count > 1 && React.createElement("span", {
       className: "text-slate-500"
-    }, " \xD7", nm.count)), React.createElement("span", {
+    }, " \xD7", nm.count)), React.createElement(TsBtn, {
+      ts: nm.ts
+    }), React.createElement("span", {
       className: "text-slate-500"
-    }, "\u2192"), typing[nm.key] !== undefined ? React.createElement("input", {
+    }, "\u2192"), cardImg(cur) ? React.createElement("img", {
+      src: cardImg(cur),
+      alt: cur,
+      title: cur,
+      className: "w-8 rounded-sm flex-none",
+      loading: "lazy"
+    }) : React.createElement("span", {
+      className: "w-8 h-[2.9rem] rounded-sm border border-dashed border-slate-600 flex-none flex items-center justify-center text-slate-500"
+    }, "?"), typing[nm.key] !== undefined ? React.createElement("input", {
       autoFocus: true,
       value: typing[nm.key],
       onChange: e => setTyping(s => ({
@@ -5054,7 +5224,25 @@ const ImportTextModal = ({
       value: "@type"
     }, t('importTypeName'))), doubt && React.createElement("span", {
       className: "text-amber-300 font-semibold"
-    }, nm.auto ? t('importGuess') : t('importNoMatch')));
+    }, nm.auto ? t('importGuess') : t('importNoMatch')), doubt && nm.options.length > 0 && React.createElement("div", {
+      className: "basis-full flex flex-wrap gap-1.5 pl-1 pt-1"
+    }, nm.options.map(o => React.createElement("button", {
+      type: "button",
+      key: o,
+      title: o,
+      onClick: () => setPicks(p => ({
+        ...p,
+        [nm.key]: o
+      })),
+      className: `w-12 rounded-sm overflow-hidden border-2 ${o === cur ? 'border-violet-400' : 'border-transparent opacity-80 hover:opacity-100'}`
+    }, cardImg(o) ? React.createElement("img", {
+      src: cardImg(o),
+      alt: o,
+      className: "w-full",
+      loading: "lazy"
+    }) : React.createElement("span", {
+      className: "block text-[9px] p-1 text-slate-300"
+    }, o)))));
   }))), hands.length > 1 && React.createElement("div", {
     className: "flex flex-wrap gap-1 border-b border-slate-700",
     role: "tablist"
@@ -5068,8 +5256,10 @@ const ImportTextModal = ({
   }, handLabel(i), " ", React.createElement("span", {
     className: "opacity-70 text-xs"
   }, "(", stepsOf(h).length, ")")))), hand.title && React.createElement("p", {
-    className: "text-xs text-violet-200 italic"
-  }, hand.title), React.createElement("p", {
+    className: "text-xs text-violet-200 italic flex items-center gap-2"
+  }, React.createElement(TsBtn, {
+    ts: hand.ts
+  }), React.createElement("span", null, hand.title)), React.createElement("p", {
     className: "text-sm font-semibold text-slate-200"
   }, t('importPreview', {
     n: steps.length
@@ -5085,7 +5275,16 @@ const ImportTextModal = ({
   }, it.title) : React.createElement("li", {
     key: i,
     className: `rounded-md p-2 text-sm border ${it.warn.length ? 'border-amber-500/70 bg-amber-900/15' : 'border-slate-700 bg-slate-800/50'}`
-  }, React.createElement("div", null, React.createElement("span", {
+  }, React.createElement("div", {
+    className: "flex items-start gap-2"
+  }, cardImg(it.main) && React.createElement("img", {
+    src: cardImg(it.main),
+    alt: "",
+    className: "w-7 rounded-sm flex-none mt-0.5",
+    loading: "lazy"
+  }), React.createElement("div", {
+    className: "flex-1 min-w-0"
+  }, React.createElement("span", {
     className: "font-bold text-slate-400 mr-1"
   }, ++n, "."), it.chainRole === 'resolve' && React.createElement("span", {
     className: "text-sky-300 mr-1"
@@ -5097,7 +5296,9 @@ const ImportTextModal = ({
     className: "font-semibold text-white"
   }, it.main ? nameOf(it.main) : '—'), it.targets.length > 0 && React.createElement("span", {
     className: "text-slate-300"
-  }, " \u2192 ", it.targets.map(nameOf).join(', '))), it.desc && React.createElement("div", {
+  }, " \u2192 ", it.targets.map(nameOf).join(', '))), React.createElement(TsBtn, {
+    ts: it.ts
+  })), it.desc && React.createElement("div", {
     className: "text-xs text-slate-400 mt-0.5"
   }, it.desc), it.branch && React.createElement("div", {
     className: "text-xs text-red-300 mt-0.5"
@@ -5108,7 +5309,7 @@ const ImportTextModal = ({
     w: w
   })))))), hand.endboard && React.createElement("p", {
     className: "text-xs text-slate-400"
-  }, React.createElement("b", null, t('importEndboard'), ":"), " ", hand.endboard.join(' · ')))), React.createElement("div", {
+  }, React.createElement("b", null, t('importEndboard'), ":"), " ", hand.endboard.join(' · '))))), React.createElement("div", {
     className: "flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-slate-700"
   }, React.createElement("button", {
     onClick: onClose,
@@ -7485,6 +7686,50 @@ const App = () => {
       n.delete(key);
       return n;
     }), 1400);
+  };
+  const setStepMain = (step, card) => {
+    if (!card || card.isNote || step.isLocked) return;
+    updateStep(step.id, {
+      mainCardInstanceId: card.instanceId
+    });
+  };
+  const dropOnStepMain = (e, step) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+    setDragOverIndex(null);
+    let d = null;
+    try {
+      d = JSON.parse(e.dataTransfer.getData('text/plain'));
+    } catch (er) {}
+    window.__YGO_DRAGGING__ = false;
+    setDraggedItem(null);
+    if (!d) return;
+    if (d.type === 'step') {
+      handleReorder('step', d.data, step);
+      return;
+    }
+    if (step.isLocked) return;
+    if (['pool-card', 'hand-card', 'board-card'].includes(d.type)) {
+      setStepMain(step, findCard(d.data.instanceId || d.data));
+      return;
+    }
+    if (d.type === 'search-card') {
+      let c = cardPool.find(x => !x.isCustom && x.ygoprodeck_id === d.data.id);
+      let pool = cardPool;
+      if (!c) {
+        c = createComboCardInstance(d.data, IMAGE_PROXY);
+        pool = [...cardPool, c];
+      }
+      setComboState({
+        ...comboState,
+        cardPool: pool,
+        comboSteps: comboSteps.map(s => s.id === step.id ? {
+          ...s,
+          mainCardInstanceId: c.instanceId
+        } : s)
+      }, `Added '${c.name}'`);
+    }
   };
   const addVulnCard = (step, card) => {
     if (!card || card.isNote) return;
@@ -10277,6 +10522,17 @@ const App = () => {
       buttonText: t('insertStepBelow'),
       t: t,
       preferredDirection: "side"
+    }), !step.isLocked && React.createElement(CardSelector, {
+      cardPool: cardPool,
+      onCardSelected: c => {
+        setStepMain(step, c);
+        setOpenStepMenuId(null);
+      },
+      displayAs: "menu-item",
+      icon: "fa-right-left",
+      buttonText: mainCard ? t('changeStepCard') : t('setStepCard'),
+      t: t,
+      preferredDirection: "side"
     }), React.createElement("button", {
       onClick: () => toggleStepLock(step.id),
       className: "step-menu-item",
@@ -10409,8 +10665,17 @@ const App = () => {
       preferredDirection: "side",
       wrapperClassName: "side-add-vuln"
     })), React.createElement("div", {
-      className: "step-main flex justify-center relative"
-    }, React.createElement(CardDisplay, {
+      className: "step-main flex flex-col items-center justify-center relative gap-1.5",
+      title: step.isLocked ? undefined : t('dropToSetCard'),
+      onDragOver: e => {
+        if (step.isLocked) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.add('drag-over');
+      },
+      onDragLeave: e => e.currentTarget.classList.remove('drag-over'),
+      onDrop: e => dropOnStepMain(e, step)
+    }, mainCard ? React.createElement(CardDisplay, {
       card: mainCard,
       size: "medium",
       onClick: c => setSelectedCardForZoom(c),
@@ -10418,6 +10683,20 @@ const App = () => {
       onMouseEnter: handleCardMouseEnter,
       onMouseLeave: handleCardMouseLeave,
       onMouseMove: handleCardMouseMove
+    }) : !step.isLocked && React.createElement(CardSelector, {
+      cardPool: cardPool,
+      onCardSelected: c => setStepMain(step, c),
+      displayAs: "card-placeholder",
+      t: t,
+      preferredDirection: "side"
+    }), mainCard && mainCard.isWildcard && !step.isLocked && React.createElement(CardSelector, {
+      cardPool: cardPool,
+      onCardSelected: c => setStepMain(step, c),
+      displayAs: "pill",
+      icon: "fa-right-left",
+      buttonText: t('pickRealCard'),
+      t: t,
+      preferredDirection: "side"
     })), React.createElement("div", {
       className: `step-side step-side-right ${openSide === step.id + ':right' ? 'side-open' : ''}`,
       "aria-label": t('sideTargets')

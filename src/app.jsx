@@ -332,6 +332,14 @@
             const contextMenuHandler = onContextMenu ? (e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(card, e); } : null;
             const removeHandler = onRemove ? (e) => { e.stopPropagation(); onRemove(); } : null;
             const imageUrl = useCropped ? card.image_url_cropped : (card.image_url_small || card.image_url);
+            const imgRef = useRef(null);
+            useEffect(() => {
+                // ojo: si la imagen ya venía de caché (o cambió la carta) no me llega onLoad y se quedaba invisible hasta pasar el cursor
+                const im = imgRef.current;
+                setIsImageLoaded(!!(im && im.complete && im.naturalWidth));
+                const tm = setTimeout(() => setIsImageLoaded(true), 4000);
+                return () => clearTimeout(tm);
+            }, [imageUrl]);
 
             return (
                 <div 
@@ -353,6 +361,7 @@
                     <div className="relative w-full" style={{ aspectRatio: useCropped ? '1' : '0.686' }}>
                         {!isImageLoaded && <div className="absolute inset-0 card-skeleton"></div>}
                         <img 
+                            ref={imgRef}
                             src={imageUrl} 
                             alt={card.name} 
                             className={`w-full object-cover rounded-md shadow-lg transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
@@ -540,7 +549,7 @@
             );
         };
 
-        const CardSelector = ({ cardPool, onCardSelected, buttonText, displayAs = 'button', t, wrapperClassName = '', onMouseEnter, onMouseLeave, onMouseMove, preferredDirection = 'down', mode = 'pool', allowNote = false }) => {
+        const CardSelector = ({ cardPool, onCardSelected, buttonText, displayAs = 'button', t, wrapperClassName = '', onMouseEnter, onMouseLeave, onMouseMove, preferredDirection = 'down', mode = 'pool', allowNote = false, icon = 'fa-plus' }) => {
             const allMode = mode === 'all'; // modo 'all' = buscar en todas las cartas, sin pool ni notas y sin meterlas al pool
             const [isOpen, setIsOpen] = useState(false);
             const [quickPicks, setQuickPicks] = useState(handTrapCache.data);
@@ -641,8 +650,8 @@
 
 
             const filteredPool = cardPool.filter(card => !card.isWildcard && card.name.toLowerCase().includes(filter.toLowerCase()));
-            const buttonClasses = { 'side-add': "side-add-btn", 'menu-item': "step-menu-item", 'button': "w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed", 'small-button': "p-2 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed flex items-center justify-center", 'card-placeholder': "w-24 h-[8.5rem] flex items-center justify-center border-2 border-dashed border-slate-600 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors" };
-            const buttonContent = { 'side-add': <i className="fas fa-plus"></i>, 'menu-item': <><i className="fas fa-plus w-5 text-center"></i>{buttonText}</>, 'button': buttonText || t('addStep'), 'small-button': <i className="fas fa-plus"></i>, 'card-placeholder': <i className="fas fa-plus"></i> };
+            const buttonClasses = { 'side-add': "side-add-btn", 'menu-item': "step-menu-item", 'button': "w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed", 'small-button': "p-2 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-colors shadow-md disabled:bg-violet-800 disabled:cursor-not-allowed flex items-center justify-center", 'pill': "px-2.5 py-1 text-xs font-semibold bg-violet-600 text-white rounded-full hover:bg-violet-700 shadow", 'card-placeholder': "w-24 h-[8.5rem] flex items-center justify-center border-2 border-dashed border-slate-600 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors" };
+            const buttonContent = { 'side-add': <i className="fas fa-plus"></i>, 'menu-item': <><i className={`fas ${icon} w-5 text-center`}></i>{buttonText}</>, 'pill': <><i className={`fas ${icon} mr-1`}></i>{buttonText}</>, 'button': buttonText || t('addStep'), 'small-button': <i className="fas fa-plus"></i>, 'card-placeholder': <i className="fas fa-plus"></i> };
             
             const handleSelect = (card) => {
                 if (!card) return;
@@ -1949,29 +1958,46 @@
             const ls = String(text || '').split('\n').filter(l => l.trim());
             return (ls.length >= 3 && ls.filter(l => IMPORT_TS.test(l)).length >= ls.length * 0.3) || /\[(music|applause|laughter|snorts?|música|musique|musik)\]/i.test(text);
         };
+        const importTsSec = (m) => { const p = m.replace(/[()\s]/g, '').split(/[.,]/)[0].split(':').map(Number); return p.reduce((acc, x) => acc * 60 + x, 0); };
+        // enlace de YouTube en el texto (tactiq lo pone en el encabezado)
+        const importVideoId = (text) => { const m = String(text || '').match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|watch\/|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/); return m ? m[1] : null; };
         const importCleanTranscript = (text) => {
-            let title = ''; const body = [];
+            let title = ''; const parts = []; let pendingTs = null;
             String(text).split('\n').forEach(l => {
                 if (/^\s*#/.test(l)) { const tt = l.replace(/^\s*#+\s*/, '').trim(); if (!title && tt && !/transcript|https?:\/\//i.test(tt)) title = tt; return; }
-                body.push(l.replace(IMPORT_TS, ''));
+                const m = l.match(IMPORT_TS);
+                const txt = l.replace(IMPORT_TS, '').replace(/\[[^\]]*\]/g, ' ').replace(/\((music|applause|laughter)\)/gi, ' ').replace(/\s+/g, ' ').trim();
+                const ts = m ? importTsSec(m[0]) : pendingTs;
+                if (!txt) { if (m) pendingTs = ts; return; } // YouTube copia «0:12» en un renglón y el texto en el siguiente
+                parts.push({ txt, ts }); pendingTs = null;
             });
-            const t = body.join(' ').replace(/\[[^\]]*\]/g, ' ').replace(/\((music|applause|laughter)\)/gi, ' ').replace(/\s+/g, ' ').trim();
+            // junto todo y me acuerdo dónde empieza cada renglón para saber el minuto de cada frase
+            let t = ''; const marks = [];
+            parts.forEach(pt => { if (t) t += ' '; marks.push({ at: t.length, ts: pt.ts }); t += pt.txt; });
+            const tsAt = (pos) => { let ts = null; for (const mk of marks) { if (mk.at > pos) break; if (mk.ts !== null && mk.ts !== undefined) ts = mk.ts; } return ts; };
             // una frase por paso; «…, then …» también parte la frase
-            const lines = t.split(/(?<=[.!?])\s+(?=\S)/).flatMap(s => s.split(/,?\s+(?:and\s+)?then\s+(?=[a-z])/i)).map(s => s.trim()).filter(s => /[a-z]/i.test(s));
-            return { title, lines };
+            const lines = [], times = []; let cursor = 0;
+            t.split(/(?<=[.!?])\s+(?=\S)/).forEach(sent => {
+                const at = t.indexOf(sent, cursor); cursor = at + sent.length;
+                const ts = tsAt(at);
+                sent.split(/,?\s+(?:and\s+)?then\s+(?=[a-z])/i).map(x => x.trim()).filter(x => /[a-z]/i.test(x)).forEach(x => { lines.push(x); times.push(ts); });
+            });
+            return { title, lines, times };
         };
         // Varias manos/combos en un texto: «---», «Hand 2:», «Combo 3»… y en videos frases como «Now, if you start with X, do this combo»
-        const importSplitHands = (lines, transcript) => {
-            const hands = []; let cur = { title: '', lines: [] };
+        const importSplitHands = (lines, transcript, times = []) => {
+            const hands = []; let cur = { title: '', lines: [], times: [], ts: null };
             const push = () => { if (cur.lines.length) hands.push(cur); };
-            lines.forEach(l => {
-                if (/^(?:-{3,}|={3,}|_{3,})$/.test(l)) { push(); cur = { title: '', lines: [] }; return; }
-                if (/^(?:hand|mano|combo|line|route|ruta|l[ií]nea)\s*#?\s*\d+\b\s*[:.)-]?/i.test(l) && l.length < 120) { push(); cur = { title: l.replace(/[:\s]+$/, ''), lines: [] }; return; }
-                if (transcript && /\bcombo\b/i.test(l) && l.length < 180 && /^(now|for the|the same|if you|here'?s|next|another|let'?s|ok(?:ay)?|alright|first)\b/i.test(l)) { push(); cur = { title: l, lines: [] }; return; }
-                cur.lines.push(l);
+            lines.forEach((l, i) => {
+                const ts = times[i] === undefined ? null : times[i];
+                if (/^(?:-{3,}|={3,}|_{3,})$/.test(l)) { push(); cur = { title: '', lines: [], times: [], ts: null }; return; }
+                if (/^(?:hand|mano|combo|line|route|ruta|l[ií]nea)\s*#?\s*\d+\b\s*[:.)-]?/i.test(l) && l.length < 120) { push(); cur = { title: l.replace(/[:\s]+$/, ''), lines: [], times: [], ts }; return; }
+                if (transcript && /\bcombo\b/i.test(l) && l.length < 180 && /^(now|for the|the same|if you|here'?s|next|another|let'?s|ok(?:ay)?|alright|first)\b/i.test(l)) { push(); cur = { title: l, lines: [], times: [], ts }; return; }
+                if (cur.ts === null) cur.ts = ts;
+                cur.lines.push(l); cur.times.push(ts);
             });
             push();
-            return hands.length ? hands : [{ title: '', lines: [] }];
+            return hands.length ? hands : [{ title: '', lines: [], times: [], ts: null }];
         };
 
         // Diccionario de cartas: claves (nombre completo, partes y palabras propias) → cartas
@@ -2045,10 +2071,10 @@
         const importPrepare = async (text, opts = {}) => {
             const raw = String(text || '');
             const structured = /\[\[[^\]]+\]\]/.test(raw);
-            let lines, docTitle = '', transcript = false;
-            if (!structured && importIsTranscript(raw)) { const c = importCleanTranscript(raw); lines = c.lines; docTitle = c.title; transcript = true; }
+            let lines, docTitle = '', transcript = false, times = [];
+            if (!structured && importIsTranscript(raw)) { const c = importCleanTranscript(raw); lines = c.lines; times = c.times; docTitle = c.title; transcript = true; }
             else lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-            const hands = importSplitHands(lines, transcript);
+            const hands = importSplitHands(lines, transcript, times);
             const warnings = [];
             const explicit = []; lines.forEach(l => { (l.match(/\[\[([^\]]+)\]\]/g) || []).forEach(m => { const n = m.slice(2, -2).trim(); if (!importIcon(n)) explicit.push(n); }); });
             const found = await importLookupExact(explicit);
@@ -2074,7 +2100,7 @@
             }
             const uniq = {}; pool.forEach(c => { if (c && c.name && !/token/i.test(c.type || '') && !uniq[c.name.toLowerCase()]) uniq[c.name.toLowerCase()] = c; }); // tokens fuera: casi nunca son «la carta» que se nombra
             Object.entries(uniq).forEach(([k, c]) => { if (!found[k]) found[k] = c; });
-            return { hands, warnings, found, fuzzy, vocab: importBuildVocab(Object.values(uniq)), archs: archsUsed, structured, transcript, docTitle, memo: new Map() };
+            return { hands, warnings, found, fuzzy, vocab: importBuildVocab(Object.values(uniq)), archs: archsUsed, structured, transcript, docTitle, videoId: importVideoId(raw), memo: new Map() };
         };
 
         // Paso 2 (sin internet, se repite al corregir un nombre): arma los pasos de cada mano.
@@ -2085,12 +2111,13 @@
             const { found, fuzzy, vocab, structured, transcript } = ctx;
             const warnings = [...ctx.warnings];
             const names = new Map();
+            let curTs = null; // minuto del video de la frase que estoy leyendo
             const cardOf = (name) => name === '@any' ? { name: '@any' } : found[String(name).toLowerCase()];
             // nombres completos que aparecen tal cual (los largos primero)
             const exactRes = Object.keys(found).sort((a, b) => b.length - a.length).map(n => ({ n, re: new RegExp(`(^|[^a-z0-9])(${importEsc(n)})(?=[^a-z0-9]|$)`, 'ig') }));
             const note = (text, options, auto, sure, reg) => {
                 const key = importNorm(text);
-                if (reg) { let e = names.get(key); if (!e) { e = { key, text, options, auto, sure, count: 0 }; names.set(key, e); } e.count++; }
+                if (reg) { let e = names.get(key); if (!e) { e = { key, text, options, auto, sure, count: 0, ts: curTs }; names.set(key, e); } e.count++; }
                 return picks[key] !== undefined ? picks[key] : auto;
             };
             const guessOpts = (txt) => { const nt = importNorm(txt).replace(/ /g, ''); const best = {}; vocab.forEach(e => { const s = importSim(nt, e.nk); if (s >= 0.45) e.names.forEach(n => { if (!best[n] || best[n] < s) best[n] = s; }); }); return Object.entries(best).sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]); };
@@ -2133,7 +2160,7 @@
             };
 
             const hands = ctx.hands.map(h => buildHand(h));
-            return { hands, warnings, found, names: [...names.values()], structured, transcript };
+            return { hands, warnings, found, names: [...names.values()], structured, transcript, videoId: ctx.videoId };
 
             function buildHand(hand) {
                 const items = [];
@@ -2143,7 +2170,8 @@
                 // «it / itself» = la última carta de la que se habló (empieza con la del título de la mano)
                 let lastCard = hand.title ? (findCards(hand.title, false).hits[0] || {}).name || null : null;
 
-                hand.lines.forEach(raw => {
+                hand.lines.forEach((raw, li) => {
+                    curTs = (hand.times || [])[li]; if (curTs === undefined) curTs = null;
                     let line = raw;
                     if (/^(end ?board|final board)\b/i.test(line) || (transcript && /\b(this|the|our|your|final) end ?board\b/i.test(line))) { endboard = endboard || []; line = line.replace(/^(end ?board|final board)\s*:?\s*/i, ''); if (!line) return; }
                     if (endboard) { endboard.push(line.replace(/\[\[([^\]]+)\]\]/g, '$1').replace(/\{[^}]+\}/g, '').trim()); return; }
@@ -2176,7 +2204,7 @@
                     if (key && seen[key] === undefined && (target || items).length > before) seen[key] = alt ? -1 : before;
                 });
                 closeAlt();
-                return { title: hand.title, items, endboard: endboard && endboard.length ? endboard : null };
+                return { title: hand.title, ts: hand.ts, items, endboard: endboard && endboard.length ? endboard : null };
 
                 function closeAlt() {
                     if (!alt) return;
@@ -2249,7 +2277,7 @@
                 function parseFree(line, target) {
                     const list = target || items;
                     const prev = list[list.length - 1];
-                    const st = { kind: 'step', action: 'Other', main: null, targets: [], desc: line, chainRole: undefined, warn: [] };
+                    const st = { kind: 'step', action: 'Other', main: null, targets: [], desc: line, chainRole: undefined, warn: [], ts: curTs };
                     const fc = findCards(line);
                     const hits = fc.hits; st.warn.push(...fc.warn);
                     const rest = fc.rest;
@@ -2303,7 +2331,13 @@
             }
         };
 
+        // imagen chiquita de una carta (de la API o del pool) para la vista previa del importador
+        const importImg = (c) => { if (!c) return null; if (c.image_url_small) return c.image_url_small; const u = c.card_images && c.card_images[0] && c.card_images[0].image_url_small; return u ? 'https://images.weserv.nl/?url=' + u.replace(/^https?:\/\//, '') : null; };
+        const importFmtTs = (s) => { s = Math.max(0, Math.floor(s || 0)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = String(s % 60).padStart(2, '0'); return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`; };
         const ImportTextModal = ({ show, onClose, onApply, t, deckCards = [] }) => {
+            const [videoLink, setVideoLink] = useState('');
+            const [showVideo, setShowVideo] = useState(false);
+            const [seek, setSeek] = useState({ s: 0, n: 0 });
             const [text, setText] = useState('');
             const [busy, setBusy] = useState(false);
             const [ctx, setCtx] = useState(null);
@@ -2336,6 +2370,10 @@
             const allSteps = hands.reduce((s, h) => s + stepsOf(h).length, 0);
             const flagged = steps.filter(s => s.warn.length).length;
             const nameOf = (n) => n === '@any' ? t('anyCard') : n;
+            const cardImg = (n) => n && n !== '@any' && res && res.found ? importImg(res.found[String(n).toLowerCase()]) : null;
+            const videoId = importVideoId(videoLink) || (res && res.videoId) || importVideoId(text);
+            const jump = (ts) => { setShowVideo(true); setSeek({ s: ts || 0, n: Date.now() }); };
+            const TsBtn = ({ ts }) => videoId && ts !== null && ts !== undefined ? <button type="button" onClick={() => jump(ts)} title={t('importJump')} className="px-1.5 py-0.5 rounded bg-red-700/80 hover:bg-red-600 text-white text-[10px] font-bold whitespace-nowrap"><i className="fab fa-youtube mr-1"></i>{importFmtTs(ts)}</button> : null;
             const W = ({ w }) => <li>{t(w.key, w.p || {})}</li>;
             const act = (s) => { const a = YGO_ACTIONS.find(x => x.name === s.action) || {}; return `${a.emoji || ''} ${s.custom || trTerm(s.action)}`; };
             const handLabel = (i) => t('importHand', { n: i + 1 });
@@ -2350,11 +2388,20 @@
             let n = 0;
             return (
                 <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-3" onClick={onClose}>
-                    <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                    <div className={`bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full ${showVideo && videoId ? 'max-w-6xl' : 'max-w-3xl'} max-h-[92vh] flex flex-col overflow-hidden`} onClick={e => e.stopPropagation()}>
                         <div className="flex items-center gap-3 px-5 pt-4 pb-2">
                             <h3 className="text-lg font-bold text-violet-300 flex-1">{t('importText')} <span className="ml-1.5 px-1.5 py-0.5 rounded bg-slate-950 text-amber-300 text-[10px] font-bold uppercase tracking-wide align-middle">Beta</span></h3>
                             <button onClick={onClose} aria-label={t('closeLabel')} className="w-10 h-10 rounded-full bg-black/30 text-gray-300 hover:text-white text-2xl">×</button>
                         </div>
+                        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+                        {showVideo && videoId && (
+                            <div className="flex-none lg:order-2 lg:w-[440px] px-5 lg:pl-0 pb-2">
+                                <div className="relative w-full rounded-lg overflow-hidden bg-black" style={{ aspectRatio: '16 / 9' }}>
+                                    <iframe key={seek.n} title="YouTube" className="absolute inset-0 w-full h-full" src={`https://www.youtube-nocookie.com/embed/${videoId}?start=${Math.floor(seek.s)}${seek.n ? '&autoplay=1' : ''}&rel=0`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+                                </div>
+                                <button type="button" onClick={() => setShowVideo(false)} className="mt-1 text-xs text-slate-400 hover:text-white"><i className="fas fa-eye-slash mr-1"></i>{t('importHideVideo')}</button>
+                            </div>
+                        )}
                         <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-3 space-y-3">
                             <div className="rounded-lg border border-amber-500/50 bg-amber-900/20 p-3 text-xs text-amber-100">
                                 <p className="font-bold mb-1"><i className="fas fa-flask mr-1"></i>{t('importBetaTitle')}</p>
@@ -2364,6 +2411,11 @@
                             </div>
                             <p className="text-sm text-slate-300">{t('importTextHelp')}</p>
                             <textarea value={text} onChange={e => { setText(e.target.value); reset(); }} onPaste={onPaste} rows="7" placeholder={t('importTextPlaceholder')} className="w-full p-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white font-mono" />
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                <i className="fab fa-youtube text-red-500 text-base"></i>
+                                <input value={videoLink} onChange={e => setVideoLink(e.target.value)} placeholder={importVideoId(text) ? t('importVideoFound') : t('importVideoLink')} className="flex-1 min-w-[12rem] p-1.5 bg-slate-800 border border-slate-600 rounded text-white" />
+                                {videoId && <button type="button" onClick={() => setShowVideo(v => !v)} className="px-3 py-1.5 rounded bg-red-700 hover:bg-red-600 text-white font-semibold"><i className={`fas ${showVideo ? 'fa-eye-slash' : 'fa-play'} mr-1`}></i>{showVideo ? t('importHideVideo') : t('importWatch')}</button>}
+                            </div>
                             {deckCards.length > 0 && <label className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={useDeck} onChange={e => { setUseDeck(e.target.checked); reset(); }} />{t('importUseDeck', { n: deckCards.length })}</label>}
                             {res && res.error && <p className="text-sm text-red-300">{t('importError')}</p>}
                             {res && !res.error && (
@@ -2382,7 +2434,9 @@
                                                     return (
                                                         <div key={nm.key} className={`flex flex-wrap items-center gap-2 text-xs rounded px-2 py-1 ${doubt ? 'bg-amber-900/25 border border-amber-500/50' : ''}`}>
                                                             <span className="font-mono text-slate-200 min-w-[7rem]">«{nm.text}»{nm.count > 1 && <span className="text-slate-500"> ×{nm.count}</span>}</span>
+                                                            <TsBtn ts={nm.ts} />
                                                             <span className="text-slate-500">→</span>
+                                                            {cardImg(cur) ? <img src={cardImg(cur)} alt={cur} title={cur} className="w-8 rounded-sm flex-none" loading="lazy" /> : <span className="w-8 h-[2.9rem] rounded-sm border border-dashed border-slate-600 flex-none flex items-center justify-center text-slate-500">?</span>}
                                                             {typing[nm.key] !== undefined
                                                                 ? <input autoFocus value={typing[nm.key]} onChange={e => setTyping(s => ({ ...s, [nm.key]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') typeName(nm.key, typing[nm.key]); if (e.key === 'Escape') setTyping(s => ({ ...s, [nm.key]: undefined })); }} onBlur={() => typeName(nm.key, typing[nm.key])} placeholder={t('importTypeName')} className="flex-1 min-w-[10rem] p-1 bg-slate-900 border border-slate-600 rounded text-white" />
                                                                 : <select value={cur} onChange={e => { const v = e.target.value; if (v === '@type') setTyping(s => ({ ...s, [nm.key]: '' })); else setPicks(p => ({ ...p, [nm.key]: v })); }} className="flex-1 min-w-[10rem] max-w-full p-1 bg-slate-900 border border-slate-600 rounded text-white">
@@ -2391,6 +2445,11 @@
                                                                     <option value="@type">{t('importTypeName')}</option>
                                                                 </select>}
                                                             {doubt && <span className="text-amber-300 font-semibold">{nm.auto ? t('importGuess') : t('importNoMatch')}</span>}
+                                                            {doubt && nm.options.length > 0 && (
+                                                                <div className="basis-full flex flex-wrap gap-1.5 pl-1 pt-1">
+                                                                    {nm.options.map(o => <button type="button" key={o} title={o} onClick={() => setPicks(p => ({ ...p, [nm.key]: o }))} className={`w-12 rounded-sm overflow-hidden border-2 ${o === cur ? 'border-violet-400' : 'border-transparent opacity-80 hover:opacity-100'}`}>{cardImg(o) ? <img src={cardImg(o)} alt={o} className="w-full" loading="lazy" /> : <span className="block text-[9px] p-1 text-slate-300">{o}</span>}</button>)}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
@@ -2402,13 +2461,13 @@
                                             {hands.map((h, i) => <button key={i} role="tab" aria-selected={i === tab} title={h.title} onClick={() => setTab(i)} className={`px-3 py-1.5 text-sm font-semibold rounded-t-md ${i === tab ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>{handLabel(i)} <span className="opacity-70 text-xs">({stepsOf(h).length})</span></button>)}
                                         </div>
                                     )}
-                                    {hand.title && <p className="text-xs text-violet-200 italic">{hand.title}</p>}
+                                    {hand.title && <p className="text-xs text-violet-200 italic flex items-center gap-2"><TsBtn ts={hand.ts} /><span>{hand.title}</span></p>}
                                     <p className="text-sm font-semibold text-slate-200">{t('importPreview', { n: steps.length })}{flagged > 0 && <span className="text-amber-300"> · {t('importFlagged', { n: flagged })}</span>}</p>
                                     <ol className="space-y-1.5">
                                         {hand.items.map((it, i) => it.kind === 'group'
                                             ? <li key={i} className="text-amber-400 font-bold text-xs uppercase pt-2">{it.title}</li>
                                             : <li key={i} className={`rounded-md p-2 text-sm border ${it.warn.length ? 'border-amber-500/70 bg-amber-900/15' : 'border-slate-700 bg-slate-800/50'}`}>
-                                                <div><span className="font-bold text-slate-400 mr-1">{++n}.</span>{it.chainRole === 'resolve' && <span className="text-sky-300 mr-1">↳</span>}{it.chainRole === 'link' && <span className="text-sky-300 mr-1">⛓</span>}<span className="text-yellow-300 font-semibold">{act(it)}</span> <span className="font-semibold text-white">{it.main ? nameOf(it.main) : '—'}</span>{it.targets.length > 0 && <span className="text-slate-300"> → {it.targets.map(nameOf).join(', ')}</span>}</div>
+                                                <div className="flex items-start gap-2">{cardImg(it.main) && <img src={cardImg(it.main)} alt="" className="w-7 rounded-sm flex-none mt-0.5" loading="lazy" />}<div className="flex-1 min-w-0"><span className="font-bold text-slate-400 mr-1">{++n}.</span>{it.chainRole === 'resolve' && <span className="text-sky-300 mr-1">↳</span>}{it.chainRole === 'link' && <span className="text-sky-300 mr-1">⛓</span>}<span className="text-yellow-300 font-semibold">{act(it)}</span> <span className="font-semibold text-white">{it.main ? nameOf(it.main) : '—'}</span>{it.targets.length > 0 && <span className="text-slate-300"> → {it.targets.map(nameOf).join(', ')}</span>}</div><TsBtn ts={it.ts} /></div>
                                                 {it.desc && <div className="text-xs text-slate-400 mt-0.5">{it.desc}</div>}
                                                 {it.branch && <div className="text-xs text-red-300 mt-0.5">↳ {t('branchLabel')}: {it.branch.steps.length}</div>}
                                                 {it.warn.length > 0 && <ul className="text-xs text-amber-300 list-disc pl-5 mt-1">{it.warn.map((w, k) => <W key={k} w={w} />)}</ul>}
@@ -2417,6 +2476,7 @@
                                     {hand.endboard && <p className="text-xs text-slate-400"><b>{t('importEndboard')}:</b> {hand.endboard.join(' · ')}</p>}
                                 </div>
                             )}
+                        </div>
                         </div>
                         <div className="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-slate-700">
                             <button onClick={onClose} className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-700">{t('cancel')}</button>
@@ -3764,6 +3824,23 @@
                 setWiggleKeys(prev => { const n = new Set(prev); n.add(key); return n; });
                 setTimeout(() => setWiggleKeys(prev => { const n = new Set(prev); n.delete(key); return n; }), 1400);
             };
+            // carta principal del paso: elegirla, cambiarla o soltarla desde el pool
+            const setStepMain = (step, card) => { if (!card || card.isNote || step.isLocked) return; updateStep(step.id, { mainCardInstanceId: card.instanceId }); };
+            const dropOnStepMain = (e, step) => {
+                e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over'); setDragOverIndex(null);
+                let d = null; try { d = JSON.parse(e.dataTransfer.getData('text/plain')); } catch (er) {}
+                window.__YGO_DRAGGING__ = false; setDraggedItem(null);
+                if (!d) return;
+                if (d.type === 'step') { handleReorder('step', d.data, step); return; }
+                if (step.isLocked) return;
+                if (['pool-card', 'hand-card', 'board-card'].includes(d.type)) { setStepMain(step, findCard(d.data.instanceId || d.data)); return; }
+                if (d.type === 'search-card') {
+                    // carta del buscador: entra al pool y al paso de una vez
+                    let c = cardPool.find(x => !x.isCustom && x.ygoprodeck_id === d.data.id); let pool = cardPool;
+                    if (!c) { c = createComboCardInstance(d.data, IMAGE_PROXY); pool = [...cardPool, c]; }
+                    setComboState({ ...comboState, cardPool: pool, comboSteps: comboSteps.map(s => s.id === step.id ? { ...s, mainCardInstanceId: c.instanceId } : s) }, `Added '${c.name}'`);
+                }
+            };
             const addVulnCard = (step, card) => {
                 if (!card || card.isNote) return;
                 const v = step.vulnerability || { text: '', cards: [] };
@@ -4968,6 +5045,7 @@
                                                                     <button onClick={() => moveStep(step.id, -1)} disabled={index === 0} className="step-menu-item" role="menuitem"><i className="fas fa-arrow-up w-5 text-center"></i>{t('moveStepUp')}</button>
                                                                     <button onClick={() => moveStep(step.id, 1)} disabled={index === comboSteps.length - 1} className="step-menu-item" role="menuitem"><i className="fas fa-arrow-down w-5 text-center"></i>{t('moveStepDown')}</button>
                                                                     <CardSelector cardPool={cardPool} onCardSelected={item => { handleAddStepOrNote(item, index + 1); setOpenStepMenuId(null); }} allowNote={true} displayAs="menu-item" buttonText={t('insertStepBelow')} t={t} preferredDirection="side" />
+                                                                    {!step.isLocked && <CardSelector cardPool={cardPool} onCardSelected={c => { setStepMain(step, c); setOpenStepMenuId(null); }} displayAs="menu-item" icon="fa-right-left" buttonText={mainCard ? t('changeStepCard') : t('setStepCard')} t={t} preferredDirection="side" />}
                                                                     <button onClick={() => toggleStepLock(step.id)} className="step-menu-item" role="menuitem">{step.isLocked ? <i className="fas fa-lock w-5 text-center"></i> : <i className="fas fa-unlock w-5 text-center"></i>}{step.isLocked ? t('unlockStep') : t('lockStep')}</button>
                                                                     <div className="border-t border-[var(--color-border)] my-1"></div>
                                                                     <div className="px-3 pt-1 pb-0.5 text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">{t('chainTitle')}</div>
@@ -4994,7 +5072,11 @@
                                                             ); })}
                                                             {!step.isLocked && <CardSelector cardPool={cardPool} mode="all" onCardSelected={card => addVulnCard(step, card)} displayAs="side-add" t={t} preferredDirection="side" wrapperClassName="side-add-vuln" />}
                                                         </div>
-                                                        <div className="step-main flex justify-center relative"><CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} /></div>
+                                                        <div className="step-main flex flex-col items-center justify-center relative gap-1.5" title={step.isLocked ? undefined : t('dropToSetCard')} onDragOver={e => { if (step.isLocked) return; e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('drag-over'); }} onDragLeave={e => e.currentTarget.classList.remove('drag-over')} onDrop={e => dropOnStepMain(e, step)}>
+                                                            {mainCard ? <CardDisplay card={mainCard} size="medium" onClick={c => setSelectedCardForZoom(c)} isHighlighted={highlightedCardIds.includes(step.mainCardInstanceId)} onMouseEnter={handleCardMouseEnter} onMouseLeave={handleCardMouseLeave} onMouseMove={handleCardMouseMove} />
+                                                                : (!step.isLocked && <CardSelector cardPool={cardPool} onCardSelected={c => setStepMain(step, c)} displayAs="card-placeholder" t={t} preferredDirection="side" />)}
+                                                            {mainCard && mainCard.isWildcard && !step.isLocked && <CardSelector cardPool={cardPool} onCardSelected={c => setStepMain(step, c)} displayAs="pill" icon="fa-right-left" buttonText={t('pickRealCard')} t={t} preferredDirection="side" />}
+                                                        </div>
                                                         <div className={`step-side step-side-right ${openSide === step.id + ':right' ? 'side-open' : ''}`} aria-label={t('sideTargets')}><button type="button" className="side-close" onClick={() => setOpenSide(null)} aria-label={t('closeLabel')}>×</button>
                                                             {(step.targetCards || []).map((target, ti) => { const tc = findCard(target.instanceId); if (!tc) return null; const mk = targetMove(step, target); return (
                                                                 <div key={`target-${target.instanceId}-${ti}`} className={`side-thumb ${highlightedCardIds.includes(target.instanceId) ? 'side-hl' : ''}`} title={`${tc.name} — ${moveLabel(mk)}`}>
