@@ -4007,23 +4007,46 @@ const importLookupFuzzy = async cands => {
       if (!r.ok) continue;
       const data = (await r.json()).data || [];
       const lc = c.toLowerCase();
+      const archOf = list => [...new Set(list.map(x => x.archetype).filter(Boolean))];
       const exact = data.find(x => x.name.toLowerCase() === lc);
       const word = data.filter(x => new RegExp(`(^|[^a-z])${lc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`, 'i').test(x.name));
       if (exact) out[lc] = {
-        card: exact
+        card: exact,
+        archs: archOf([exact])
       };else if (word.length === 1) out[lc] = {
-        card: word[0]
+        card: word[0],
+        archs: archOf(word)
       };else if (word.length > 1) out[lc] = {
-        ambiguous: word.slice(0, 4).map(x => x.name)
+        ambiguous: word.slice(0, 4).map(x => x.name),
+        cards: word.slice(0, 4),
+        archs: archOf(word)
+      };else if (data.length) out[lc] = {
+        none: true,
+        archs: archOf(data)
       };
     } catch (e) {}
   }
   return out;
 };
-const IMPORT_STOP = new Set('the a an of and or to from in into on with for by if then when while it its this that your my their his her you we i is are be as at all any each both either one two three four five deck gy graveyard hand field zone zones extra main monster monsters spell trap card cards normal special summon summons summoned link xyz synchro fusion ritual pendulum set activate activates effect effects use uses search searches add adds send sends banish banishes discard discards draw draws detach attach tribute cost starter end endboard board chain cl step turn opponent opponents player emz mmz s/t st note notes optional otherwise instead also can may must once per target targets negate destroy destroys equip flip attack battle phase standby draw first second third last next level rank atk def'.split(' '));
+const IMPORT_STOP = new Set('the a an of and or to from in into on with for by if then when while it its this that your my their his her you we i is are be as at all any each both either one two three four five deck gy graveyard hand field zone zones extra main monster monsters spell spells trap traps card cards normal special summon summons summoned link xyz synchro fusion ritual pendulum set activate activates effect effects use uses search searches add adds send sends banish banishes discard discards draw draws detach attach tribute cost starter end endboard board chain cl step turn opponent opponents player emz mmz s/t st note notes optional otherwise instead also can may must once per target targets negate negates destroy destroys equip flip attack battle phase standby draw first second third last next level rank atk def'.split(' '));
+const IMPORT_FILLER = new Set('engrave random copiescopy more other ones itself just need needs couple sure under points make makes light dark fiend since using shuffling shuffle shuffled revive revives grave place places reveal choose again early during total version rest same exactly combo combos drew drawn skillfully drawing want also only even still both lot here there what where this these those them they going show start started already time times way some few let well now okay alright because remember make sure point pointing count counting music applause laughter thing things into onto back over around about after before since though through whole full play plays played get gets got give gives given took take takes using used than other another free disruptions disruption floodgate interruption interruptions omni hand traps materials material copies life points'.split(' '));
 const importEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const importNorm = s => String(s || '').toLowerCase().replace(/['’]s\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const importLev = (a, b) => {
+  if (a === b) return 0;
+  let prev = Array.from({
+    length: b.length + 1
+  }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+};
+const importSim = (a, b) => 1 - importLev(a, b) / Math.max(a.length, b.length, 1);
 const importCandidates = line => {
-  const words = line.replace(/[«»"“”()]/g, ' ').split(/\s+/).filter(Boolean);
+  const words = line.replace(/[«»"“”()|]/g, ' ').split(/\s+/).filter(Boolean);
   const runs = [];
   let cur = [];
   const flush = () => {
@@ -4034,7 +4057,7 @@ const importCandidates = line => {
   words.forEach(w0 => {
     const w = w0.replace(/['’]s$/i, '').replace(/[.,;:!?]+$/, '');
     const bare = w.toLowerCase();
-    if (/^[A-Z0-9]/.test(w) && !IMPORT_STOP.has(bare)) {
+    if (/^[A-Z0-9]/.test(w) && !/^\d+$/.test(w) && !IMPORT_STOP.has(bare) && !IMPORT_FILLER.has(bare) && !/^(you'll|i'll|we'll|it's|don't|let's)$/i.test(bare)) {
       cur.push(w);
       if (/[.,;:!?]$/.test(w0) || /['’]s$/i.test(w0)) flush();
     } else if (cur.length && /^(the|of|&|in|with)$/i.test(w)) cur.push(w);else flush();
@@ -4042,7 +4065,162 @@ const importCandidates = line => {
   flush();
   return runs.filter(r => r.length >= 3);
 };
-const IMPORT_KEYWORDS = [[/\blink summon|\blink (?:climb|into)\b/, 'Link Summon'], [/\bxyz summon|\boverlay\b|\brank[- ]?up\b/, 'Xyz Summon'], [/\bsynchro summon|\bsynchro\b/, 'Synchro Summon'], [/\bfusion summon|\bfuse\b/, 'Fusion Summon'], [/\bpendulum summon/, 'Pendulum Summon'], [/\bnormal summon|\bns\b/, 'Normal Summon'], [/\bspecial summon|\bss\b|\brevive|\bsummons?\b|\bsummoned\b/, 'Special Summon'], [/\bsearch(es)?\b/, 'Search'], [/\badds?\b|\bto (?:the |your )?hand\b|\bsalvage/, 'Add to Hand'], [/\bsend(s)?\b.*\b(gy|graveyard)\b|\bto (?:the )?(gy|graveyard)\b|\bmill(s)?\b|\btribut/, 'Send to GY'], [/\bdiscard/, 'Discard'], [/\bbanish/, 'Banish'], [/\bset(s)?\b/, 'Set'], [/\battack/, 'Attack'], [/\bactivat|\beffect\b|\buse(s)?\b|\btrigger/, '@activate']];
+const IMPORT_TS = /^\s*\(?\d{1,2}:\d{2}(?::\d{2})?(?:[.,]\d+)?\)?\s*/;
+const importIsTranscript = text => {
+  const ls = String(text || '').split('\n').filter(l => l.trim());
+  return ls.length >= 3 && ls.filter(l => IMPORT_TS.test(l)).length >= ls.length * 0.3 || /\[(music|applause|laughter|snorts?|música|musique|musik)\]/i.test(text);
+};
+const importCleanTranscript = text => {
+  let title = '';
+  const body = [];
+  String(text).split('\n').forEach(l => {
+    if (/^\s*#/.test(l)) {
+      const tt = l.replace(/^\s*#+\s*/, '').trim();
+      if (!title && tt && !/transcript|https?:\/\//i.test(tt)) title = tt;
+      return;
+    }
+    body.push(l.replace(IMPORT_TS, ''));
+  });
+  const t = body.join(' ').replace(/\[[^\]]*\]/g, ' ').replace(/\((music|applause|laughter)\)/gi, ' ').replace(/\s+/g, ' ').trim();
+  const lines = t.split(/(?<=[.!?])\s+(?=\S)/).flatMap(s => s.split(/,?\s+(?:and\s+)?then\s+(?=[a-z])/i)).map(s => s.trim()).filter(s => /[a-z]/i.test(s));
+  return {
+    title,
+    lines
+  };
+};
+const importSplitHands = (lines, transcript) => {
+  const hands = [];
+  let cur = {
+    title: '',
+    lines: []
+  };
+  const push = () => {
+    if (cur.lines.length) hands.push(cur);
+  };
+  lines.forEach(l => {
+    if (/^(?:-{3,}|={3,}|_{3,})$/.test(l)) {
+      push();
+      cur = {
+        title: '',
+        lines: []
+      };
+      return;
+    }
+    if (/^(?:hand|mano|combo|line|route|ruta|l[ií]nea)\s*#?\s*\d+\b\s*[:.)-]?/i.test(l) && l.length < 120) {
+      push();
+      cur = {
+        title: l.replace(/[:\s]+$/, ''),
+        lines: []
+      };
+      return;
+    }
+    if (transcript && /\bcombo\b/i.test(l) && l.length < 180 && /^(now|for the|the same|if you|here'?s|next|another|let'?s|ok(?:ay)?|alright|first)\b/i.test(l)) {
+      push();
+      cur = {
+        title: l,
+        lines: []
+      };
+      return;
+    }
+    cur.lines.push(l);
+  });
+  push();
+  return hands.length ? hands : [{
+    title: '',
+    lines: []
+  }];
+};
+const importBuildVocab = cards => {
+  const keys = new Map();
+  const wc = {};
+  cards.forEach(c => {
+    new Set(importNorm(c.name).split(' ')).forEach(w => {
+      wc[w] = (wc[w] || 0) + 1;
+    });
+  });
+  const add = (k, c) => {
+    k = importNorm(k);
+    if (k.length < 3 || IMPORT_STOP.has(k) || IMPORT_FILLER.has(k)) return;
+    if (!keys.has(k)) keys.set(k, new Set());
+    keys.get(k).add(c.name);
+  };
+  cards.forEach(c => {
+    add(c.name, c);
+    c.name.split(/\s+-\s+|,\s+|:\s+/).forEach(seg => add(seg, c));
+    importNorm(c.name).split(' ').forEach(w => {
+      if (w.length >= 4 && wc[w] <= 2) add(w, c);
+    });
+  });
+  return [...keys.entries()].map(([k, s]) => ({
+    k,
+    nk: k.replace(/ /g, ''),
+    names: [...s]
+  })).filter(e => e.names.length <= 3);
+};
+const importVocabMatch = (line, vocab, memo) => {
+  const words = [];
+  const re = /[A-Za-z0-9'’]+/g;
+  let m;
+  while (m = re.exec(line)) words.push({
+    w: importNorm(m[0]),
+    at: m.index,
+    end: m.index + m[0].length
+  });
+  const look = txt => {
+    if (memo.has(txt)) return memo.get(txt);
+    const nt = txt.replace(/ /g, '');
+    const best = {};
+    vocab.forEach(e => {
+      if (nt.length >= 7 && e.nk.length > nt.length && e.nk.startsWith(nt)) {
+        e.names.forEach(n => {
+          if (!best[n] || best[n] < 0.9) best[n] = 0.9;
+        });
+        return;
+      }
+      if (Math.abs(e.nk.length - nt.length) > Math.max(2, nt.length * 0.4)) return;
+      const s = e.nk === nt ? 1 : importSim(nt, e.nk);
+      if (s >= 0.75 || s >= 0.6 && nt[0] === e.nk[0]) e.names.forEach(n => {
+        if (!best[n] || best[n] < s) best[n] = s;
+      });
+    });
+    const opts = Object.entries(best).map(([name, s]) => ({
+      name,
+      s
+    })).sort((a, b) => b.s - a.s).slice(0, 5);
+    memo.set(txt, opts);
+    return opts;
+  };
+  const out = [];
+  let i = 0;
+  while (i < words.length) {
+    let best = null;
+    for (let n = Math.min(4, words.length - i); n >= 1; n--) {
+      const seg = words.slice(i, i + n);
+      if (!seg.every((x, k) => x.w && !/^\d+$/.test(x.w) && !IMPORT_FILLER.has(x.w) && (!IMPORT_STOP.has(x.w) || k > 0 && k < n - 1 && /^(of|the)$/.test(x.w)))) continue;
+      const txt = seg.map(x => x.w).join(' ');
+      if (txt.replace(/ /g, '').length < 3) continue;
+      const opts = look(txt);
+      if (!opts.length) continue;
+      if (n === 1 && /^[a-z]/.test(line.slice(seg[0].at)) && opts[0].s < 0.7) continue;
+      const score = opts[0].s + n * 0.02;
+      if (!best || score > best.score) best = {
+        at: seg[0].at,
+        end: seg[n - 1].end,
+        text: line.slice(seg[0].at, seg[n - 1].end),
+        opts,
+        score,
+        n
+      };
+      if (opts[0].s === 1) break;
+    }
+    if (best) {
+      out.push(best);
+      i += best.n;
+    } else i++;
+  }
+  return out;
+};
+const IMPORT_KEYWORDS = [[/\blink summon|\blink (?:climb|into)\b/, 'Link Summon'], [/\bxyz summon|\boverlay\b|\brank[- ]?up\b|\b(?:x|xyz|exceed) (?:into|in to|to|season)\b/, 'Xyz Summon'], [/\bsynchro summon|\bsynchro\b/, 'Synchro Summon'], [/\bfusion summon|\bfuse\b|\bsummon the fusion\b/, 'Fusion Summon'], [/\bpendulum summon/, 'Pendulum Summon'], [/\bnormal summon|\bns\b/, 'Normal Summon'], [/\bspecial summon|\bss\b|\brevive|\bsummons?\b|\bsummoned\b/, 'Special Summon'], [/\bsearch(es)?\b/, 'Search'], [/\badds?\b|\bto (?:the |your )?hand\b|\bsalvage/, 'Add to Hand'], [/\bsend(s)?\b.*\b(gy|graveyard|grave)\b|\bto (?:the )?(gy|graveyard|grave)\b|\bmill(s)?\b|\btribut/, 'Send to GY'], [/\bdiscard/, 'Discard'], [/\bbanish/, 'Banish'], [/\bset(s)?\b/, 'Set'], [/\battack/, 'Attack'], [/\bactivat|\beffect\b|\buse(s)?\b|\btrigger/, '@activate']];
 const IMPORT_EXTRA_SUMMON = card => {
   const ty = (card && card.type || '').toLowerCase();
   if (/link/.test(ty)) return 'Link Summon';
@@ -4052,10 +4230,20 @@ const IMPORT_EXTRA_SUMMON = card => {
   return 'Special Summon';
 };
 const importIsSpellTrap = card => /spell|trap/i.test(card && card.type || '');
-const importParse = async text => {
-  const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
+const importPrepare = async (text, opts = {}) => {
+  const raw = String(text || '');
+  const structured = /\[\[[^\]]+\]\]/.test(raw);
+  let lines,
+    docTitle = '',
+    transcript = false;
+  if (!structured && importIsTranscript(raw)) {
+    const c = importCleanTranscript(raw);
+    lines = c.lines;
+    docTitle = c.title;
+    transcript = true;
+  } else lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const hands = importSplitHands(lines, transcript);
   const warnings = [];
-  const structured = lines.some(l => /\[\[[^\]]+\]\]/.test(l));
   const explicit = [];
   lines.forEach(l => {
     (l.match(/\[\[([^\]]+)\]\]/g) || []).forEach(m => {
@@ -4067,7 +4255,7 @@ const importParse = async text => {
   let fuzzy = {};
   const plainLines = lines.filter(l => !/\[\[/.test(l));
   if (plainLines.length) {
-    const cands = [...new Set(plainLines.flatMap(importCandidates))].filter(c => !found[c.toLowerCase()]);
+    const cands = [...new Set([...(docTitle ? importCandidates(docTitle) : []), ...plainLines.flatMap(importCandidates)])].filter(c => !found[c.toLowerCase()]);
     fuzzy = await importLookupFuzzy(cands);
     Object.values(fuzzy).forEach(v => {
       if (v.card) found[v.card.name.toLowerCase()] = v.card;
@@ -4076,379 +4264,628 @@ const importParse = async text => {
       key: 'importWarnTooManyNames'
     });
   }
+  const pool = [];
+  let archsUsed = [];
+  if (!structured) {
+    const score = {};
+    Object.values(fuzzy).forEach(v => {
+      const a = v.archs || [];
+      a.forEach(x => {
+        score[x] = (score[x] || 0) + (v.card ? 1 : 1 / a.length);
+      });
+    });
+    const archs = Object.entries(score).filter(([, s]) => s >= 0.5).sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]);
+    archsUsed = archs;
+    for (const a of archs) {
+      try {
+        const r = await fetch(`${YGOPRODECK_API_BASE_URL}?archetype=${encodeURIComponent(a)}`);
+        if (r.ok) ((await r.json()).data || []).forEach(c => pool.push(c));
+      } catch (e) {}
+    }
+    Object.values(found).forEach(c => pool.push(c));
+    Object.values(fuzzy).forEach(v => (v.cards || []).forEach(c => {
+      if (archs.includes(c.archetype)) pool.push(c);
+    }));
+    (opts.deck || []).forEach(c => pool.push(c));
+  }
+  const uniq = {};
+  pool.forEach(c => {
+    if (c && c.name && !/token/i.test(c.type || '') && !uniq[c.name.toLowerCase()]) uniq[c.name.toLowerCase()] = c;
+  });
+  Object.entries(uniq).forEach(([k, c]) => {
+    if (!found[k]) found[k] = c;
+  });
+  return {
+    hands,
+    warnings,
+    found,
+    fuzzy,
+    vocab: importBuildVocab(Object.values(uniq)),
+    archs: archsUsed,
+    structured,
+    transcript,
+    docTitle,
+    memo: new Map()
+  };
+};
+const importBuild = (ctx, picks = {}) => {
+  const {
+    found,
+    fuzzy,
+    vocab,
+    structured,
+    transcript
+  } = ctx;
+  const warnings = [...ctx.warnings];
+  const names = new Map();
   const cardOf = name => name === '@any' ? {
     name: '@any'
   } : found[String(name).toLowerCase()];
-  const items = [];
-  let endboard = null,
-    alt = null,
-    altTitle = '';
-  const seen = {};
-  const pushStep = (target, st) => {
-    (target || items).push(st);
-    return st;
+  const exactRes = Object.keys(found).sort((a, b) => b.length - a.length).map(n => ({
+    n,
+    re: new RegExp(`(^|[^a-z0-9])(${importEsc(n)})(?=[^a-z0-9]|$)`, 'ig')
+  }));
+  const note = (text, options, auto, sure, reg) => {
+    const key = importNorm(text);
+    if (reg) {
+      let e = names.get(key);
+      if (!e) {
+        e = {
+          key,
+          text,
+          options,
+          auto,
+          sure,
+          count: 0
+        };
+        names.set(key, e);
+      }
+      e.count++;
+    }
+    return picks[key] !== undefined ? picks[key] : auto;
   };
-  lines.forEach(raw => {
-    let line = raw;
-    if (/^(end ?board|final board)\b/i.test(line)) {
-      endboard = [];
-      line = line.replace(/^(end ?board|final board)\s*:?\s*/i, '');
-      if (!line) return;
-    }
-    if (endboard) {
-      endboard.push(line.replace(/\[\[([^\]]+)\]\]/g, '$1').replace(/\{[^}]+\}/g, '').trim());
-      return;
-    }
-    const numM = line.match(/^(?:step\s*)?(\d{1,2})(?:\.(\d{1,2}))?[.):]?\s+/i);
-    const key = numM ? numM[1] + (numM[2] ? '.' + numM[2] : '') : null;
-    if (numM) line = line.slice(numM[0].length);
-    if (key && seen[key] !== undefined && !alt) {
-      alt = {
-        at: seen[key],
-        steps: []
-      };
-    } else if (key && seen[key] === undefined && alt) {
-      closeAlt();
-    }
-    const target = alt ? alt.steps : null;
-    const before = (target || items).length;
-    const tokens = [];
-    const re = /\[\[([^\]]+)\]\]|\{([^}]+)\}|(\+|=)|([^[\]{}+=]+)/g;
-    let m;
-    while (m = re.exec(line)) {
-      if (m[1]) {
-        const n = m[1].trim();
-        const ic = importIcon(n);
-        tokens.push(ic ? {
-          t: 'icon',
-          v: ic,
-          raw: n
-        } : {
-          t: 'card',
-          v: n
-        });
-      } else if (m[2]) {
-        const ic = importIcon(m[2]);
-        tokens.push(ic ? {
-          t: 'icon',
-          v: ic,
-          raw: m[2]
-        } : {
-          t: 'icon',
-          v: '@unknown',
-          raw: m[2]
-        });
-      } else if (m[3]) tokens.push({
-        t: 'op',
-        v: m[3]
-      });else if (m[4] && m[4].trim()) tokens.push({
-        t: 'text',
-        v: m[4].trim()
+  const guessOpts = txt => {
+    const nt = importNorm(txt).replace(/ /g, '');
+    const best = {};
+    vocab.forEach(e => {
+      const s = importSim(nt, e.nk);
+      if (s >= 0.45) e.names.forEach(n => {
+        if (!best[n] || best[n] < s) best[n] = s;
       });
+    });
+    return Object.entries(best).sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]);
+  };
+  const findCards = (line, reg = true) => {
+    const hits = [];
+    const warn = [];
+    let rest = ' ' + line + ' ';
+    const blank = (i, len) => {
+      rest = rest.slice(0, i) + ' '.repeat(len) + rest.slice(i + len);
+    };
+    exactRes.forEach(({
+      n,
+      re
+    }) => {
+      re.lastIndex = 0;
+      let m;
+      while (m = re.exec(rest)) {
+        const at = m.index + m[1].length;
+        hits.push({
+          at,
+          name: found[n].name
+        });
+        blank(at, m[2].length);
+      }
+    });
+    const caps = importCandidates(line);
+    const capsFound = () => caps.forEach(c => {
+      const f = fuzzy[c.toLowerCase()];
+      if (!f || !f.card) return;
+      const i = rest.toLowerCase().indexOf(c.toLowerCase());
+      if (i === -1) return;
+      hits.push({
+        at: i,
+        name: f.card.name
+      });
+      blank(i, c.length);
+    });
+    if (structured) capsFound();else {
+      importVocabMatch(rest, vocab, ctx.memo).forEach(mm => {
+        const o = mm.opts;
+        const auto = o[0].s >= 0.6 ? o[0].name : null;
+        const sure = o[0].s >= 0.85 && (o.length === 1 || o[1].s <= o[0].s - 0.08);
+        const pick = note(mm.text, o.map(x => x.name), auto, sure, reg);
+        if (pick) hits.push({
+          at: mm.at,
+          name: pick
+        });
+        blank(mm.at, mm.end - mm.at);
+      });
+      capsFound();
     }
-    const hasCards = tokens.some(x => x.t === 'card');
-    if (structured && !hasCards && !tokens.some(x => x.t === 'icon')) {
-      const title = tokens.map(x => x.v).join(' ').trim();
-      if (title) {
-        if (alt) altTitle = altTitle || title;else items.push({
-          kind: 'group',
-          title
+    caps.forEach(c => {
+      const i = rest.toLowerCase().indexOf(c.toLowerCase());
+      if (i === -1) return;
+      const f = fuzzy[c.toLowerCase()];
+      if (f && f.ambiguous) {
+        const ctxName = f.ambiguous.find(x => Object.values(fuzzy).some(v => v.card && v.card.name === x)) || f.ambiguous.find(x => (ctx.archs || []).includes((found[x.toLowerCase()] || {}).archetype)) || null;
+        const pick = note(c, f.ambiguous, ctxName, false, reg);
+        if (pick) hits.push({
+          at: i,
+          name: pick
+        });else if (structured) warn.push({
+          key: 'importWarnAmbiguous',
+          p: {
+            x: c,
+            y: f.ambiguous.join(', ')
+          }
+        });
+      } else {
+        const pick = note(c, guessOpts(c), null, false, reg);
+        if (pick) hits.push({
+          at: i,
+          name: pick
+        });else if (reg && picks[importNorm(c)] === undefined) warn.push({
+          key: 'importWarnUnknownName',
+          p: {
+            x: c
+          }
         });
       }
-      return;
-    }
-    if (hasCards || tokens.some(x => x.t === 'icon')) parseStructured(tokens, target);else parseFree(raw.replace(/^(?:step\s*)?\d{1,2}(?:\.\d{1,2})?[.):]?\s+/i, ''), target);
-    if (key && seen[key] === undefined && (target || items).length > before) seen[key] = alt ? -1 : before;
-  });
-  closeAlt();
-  function closeAlt() {
-    if (!alt) return;
-    const host = items[alt.at];
-    if (host && host.kind === 'step' && alt.steps.length) {
-      host.branch = {
-        title: altTitle,
-        steps: alt.steps
-      };
-      host.warn.push({
-        key: 'importWarnAltLine'
-      });
-    }
-    alt = null;
-    altTitle = '';
-  }
-  function parseStructured(tokens, target) {
-    const newStep = (action, main, targets = [], extra = {}) => pushStep(target, {
-      kind: 'step',
-      action,
-      main,
-      targets,
-      desc: '',
-      chainRole: undefined,
-      warn: [],
-      ...extra
+      blank(i, c.length);
     });
-    const lineSteps = [];
-    const add = st => {
-      if (lineSteps.length && st.chainRole === undefined) st.chainRole = 'resolve';
-      lineSteps.push(st);
+    hits.sort((a, b) => a.at - b.at);
+    const out = hits.filter((h, k) => !k || h.name !== hits[k - 1].name);
+    return {
+      hits: out,
+      rest,
+      warn
+    };
+  };
+  const hands = ctx.hands.map(h => buildHand(h));
+  return {
+    hands,
+    warnings,
+    found,
+    names: [...names.values()],
+    structured,
+    transcript
+  };
+  function buildHand(hand) {
+    const items = [];
+    let endboard = null,
+      alt = null,
+      altTitle = '';
+    const seen = {};
+    const pushStep = (target, st) => {
+      (target || items).push(st);
       return st;
     };
-    const appendDesc = txt => {
-      const last = lineSteps[lineSteps.length - 1];
-      if (last) last.desc = (last.desc ? last.desc + ' ' : '') + txt;else pending.push(txt);
-    };
-    const pending = [];
-    const eq = tokens.findIndex(x => x.t === 'op' && x.v === '=');
-    let start = 0;
-    if (eq !== -1) {
-      const mats = tokens.slice(0, eq).filter(x => x.t === 'card').map(x => x.v);
-      const resIdx = tokens.findIndex((x, i) => i > eq && x.t === 'card');
-      if (resIdx === -1) {
-        const st = add(newStep('Other', mats[0] || null, mats.slice(1)));
-        st.warn.push({
-          key: 'importWarnOdd'
-        });
+    let lastCard = hand.title ? (findCards(hand.title, false).hits[0] || {}).name || null : null;
+    hand.lines.forEach(raw => {
+      let line = raw;
+      if (/^(end ?board|final board)\b/i.test(line) || transcript && /\b(this|the|our|your|final) end ?board\b/i.test(line)) {
+        endboard = endboard || [];
+        line = line.replace(/^(end ?board|final board)\s*:?\s*/i, '');
+        if (!line) return;
+      }
+      if (endboard) {
+        endboard.push(line.replace(/\[\[([^\]]+)\]\]/g, '$1').replace(/\{[^}]+\}/g, '').trim());
         return;
       }
-      const res = tokens[resIdx].v;
-      add(newStep(IMPORT_EXTRA_SUMMON(cardOf(res)), res, mats));
-      start = resIdx + 1;
-    }
-    let actor = null,
-      chainNext = null;
-    for (let i = start; i < tokens.length; i++) {
-      const tk = tokens[i];
-      if (tk.t === 'text') {
-        if (/^\d+$/.test(tk.v) && chainNext === 'wait') {
-          chainNext = Number(tk.v);
-          const last = lineSteps[lineSteps.length - 1];
-          if (last) last.chainRole = chainNext > 1 ? 'link' : lineSteps.length > 1 ? 'resolve' : undefined;
-          continue;
-        }
-        appendDesc(tk.v);
-        continue;
+      const numM = line.match(/^(?:step\s*)?(\d{1,2})(?:\.(\d{1,2}))?[.):]?\s+/i);
+      const key = numM ? numM[1] + (numM[2] ? '.' + numM[2] : '') : null;
+      if (numM) line = line.slice(numM[0].length);
+      if (key && seen[key] !== undefined && !alt) {
+        alt = {
+          at: seen[key],
+          steps: []
+        };
+      } else if (key && seen[key] === undefined && alt) {
+        closeAlt();
       }
-      if (tk.t === 'op') continue;
-      if (tk.t === 'icon') {
-        if (tk.v === '@unknown') {
-          const st = lineSteps[lineSteps.length - 1];
-          (st ? st.warn : warnings).push({
-            key: 'importWarnIcon',
-            p: {
-              x: tk.raw
-            }
+      const target = alt ? alt.steps : null;
+      const before = (target || items).length;
+      const tokens = [];
+      const re = /\[\[([^\]]+)\]\]|\{([^}]+)\}|(\+|=)|([^[\]{}+=]+)/g;
+      let m;
+      while (m = re.exec(line)) {
+        if (m[1]) {
+          const n = m[1].trim();
+          const ic = importIcon(n);
+          tokens.push(ic ? {
+            t: 'icon',
+            v: ic,
+            raw: n
+          } : {
+            t: 'card',
+            v: n
+          });
+        } else if (m[2]) {
+          const ic = importIcon(m[2]);
+          tokens.push(ic ? {
+            t: 'icon',
+            v: ic,
+            raw: m[2]
+          } : {
+            t: 'icon',
+            v: '@unknown',
+            raw: m[2]
+          });
+        } else if (m[3]) tokens.push({
+          t: 'op',
+          v: m[3]
+        });else if (m[4] && m[4].trim()) tokens.push({
+          t: 'text',
+          v: m[4].trim()
+        });
+      }
+      const hasCards = tokens.some(x => x.t === 'card');
+      if (structured && !hasCards && !tokens.some(x => x.t === 'icon')) {
+        const title = tokens.map(x => x.v).join(' ').trim();
+        if (title) {
+          if (alt) altTitle = altTitle || title;else items.push({
+            kind: 'group',
+            title
           });
         }
-        continue;
+        return;
       }
-      const card = tk.v;
-      const icons = [];
-      let j = i + 1;
-      while (j < tokens.length && tokens[j].t === 'icon') {
-        icons.push(tokens[j]);
-        j++;
+      if (hasCards || tokens.some(x => x.t === 'icon')) parseStructured(tokens, target);else parseFree(raw.replace(/^(?:step\s*)?\d{1,2}(?:\.\d{1,2})?[.):]?\s+/i, ''), target);
+      if (key && seen[key] === undefined && (target || items).length > before) seen[key] = alt ? -1 : before;
+    });
+    closeAlt();
+    return {
+      title: hand.title,
+      items,
+      endboard: endboard && endboard.length ? endboard : null
+    };
+    function closeAlt() {
+      if (!alt) return;
+      const host = items[alt.at];
+      if (host && host.kind === 'step' && alt.steps.length) {
+        host.branch = {
+          title: altTitle,
+          steps: alt.steps
+        };
+        host.warn.push({
+          key: 'importWarnAltLine'
+        });
       }
-      const nextCard = tokens[j] && tokens[j].t === 'card' ? tokens[j].v : null;
-      if (!icons.length) {
-        const prev = tokens[i - 1];
+      alt = null;
+      altTitle = '';
+    }
+    function parseStructured(tokens, target) {
+      const newStep = (action, main, targets = [], extra = {}) => pushStep(target, {
+        kind: 'step',
+        action,
+        main,
+        targets,
+        desc: '',
+        chainRole: undefined,
+        warn: [],
+        ...extra
+      });
+      const lineSteps = [];
+      const add = st => {
+        if (lineSteps.length && st.chainRole === undefined) st.chainRole = 'resolve';
+        lineSteps.push(st);
+        return st;
+      };
+      const appendDesc = txt => {
         const last = lineSteps[lineSteps.length - 1];
-        if (prev && prev.t === 'card' && last && /^Activate/.test(last.action)) {
-          last.targets.push(card);
+        if (last) last.desc = (last.desc ? last.desc + ' ' : '') + txt;else pending.push(txt);
+      };
+      const pending = [];
+      const eq = tokens.findIndex(x => x.t === 'op' && x.v === '=');
+      let start = 0;
+      if (eq !== -1) {
+        const mats = tokens.slice(0, eq).filter(x => x.t === 'card').map(x => x.v);
+        const resIdx = tokens.findIndex((x, i) => i > eq && x.t === 'card');
+        if (resIdx === -1) {
+          const st = add(newStep('Other', mats[0] || null, mats.slice(1)));
+          st.warn.push({
+            key: 'importWarnOdd'
+          });
+          return;
+        }
+        const res = tokens[resIdx].v;
+        add(newStep(IMPORT_EXTRA_SUMMON(cardOf(res)), res, mats));
+        start = resIdx + 1;
+      }
+      let actor = null,
+        chainNext = null;
+      for (let i = start; i < tokens.length; i++) {
+        const tk = tokens[i];
+        if (tk.t === 'text') {
+          if (/^\d+$/.test(tk.v) && chainNext === 'wait') {
+            chainNext = Number(tk.v);
+            const last = lineSteps[lineSteps.length - 1];
+            if (last) last.chainRole = chainNext > 1 ? 'link' : lineSteps.length > 1 ? 'resolve' : undefined;
+            continue;
+          }
+          appendDesc(tk.v);
+          continue;
+        }
+        if (tk.t === 'op') continue;
+        if (tk.t === 'icon') {
+          if (tk.v === '@unknown') {
+            const st = lineSteps[lineSteps.length - 1];
+            (st ? st.warn : warnings).push({
+              key: 'importWarnIcon',
+              p: {
+                x: tk.raw
+              }
+            });
+          }
+          continue;
+        }
+        const card = tk.v;
+        const icons = [];
+        let j = i + 1;
+        while (j < tokens.length && tokens[j].t === 'icon') {
+          icons.push(tokens[j]);
+          j++;
+        }
+        const nextCard = tokens[j] && tokens[j].t === 'card' ? tokens[j].v : null;
+        if (!icons.length) {
+          const prev = tokens[i - 1];
+          const last = lineSteps[lineSteps.length - 1];
+          if (prev && prev.t === 'card' && last && /^Activate/.test(last.action)) {
+            last.targets.push(card);
+            i = j - 1;
+            continue;
+          }
+          const info = cardOf(card);
+          add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card));
+          actor = card;
           i = j - 1;
           continue;
         }
-        const info = cardOf(card);
-        add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card));
-        actor = card;
+        icons.forEach(ic => {
+          const v = ic.v;
+          if (v === '@activate') {
+            const info = cardOf(card);
+            add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card));
+            actor = card;
+          } else if (v === '@chain') {
+            const info = cardOf(card);
+            add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card));
+            actor = card;
+            chainNext = 'wait';
+          } else if (v === '@hand') {
+            if (nextCard && nextCard.toLowerCase() === card.toLowerCase()) actor = card;else add(newStep('Add to Hand', actor || card, actor ? [card] : []));
+          } else if (v === '@draw') add(newStep('Other', actor || card, [], {
+            custom: 'Draw'
+          }));else if (v === '@move') add(newStep('Other', card, [], {
+            custom: 'Attach'
+          }));else if (v === '@any') {} else if (v === 'Search') add(newStep('Search', actor || card, actor ? [card] : []));else add(newStep(v, card));
+        });
         i = j - 1;
-        continue;
       }
-      icons.forEach(ic => {
-        const v = ic.v;
-        if (v === '@activate') {
-          const info = cardOf(card);
-          add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card));
-          actor = card;
-        } else if (v === '@chain') {
-          const info = cardOf(card);
-          add(newStep(importIsSpellTrap(info) ? 'Activate Spell/Trap' : 'Activate Effect', card));
-          actor = card;
-          chainNext = 'wait';
-        } else if (v === '@hand') {
-          if (nextCard && nextCard.toLowerCase() === card.toLowerCase()) actor = card;else add(newStep('Add to Hand', actor || card, actor ? [card] : []));
-        } else if (v === '@draw') add(newStep('Other', actor || card, [], {
-          custom: 'Draw'
-        }));else if (v === '@move') add(newStep('Other', card, [], {
-          custom: 'Attach'
-        }));else if (v === '@any') {} else if (v === 'Search') add(newStep('Search', actor || card, actor ? [card] : []));else add(newStep(v, card));
-      });
-      i = j - 1;
-    }
-    if (pending.length && lineSteps[0]) lineSteps[0].desc = pending.join(' ') + (lineSteps[0].desc ? ' ' + lineSteps[0].desc : '');
-    if (!lineSteps.length) {
-      const st = newStep('Other', null);
-      st.desc = pending.join(' ');
-      st.warn.push({
-        key: 'importWarnNoCard'
+      if (pending.length && lineSteps[0]) lineSteps[0].desc = pending.join(' ') + (lineSteps[0].desc ? ' ' + lineSteps[0].desc : '');
+      if (!lineSteps.length) {
+        const st = newStep('Other', null);
+        st.desc = pending.join(' ');
+        st.warn.push({
+          key: 'importWarnNoCard'
+        });
+      }
+      lineSteps.forEach(st => {
+        [st.main, ...st.targets].forEach(n => {
+          if (n && n !== '@any' && !cardOf(n)) st.warn.push({
+            key: 'importWarnNotFound',
+            p: {
+              x: n
+            }
+          });
+        });
       });
     }
-    lineSteps.forEach(st => {
-      [st.main, ...st.targets].forEach(n => {
-        if (n && n !== '@any' && !cardOf(n)) st.warn.push({
-          key: 'importWarnNotFound',
+    function parseFree(line, target) {
+      const list = target || items;
+      const prev = list[list.length - 1];
+      const st = {
+        kind: 'step',
+        action: 'Other',
+        main: null,
+        targets: [],
+        desc: line,
+        chainRole: undefined,
+        warn: []
+      };
+      const fc = findCards(line);
+      const hits = fc.hits;
+      st.warn.push(...fc.warn);
+      const rest = fc.rest;
+      let low = rest.toLowerCase();
+      const acts = [];
+      IMPORT_KEYWORDS.forEach(([re, a]) => {
+        const m = low.match(re);
+        if (m && !acts.find(x => x.a === a)) {
+          acts.push({
+            a,
+            at: m.index
+          });
+          low = low.slice(0, m.index) + ' '.repeat(m[0].length) + low.slice(m.index + m[0].length);
+        }
+      });
+      low = rest.toLowerCase();
+      const pron = /\b(it|itself|its|this card)\b/.exec(low);
+      if (pron && lastCard && !hits.some(h => h.at < pron.index)) {
+        hits.push({
+          at: pron.index,
+          name: lastCard
+        });
+        hits.sort((a, b) => a.at - b.at);
+      }
+      const cards = hits.map(h => h.name);
+      const real = acts.filter(x => x.a !== '@activate').sort((a, b) => a.at - b.at);
+      if (transcript && (!cards.length && !real.length || /^(you'?ll|you|we'?ll)\s+(also\s+|just\s+)?need\b/i.test(line))) {
+        if (prev && prev.kind === 'step') prev.desc += ' ' + line;
+        return;
+      }
+      const pos = name => (hits.find(h => h.name === name) || {}).at;
+      if (real.length) {
+        const a = real[0];
+        st.action = a.a;
+        const intoM = /Summon$/.test(a.a) && /^\S*(?:\s+\S+)??\s*\b(?:into|in to|to|summon)\s+(?:the\s+)?(?:fusion\s+)?([a-z][a-z'’-]{2,})/i.exec((' ' + line + ' ').slice(a.at));
+        const intoAt = intoM ? a.at + intoM.index + intoM[0].length - intoM[1].length : -1;
+        if (intoM && !IMPORT_FILLER.has(intoM[1].toLowerCase()) && !IMPORT_STOP.has(intoM[1].toLowerCase()) && !hits.some(h => Math.abs(h.at - intoAt) <= 1)) {
+          const pick = note(intoM[1], guessOpts(intoM[1]), null, false, true);
+          st.main = pick || null;
+          st.targets = cards.filter(c => c !== st.main);
+          if (!pick && !st.warn.some(w => w.p && w.p.x === intoM[1])) st.warn.push({
+            key: 'importWarnUnknownName',
+            p: {
+              x: intoM[1]
+            }
+          });
+        } else if (/Summon$/.test(a.a)) {
+          const after = hits.find(h => h.at > a.at);
+          st.main = after ? after.name : st.warn.some(w => w.key === 'importWarnAmbiguous') ? null : cards[cards.length - 1] || null;
+          st.targets = /^(Link|Xyz|Synchro|Fusion) Summon$/.test(a.a) ? cards.filter(c => c !== st.main) : [];
+        } else {
+          const actorHit = hits.find(h => h.at < a.at);
+          if (!actorHit && /^(Search|Add to Hand)$/.test(a.a) && lastCard && !cards.includes(lastCard)) {
+            st.main = lastCard;
+            st.targets = cards;
+          } else {
+            st.main = actorHit ? actorHit.name : cards[0] || null;
+            st.targets = cards.filter(c => c !== st.main && pos(c) > a.at);
+            if (!actorHit && cards.length > 1) st.targets = cards.slice(1);
+          }
+        }
+        if (a.a === 'Add to Hand' && /\b(from )?(the )?deck\b/.test(low) && !/\b(gy|graveyard|banish)/.test(low)) st.action = 'Search';
+        if (st.action === 'Special Summon' && st.main && /\b(using|with|by shuffling|by tributing)\b/.test(low)) st.action = IMPORT_EXTRA_SUMMON(cardOf(st.main));
+        if (!cards.length && /^(Discard|Send to GY|Banish)$/.test(a.a) && /\b(random|cards?|another|any)\b/.test(low)) st.main = '@any';
+        if (real.length > 1 && new Set(real.map(x => x.a)).size > 1) st.warn.push({
+          key: 'importWarnManyActions',
           p: {
-            x: n
+            x: real.map(x => trTerm(x.a)).join(' + ')
           }
         });
-      });
-    });
-  }
-  function parseFree(line, target) {
-    const st = {
-      kind: 'step',
-      action: 'Other',
-      main: null,
-      targets: [],
-      desc: line,
-      chainRole: undefined,
-      warn: []
-    };
-    const hits = [];
-    const names = Object.keys(found).sort((a, b) => b.length - a.length);
-    let rest = ' ' + line + ' ';
-    names.forEach(n => {
-      const re = new RegExp(`(^|[^a-z0-9])(${importEsc(n)})(?=[^a-z0-9]|$)`, 'ig');
-      let m;
-      while (m = re.exec(rest)) {
-        hits.push({
-          at: m.index + m[1].length,
-          name: found[n].name
-        });
-        rest = rest.slice(0, m.index + m[1].length) + ' '.repeat(m[2].length) + rest.slice(m.index + m[1].length + m[2].length);
-      }
-    });
-    importCandidates(line).forEach(c => {
-      const f = fuzzy[c.toLowerCase()];
-      if (!f) return;
-      const i = rest.toLowerCase().indexOf(c.toLowerCase());
-      if (i === -1) return;
-      const ctx = f.ambiguous && f.ambiguous.find(x => found[x.toLowerCase()]);
-      if (f.card || ctx) hits.push({
-        at: i,
-        name: f.card ? f.card.name : ctx
-      });else st.warn.push({
-        key: 'importWarnAmbiguous',
-        p: {
-          x: c,
-          y: f.ambiguous.join(', ')
-        }
-      });
-      rest = rest.slice(0, i) + ' '.repeat(c.length) + rest.slice(i + c.length);
-    });
-    hits.sort((a, b) => a.at - b.at);
-    const cards = hits.map(h => h.name);
-    let low = rest.toLowerCase();
-    const acts = [];
-    IMPORT_KEYWORDS.forEach(([re, a]) => {
-      const m = low.match(re);
-      if (m && !acts.find(x => x.a === a)) {
-        acts.push({
-          a,
-          at: m.index
-        });
-        low = low.slice(0, m.index) + ' '.repeat(m[0].length) + low.slice(m.index + m[0].length);
-      }
-    });
-    low = rest.toLowerCase();
-    const real = acts.filter(x => x.a !== '@activate').sort((a, b) => a.at - b.at);
-    const pos = name => (hits.find(h => h.name === name) || {}).at;
-    if (real.length) {
-      const a = real[0];
-      st.action = a.a;
-      if (/Summon$/.test(a.a)) {
-        const after = hits.find(h => h.at > a.at);
-        st.main = after ? after.name : st.warn.some(w => w.key === 'importWarnAmbiguous') ? null : cards[cards.length - 1] || null;
-        st.targets = /^(Link|Xyz|Synchro|Fusion) Summon$/.test(a.a) ? cards.filter(c => c !== st.main) : [];
+      } else if (acts.length && cards.length) {
+        st.main = cards[0];
+        st.action = importIsSpellTrap(cardOf(cards[0])) ? 'Activate Spell/Trap' : 'Activate Effect';
+        st.targets = cards.slice(1);
       } else {
-        const actorHit = hits.find(h => h.at < a.at);
-        st.main = actorHit ? actorHit.name : cards[0] || null;
-        st.targets = cards.filter(c => c !== st.main && pos(c) > a.at);
-        if (!actorHit && cards.length > 1) st.targets = cards.slice(1);
+        st.main = cards[0] || null;
+        st.targets = cards.slice(1);
+        if (cards.length) st.warn.push({
+          key: 'importWarnNoAction'
+        });
       }
-      if (a.a === 'Add to Hand' && /\b(from )?(the )?deck\b/.test(low) && !/\b(gy|graveyard|banish)/.test(low)) st.action = 'Search';
-      if (real.length > 1 && new Set(real.map(x => x.a)).size > 1) st.warn.push({
-        key: 'importWarnManyActions',
-        p: {
-          x: real.map(x => trTerm(x.a)).join(' + ')
-        }
+      if (!st.main && !cards.length) st.warn.push({
+        key: 'importWarnNoCard'
       });
-    } else if (acts.length && cards.length) {
-      st.main = cards[0];
-      st.action = importIsSpellTrap(cardOf(cards[0])) ? 'Activate Spell/Trap' : 'Activate Effect';
-      st.targets = cards.slice(1);
-    } else {
-      st.main = cards[0] || null;
-      st.targets = cards.slice(1);
-      if (cards.length) st.warn.push({
-        key: 'importWarnNoAction'
+      if (line.length > 170 || /\b(if|unless|otherwise|either|instead|depending|in case|optional(ly)?)\b/i.test(line)) st.warn.push({
+        key: 'importWarnComplex'
       });
+      if (/^(Search|Add to Hand)$/.test(st.action) && st.targets.length) lastCard = st.targets[st.targets.length - 1];else if (!/^(Discard|Send to GY|Banish)$/.test(st.action) && st.main && st.main !== '@any') lastCard = st.main;
+      if (transcript && prev && prev.kind === 'step' && /^Activate/.test(prev.action) && !prev.targets.length && prev.main && st.main === prev.main && !/^Activate/.test(st.action) && st.action !== 'Other') {
+        prev.action = st.action;
+        prev.targets = st.targets;
+        prev.desc += ' ' + st.desc;
+        prev.warn = prev.warn.concat(st.warn);
+        return;
+      }
+      pushStep(target, st);
     }
-    if (!cards.length) st.warn.push({
-      key: 'importWarnNoCard'
-    });
-    if (line.length > 170 || /\b(if|unless|otherwise|either|instead|depending|in case|optional(ly)?)\b/i.test(line)) st.warn.push({
-      key: 'importWarnComplex'
-    });
-    importCandidates(line).forEach(c => {
-      if (!fuzzy[c.toLowerCase()] && !found[c.toLowerCase()] && !cards.some(x => x.toLowerCase().includes(c.toLowerCase()))) st.warn.push({
-        key: 'importWarnUnknownName',
-        p: {
-          x: c
-        }
-      });
-    });
-    pushStep(target, st);
   }
-  return {
-    items,
-    warnings,
-    endboard: endboard && endboard.length ? endboard : null,
-    found,
-    structured
-  };
 };
 const ImportTextModal = ({
   show,
   onClose,
   onApply,
-  t
+  t,
+  deckCards = []
 }) => {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState(null);
+  const [ctx, setCtx] = useState(null);
+  const [picks, setPicks] = useState({});
+  const [tab, setTab] = useState(0);
+  const [useDeck, setUseDeck] = useState(true);
+  const [typing, setTyping] = useState({});
+  const res = useMemo(() => {
+    if (!ctx || ctx.error) return ctx;
+    try {
+      return importBuild(ctx, picks);
+    } catch (e) {
+      console.error(e);
+      return {
+        error: true
+      };
+    }
+  }, [ctx, picks]);
   if (!show) return null;
+  const reset = () => {
+    setCtx(null);
+    setPicks({});
+    setTab(0);
+  };
   const onPaste = e => {
     const html = e.clipboardData && e.clipboardData.getData('text/html');
     if (html && /<img/i.test(html)) {
       e.preventDefault();
       const txt = importHtmlToText(html);
       setText(prev => (prev ? prev + '\n' : '') + txt);
-      setRes(null);
+      reset();
     }
   };
   const analyze = async () => {
     setBusy(true);
     try {
-      setRes(await importParse(text));
+      setPicks({});
+      setTab(0);
+      setCtx(await importPrepare(text, {
+        deck: useDeck ? deckCards : []
+      }));
     } catch (e) {
       console.error(e);
-      setRes({
+      setCtx({
         error: true
       });
     }
     setBusy(false);
   };
-  const steps = res && res.items ? res.items.filter(x => x.kind === 'step') : [];
+  const typeName = async (key, value) => {
+    const v = String(value || '').trim();
+    if (!v || !ctx) return;
+    let card = ctx.found[v.toLowerCase()];
+    if (!card) {
+      const ex = await importLookupExact([v]);
+      card = ex[v.toLowerCase()];
+    }
+    if (!card) {
+      const fz = await importLookupFuzzy([v]);
+      const f = fz[v.toLowerCase()];
+      card = f && (f.card || (f.cards || [])[0]);
+    }
+    if (!card) {
+      alert(t('importWarnNotFound', {
+        x: v
+      }));
+      return;
+    }
+    ctx.found[card.name.toLowerCase()] = card;
+    setPicks(p => ({
+      ...p,
+      [key]: card.name
+    }));
+    setTyping(s => ({
+      ...s,
+      [key]: undefined
+    }));
+  };
+  const hands = res && res.hands ? res.hands : [];
+  const hand = hands[Math.min(tab, hands.length - 1)] || {
+    items: []
+  };
+  const stepsOf = h => h.items.filter(x => x.kind === 'step');
+  const steps = stepsOf(hand);
+  const allSteps = hands.reduce((s, h) => s + stepsOf(h).length, 0);
   const flagged = steps.filter(s => s.warn.length).length;
   const nameOf = n => n === '@any' ? t('anyCard') : n;
   const W = ({
@@ -4458,6 +4895,34 @@ const ImportTextModal = ({
     const a = YGO_ACTIONS.find(x => x.name === s.action) || {};
     return `${a.emoji || ''} ${s.custom || trTerm(s.action)}`;
   };
+  const handLabel = i => t('importHand', {
+    n: i + 1
+  });
+  const asImport = list => ({
+    found: res.found,
+    items: list.flatMap(({
+      h,
+      i
+    }) => [...(hands.length > 1 ? [{
+      kind: 'group',
+      title: handLabel(i) + (h.title ? ' — ' + h.title : '')
+    }] : []), ...h.items]),
+    endboard: list.some(({
+      h
+    }) => h.endboard) ? list.filter(({
+      h
+    }) => h.endboard).map(({
+      h,
+      i
+    }) => (hands.length > 1 ? handLabel(i) + ': ' : '') + h.endboard.join(' ')) : null
+  });
+  const apply = list => {
+    onApply(asImport(list));
+    onClose();
+    setText('');
+    reset();
+  };
+  const doubtful = res && res.names ? res.names.filter(n => !n.sure && picks[n.key] === undefined).length : 0;
   let n = 0;
   return React.createElement("div", {
     className: "fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-3",
@@ -4485,23 +4950,126 @@ const ImportTextModal = ({
     className: "fas fa-flask mr-1"
   }), t('importBetaTitle')), React.createElement("ul", {
     className: "list-disc pl-5 space-y-0.5"
-  }, React.createElement("li", null, t('importLimitEnglish')), React.createElement("li", null, t('importLimitReview')), React.createElement("li", null, t('importLimitChains')), React.createElement("li", null, t('importLimitZones')), React.createElement("li", null, t('importLimitCredit')))), React.createElement("p", {
+  }, React.createElement("li", null, t('importLimitEnglish')), React.createElement("li", null, t('importLimitReview')), React.createElement("li", null, t('importLimitVideo')), React.createElement("li", null, t('importLimitChains')), React.createElement("li", null, t('importLimitZones')), React.createElement("li", null, t('importLimitCredit')))), React.createElement("p", {
     className: "text-sm text-slate-300"
   }, t('importTextHelp')), React.createElement("textarea", {
     value: text,
     onChange: e => {
       setText(e.target.value);
-      setRes(null);
+      reset();
     },
     onPaste: onPaste,
     rows: "7",
     placeholder: t('importTextPlaceholder'),
     className: "w-full p-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white font-mono"
-  }), res && res.error && React.createElement("p", {
+  }), deckCards.length > 0 && React.createElement("label", {
+    className: "flex items-start gap-2 text-xs text-slate-300 cursor-pointer"
+  }, React.createElement("input", {
+    type: "checkbox",
+    className: "mt-0.5 h-4 w-4",
+    checked: useDeck,
+    onChange: e => {
+      setUseDeck(e.target.checked);
+      reset();
+    }
+  }), t('importUseDeck', {
+    n: deckCards.length
+  })), res && res.error && React.createElement("p", {
     className: "text-sm text-red-300"
   }, t('importError')), res && !res.error && React.createElement("div", {
     className: "space-y-2"
-  }, React.createElement("p", {
+  }, res.transcript && React.createElement("p", {
+    className: "text-xs text-sky-300"
+  }, React.createElement("i", {
+    className: "fas fa-closed-captioning mr-1"
+  }), t('importTranscriptCleaned')), res.warnings.length > 0 && React.createElement("ul", {
+    className: "text-xs text-amber-300 list-disc pl-5"
+  }, res.warnings.map((w, i) => React.createElement(W, {
+    key: i,
+    w: w
+  }))), res.names.length > 0 && React.createElement("details", {
+    className: "rounded-lg border border-slate-700 bg-slate-800/40 p-2",
+    open: doubtful > 0
+  }, React.createElement("summary", {
+    className: "cursor-pointer text-sm font-semibold text-slate-200"
+  }, t('importNames', {
+    n: res.names.length
+  }), doubtful > 0 && React.createElement("span", {
+    className: "text-amber-300"
+  }, " \xB7 ", t('importNamesDoubt', {
+    n: doubtful
+  }))), React.createElement("p", {
+    className: "text-xs text-slate-400 mt-1 mb-2"
+  }, t('importNamesHelp')), React.createElement("div", {
+    className: "space-y-1"
+  }, [...res.names].sort((a, b) => a.sure - b.sure || b.count - a.count).map(nm => {
+    const cur = picks[nm.key] !== undefined ? picks[nm.key] : nm.auto || '';
+    const opts = [...new Set([...(cur ? [cur] : []), ...nm.options])];
+    const doubt = !nm.sure && picks[nm.key] === undefined;
+    return React.createElement("div", {
+      key: nm.key,
+      className: `flex flex-wrap items-center gap-2 text-xs rounded px-2 py-1 ${doubt ? 'bg-amber-900/25 border border-amber-500/50' : ''}`
+    }, React.createElement("span", {
+      className: "font-mono text-slate-200 min-w-[7rem]"
+    }, "\xAB", nm.text, "\xBB", nm.count > 1 && React.createElement("span", {
+      className: "text-slate-500"
+    }, " \xD7", nm.count)), React.createElement("span", {
+      className: "text-slate-500"
+    }, "\u2192"), typing[nm.key] !== undefined ? React.createElement("input", {
+      autoFocus: true,
+      value: typing[nm.key],
+      onChange: e => setTyping(s => ({
+        ...s,
+        [nm.key]: e.target.value
+      })),
+      onKeyDown: e => {
+        if (e.key === 'Enter') typeName(nm.key, typing[nm.key]);
+        if (e.key === 'Escape') setTyping(s => ({
+          ...s,
+          [nm.key]: undefined
+        }));
+      },
+      onBlur: () => typeName(nm.key, typing[nm.key]),
+      placeholder: t('importTypeName'),
+      className: "flex-1 min-w-[10rem] p-1 bg-slate-900 border border-slate-600 rounded text-white"
+    }) : React.createElement("select", {
+      value: cur,
+      onChange: e => {
+        const v = e.target.value;
+        if (v === '@type') setTyping(s => ({
+          ...s,
+          [nm.key]: ''
+        }));else setPicks(p => ({
+          ...p,
+          [nm.key]: v
+        }));
+      },
+      className: "flex-1 min-w-[10rem] max-w-full p-1 bg-slate-900 border border-slate-600 rounded text-white"
+    }, opts.map(o => React.createElement("option", {
+      key: o,
+      value: o
+    }, o)), React.createElement("option", {
+      value: ""
+    }, t('importNotCard')), React.createElement("option", {
+      value: "@type"
+    }, t('importTypeName'))), doubt && React.createElement("span", {
+      className: "text-amber-300 font-semibold"
+    }, nm.auto ? t('importGuess') : t('importNoMatch')));
+  }))), hands.length > 1 && React.createElement("div", {
+    className: "flex flex-wrap gap-1 border-b border-slate-700",
+    role: "tablist"
+  }, hands.map((h, i) => React.createElement("button", {
+    key: i,
+    role: "tab",
+    "aria-selected": i === tab,
+    title: h.title,
+    onClick: () => setTab(i),
+    className: `px-3 py-1.5 text-sm font-semibold rounded-t-md ${i === tab ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`
+  }, handLabel(i), " ", React.createElement("span", {
+    className: "opacity-70 text-xs"
+  }, "(", stepsOf(h).length, ")")))), hand.title && React.createElement("p", {
+    className: "text-xs text-violet-200 italic"
+  }, hand.title), React.createElement("p", {
     className: "text-sm font-semibold text-slate-200"
   }, t('importPreview', {
     n: steps.length
@@ -4509,14 +5077,9 @@ const ImportTextModal = ({
     className: "text-amber-300"
   }, " \xB7 ", t('importFlagged', {
     n: flagged
-  }))), res.warnings.length > 0 && React.createElement("ul", {
-    className: "text-xs text-amber-300 list-disc pl-5"
-  }, res.warnings.map((w, i) => React.createElement(W, {
-    key: i,
-    w: w
   }))), React.createElement("ol", {
     className: "space-y-1.5"
-  }, res.items.map((it, i) => it.kind === 'group' ? React.createElement("li", {
+  }, hand.items.map((it, i) => it.kind === 'group' ? React.createElement("li", {
     key: i,
     className: "text-amber-400 font-bold text-xs uppercase pt-2"
   }, it.title) : React.createElement("li", {
@@ -4543,9 +5106,9 @@ const ImportTextModal = ({
   }, it.warn.map((w, k) => React.createElement(W, {
     key: k,
     w: w
-  })))))), res.endboard && React.createElement("p", {
+  })))))), hand.endboard && React.createElement("p", {
     className: "text-xs text-slate-400"
-  }, React.createElement("b", null, t('importEndboard'), ":"), " ", res.endboard.join(' · ')))), React.createElement("div", {
+  }, React.createElement("b", null, t('importEndboard'), ":"), " ", hand.endboard.join(' · ')))), React.createElement("div", {
     className: "flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-slate-700"
   }, React.createElement("button", {
     onClick: onClose,
@@ -4556,17 +5119,28 @@ const ImportTextModal = ({
     className: "px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50"
   }, busy ? '…' : React.createElement(React.Fragment, null, React.createElement("i", {
     className: "fas fa-search mr-2"
-  }), t('importAnalyze'))), res && !res.error && steps.length > 0 && React.createElement("button", {
-    onClick: () => {
-      onApply(res);
-      onClose();
-      setText('');
-      setRes(null);
-    },
+  }), t('importAnalyze'))), res && !res.error && hands.length > 1 && allSteps > 0 && React.createElement("button", {
+    onClick: () => apply(hands.map((h, i) => ({
+      h,
+      i
+    }))),
+    className: "px-4 py-2 bg-emerald-800 text-white font-semibold rounded-lg hover:bg-emerald-700"
+  }, React.createElement("i", {
+    className: "fas fa-layer-group mr-2"
+  }), t('importApplyAll', {
+    n: allSteps
+  })), res && !res.error && steps.length > 0 && React.createElement("button", {
+    onClick: () => apply([{
+      h: hand,
+      i: Math.min(tab, hands.length - 1)
+    }]),
     className: "px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
   }, React.createElement("i", {
     className: "fas fa-plus mr-2"
-  }), t('importApply', {
+  }), hands.length > 1 ? t('importApplyHand', {
+    h: handLabel(Math.min(tab, hands.length - 1)),
+    n: steps.length
+  }) : t('importApply', {
     n: steps.length
   })))));
 };
@@ -8428,7 +9002,8 @@ const App = () => {
     show: showImportText,
     onClose: () => setShowImportText(false),
     onApply: applyImport,
-    t: t
+    t: t,
+    deckCards: cardPool.filter(c => !c.isWildcard && !c.isCustom && c.name)
   }), showShortcuts && React.createElement("div", {
     className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60",
     onClick: () => setShowShortcuts(false)
