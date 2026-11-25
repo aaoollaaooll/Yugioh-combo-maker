@@ -2344,6 +2344,7 @@
             const [ctx, setCtx] = useState(null);
             const [picks, setPicks] = useState({});
             const [history, setHistory] = useState([]);
+            const [extraTick, setExtraTick] = useState(0);
             const [tab, setTab] = useState(0);
             const [useDeck, setUseDeck] = useState(true);
             const [typing, setTyping] = useState({});
@@ -2353,7 +2354,7 @@
             const listRef = useRef(null);
             const lyricsRef = useRef(null);
             const savedScroll = useRef(null);
-            const res = useMemo(() => { if (!ctx || ctx.error) return ctx; try { return importBuild(ctx, picks); } catch (e) { console.error(e); return { error: true }; } }, [ctx, picks]);
+            const res = useMemo(() => { if (!ctx || ctx.error) return ctx; try { return importBuild(ctx, picks); } catch (e) { console.error(e); return { error: true }; } }, [ctx, picks, extraTick]);
             // la lista de nombres sale del primer análisis y ya no cambia (si no, al elegir una carta aparecían/desaparecían filas y el clic caía en otra)
             const baseNames = useMemo(() => { if (!ctx || ctx.error) return []; try { return [...importBuild(ctx, {}).names].sort((a, b) => (a.sure - b.sure) || (b.count - a.count)); } catch (e) { return []; } }, [ctx]);
             const videoId = importVideoId(videoLink) || (res && res.videoId) || importVideoId(text);
@@ -2398,7 +2399,20 @@
                 const html = e.clipboardData && e.clipboardData.getData('text/html');
                 if (html && /<img/i.test(html)) { e.preventDefault(); const txt = importHtmlToText(html); setText(prev => (prev ? prev + '\n' : '') + txt); reset(); }
             };
-            const analyze = async () => { setBusy(true); try { reset(); setCtx(await importPrepare(text, { deck: useDeck ? deckCards : [] })); } catch (e) { console.error(e); setCtx({ error: true }); } setBusy(false); };
+            const analyze = async () => {
+                setBusy(true);
+                try {
+                    reset();
+                    const c = await importPrepare(text, { deck: useDeck ? deckCards : [] });
+                    setCtx(c);
+                    // las opciones que solo tengo por nombre (sin datos): las pido para ver su imagen y que entren bien al combo
+                    try {
+                        const missing = [...new Set(importBuild(c, {}).names.flatMap(nm => nm.options))].filter(o => o && !c.found[o.toLowerCase()]);
+                        if (missing.length) { const got = await importLookupExact(missing); Object.assign(c.found, got); setExtraTick(x => x + 1); }
+                    } catch (e) {}
+                } catch (e) { console.error(e); setCtx({ error: true }); }
+                setBusy(false);
+            };
             // cada elección se puede deshacer
             const setPick = (key, val) => { setHistory(h => [...h.slice(-49), picks]); setPicks(p => ({ ...p, [key]: val })); };
             const undo = () => { if (!history.length) return; setPicks(history[history.length - 1]); setHistory(history.slice(0, -1)); };

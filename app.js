@@ -4912,6 +4912,7 @@ const ImportTextModal = ({
   const [ctx, setCtx] = useState(null);
   const [picks, setPicks] = useState({});
   const [history, setHistory] = useState([]);
+  const [extraTick, setExtraTick] = useState(0);
   const [tab, setTab] = useState(0);
   const [useDeck, setUseDeck] = useState(true);
   const [typing, setTyping] = useState({});
@@ -4931,7 +4932,7 @@ const ImportTextModal = ({
         error: true
       };
     }
-  }, [ctx, picks]);
+  }, [ctx, picks, extraTick]);
   const baseNames = useMemo(() => {
     if (!ctx || ctx.error) return [];
     try {
@@ -5026,9 +5027,18 @@ const ImportTextModal = ({
     setBusy(true);
     try {
       reset();
-      setCtx(await importPrepare(text, {
+      const c = await importPrepare(text, {
         deck: useDeck ? deckCards : []
-      }));
+      });
+      setCtx(c);
+      try {
+        const missing = [...new Set(importBuild(c, {}).names.flatMap(nm => nm.options))].filter(o => o && !c.found[o.toLowerCase()]);
+        if (missing.length) {
+          const got = await importLookupExact(missing);
+          Object.assign(c.found, got);
+          setExtraTick(x => x + 1);
+        }
+      } catch (e) {}
     } catch (e) {
       console.error(e);
       setCtx({
