@@ -2100,7 +2100,7 @@
             }
             const uniq = {}; pool.forEach(c => { if (c && c.name && !/token/i.test(c.type || '') && !uniq[c.name.toLowerCase()]) uniq[c.name.toLowerCase()] = c; }); // tokens fuera: casi nunca son «la carta» que se nombra
             Object.entries(uniq).forEach(([k, c]) => { if (!found[k]) found[k] = c; });
-            return { hands, warnings, found, fuzzy, vocab: importBuildVocab(Object.values(uniq)), archs: archsUsed, structured, transcript, docTitle, videoId: importVideoId(raw), memo: new Map() };
+            return { hands, warnings, found, fuzzy, vocab: importBuildVocab(Object.values(uniq)), archs: archsUsed, structured, transcript, docTitle, videoId: importVideoId(raw), lyrics: transcript ? lines.map((l, i) => ({ text: l, ts: times[i] === undefined ? null : times[i] })) : [], memo: new Map() };
         };
 
         // Paso 2 (sin internet, se repite al corregir un nombre): arma los pasos de cada mano.
@@ -2337,31 +2337,92 @@
         const ImportTextModal = ({ show, onClose, onApply, t, deckCards = [] }) => {
             const [videoLink, setVideoLink] = useState('');
             const [showVideo, setShowVideo] = useState(false);
-            const [seek, setSeek] = useState({ s: 0, n: 0 });
+            const [startAt, setStartAt] = useState(0);
+            const [playTime, setPlayTime] = useState(null);
             const [text, setText] = useState('');
             const [busy, setBusy] = useState(false);
             const [ctx, setCtx] = useState(null);
             const [picks, setPicks] = useState({});
+            const [history, setHistory] = useState([]);
             const [tab, setTab] = useState(0);
             const [useDeck, setUseDeck] = useState(true);
             const [typing, setTyping] = useState({});
+            const [sug, setSug] = useState({});
+            const sugTimers = useRef({});
+            const iframeRef = useRef(null);
+            const listRef = useRef(null);
+            const lyricsRef = useRef(null);
+            const savedScroll = useRef(null);
             const res = useMemo(() => { if (!ctx || ctx.error) return ctx; try { return importBuild(ctx, picks); } catch (e) { console.error(e); return { error: true }; } }, [ctx, picks]);
+            // la lista de nombres sale del primer análisis y ya no cambia (si no, al elegir una carta aparecían/desaparecían filas y el clic caía en otra)
+            const baseNames = useMemo(() => { if (!ctx || ctx.error) return []; try { return [...importBuild(ctx, {}).names].sort((a, b) => (a.sure - b.sure) || (b.count - a.count)); } catch (e) { return []; } }, [ctx]);
+            const videoId = importVideoId(videoLink) || (res && res.videoId) || importVideoId(text);
+            const lyrics = (ctx && ctx.lyrics) || [];
+            let activeLine = -1;
+            if (playTime !== null) lyrics.forEach((l, i) => { if (l.ts !== null && l.ts <= playTime + 0.3) activeLine = i; });
+
+            // el video me avisa en qué segundo va (API de YouTube por postMessage, sin cargar scripts)
+            useEffect(() => {
+                if (!show || !showVideo) return;
+                const onMsg = (e) => {
+                    if (!/youtube/.test(e.origin || '')) return;
+                    let d = e.data; try { if (typeof d === 'string') d = JSON.parse(d); } catch (er) { return; }
+                    if (d && d.event === 'infoDelivery' && d.info && typeof d.info.currentTime === 'number') setPlayTime(d.info.currentTime);
+                };
+                window.addEventListener('message', onMsg);
+                const hello = setInterval(() => { const w = iframeRef.current && iframeRef.current.contentWindow; if (w) w.postMessage(JSON.stringify({ event: 'listening', id: 'ygo-import', channel: 'widget' }), '*'); }, 1000);
+                return () => { window.removeEventListener('message', onMsg); clearInterval(hello); };
+            }, [show, showVideo, videoId]);
+            // la línea que va sonando queda al centro, como letra de canción
+            useEffect(() => {
+                const box = lyricsRef.current; if (!box || activeLine < 0) return;
+                const row = box.querySelector(`[data-line="${activeLine}"]`); if (!row) return;
+                box.scrollTo({ top: Math.max(0, row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2), behavior: 'smooth' });
+            }, [activeLine]);
+            // al salir de pantalla completa el navegador me regresaba al principio de la lista: guardo dónde iba
+            useEffect(() => {
+                if (!show) return;
+                const onFs = () => {
+                    const box = listRef.current; if (!box) return;
+                    if (document.fullscreenElement) savedScroll.current = box.scrollTop;
+                    else if (savedScroll.current !== null) { const y = savedScroll.current; [30, 200, 500].forEach(ms => setTimeout(() => { if (listRef.current) listRef.current.scrollTop = y; }, ms)); }
+                };
+                document.addEventListener('fullscreenchange', onFs);
+                return () => document.removeEventListener('fullscreenchange', onFs);
+            }, [show]);
             if (!show) return null;
-            const reset = () => { setCtx(null); setPicks({}); setTab(0); };
+
+            const reset = () => { setCtx(null); setPicks({}); setHistory([]); setTab(0); setTyping({}); setSug({}); };
+            const clearAll = () => { setText(''); setVideoLink(''); setShowVideo(false); setPlayTime(null); reset(); };
             const onPaste = (e) => {
                 const html = e.clipboardData && e.clipboardData.getData('text/html');
                 if (html && /<img/i.test(html)) { e.preventDefault(); const txt = importHtmlToText(html); setText(prev => (prev ? prev + '\n' : '') + txt); reset(); }
             };
-            const analyze = async () => { setBusy(true); try { setPicks({}); setTab(0); setCtx(await importPrepare(text, { deck: useDeck ? deckCards : [] })); } catch (e) { console.error(e); setCtx({ error: true }); } setBusy(false); };
-            // nombre escrito a mano en «Nombres detectados»
+            const analyze = async () => { setBusy(true); try { reset(); setCtx(await importPrepare(text, { deck: useDeck ? deckCards : [] })); } catch (e) { console.error(e); setCtx({ error: true }); } setBusy(false); };
+            // cada elección se puede deshacer
+            const setPick = (key, val) => { setHistory(h => [...h.slice(-49), picks]); setPicks(p => ({ ...p, [key]: val })); };
+            const undo = () => { if (!history.length) return; setPicks(history[history.length - 1]); setHistory(history.slice(0, -1)); };
+            const choose = (key, card) => { if (!card || !ctx) return; ctx.found[card.name.toLowerCase()] = card; setPick(key, card.name); setTyping(s => ({ ...s, [key]: undefined })); setSug(s => ({ ...s, [key]: [] })); };
+            // escribir un nombre: sugerencias mientras escribo (como el buscador)
+            const onType = (key, v) => {
+                setTyping(s => ({ ...s, [key]: v }));
+                clearTimeout(sugTimers.current[key]);
+                const q = v.trim();
+                if (q.length < 2) { setSug(s => ({ ...s, [key]: [] })); return; }
+                sugTimers.current[key] = setTimeout(async () => {
+                    let list = [];
+                    try { const r = await fetch(`${YGOPRODECK_API_BASE_URL}?fname=${encodeURIComponent(q)}`); if (r.ok) list = ((await r.json()).data || []).slice(0, 8); } catch (e) {}
+                    if (!list.length && ctx) { const nq = importNorm(q).replace(/ /g, ''); list = Object.values(ctx.found).map(c => ({ c, s: Math.max(...importNorm(c.name).split(' ').map(w => importSim(nq, w)), importSim(nq, importNorm(c.name).replace(/ /g, ''))) })).filter(x => x.s >= 0.5).sort((a, b) => b.s - a.s).slice(0, 6).map(x => x.c); }
+                    setSug(s => ({ ...s, [key]: list }));
+                }, 300);
+            };
             const typeName = async (key, value) => {
                 const v = String(value || '').trim(); if (!v || !ctx) return;
+                const first = (sug[key] || [])[0];
                 let card = ctx.found[v.toLowerCase()];
                 if (!card) { const ex = await importLookupExact([v]); card = ex[v.toLowerCase()]; }
-                if (!card) { const fz = await importLookupFuzzy([v]); const f = fz[v.toLowerCase()]; card = f && (f.card || (f.cards || [])[0]); }
-                if (!card) { alert(t('importWarnNotFound', { x: v })); return; }
-                ctx.found[card.name.toLowerCase()] = card;
-                setPicks(p => ({ ...p, [key]: card.name })); setTyping(s => ({ ...s, [key]: undefined }));
+                if (!card && first) card = first;
+                if (card) choose(key, card);
             };
             const hands = res && res.hands ? res.hands : [];
             const hand = hands[Math.min(tab, hands.length - 1)] || { items: [] };
@@ -2371,9 +2432,10 @@
             const flagged = steps.filter(s => s.warn.length).length;
             const nameOf = (n) => n === '@any' ? t('anyCard') : n;
             const cardImg = (n) => n && n !== '@any' && res && res.found ? importImg(res.found[String(n).toLowerCase()]) : null;
-            const videoId = importVideoId(videoLink) || (res && res.videoId) || importVideoId(text);
-            const jump = (ts) => { setShowVideo(true); setSeek({ s: ts || 0, n: Date.now() }); };
-            const TsBtn = ({ ts }) => videoId && ts !== null && ts !== undefined ? <button type="button" onClick={() => jump(ts)} title={t('importJump')} className="px-1.5 py-0.5 rounded bg-red-700/80 hover:bg-red-600 text-white text-[10px] font-bold whitespace-nowrap"><i className="fab fa-youtube mr-1"></i>{importFmtTs(ts)}</button> : null;
+            const ytCmd = (func, args = []) => { const w = iframeRef.current && iframeRef.current.contentWindow; if (w) w.postMessage(JSON.stringify({ event: 'command', func, args, id: 'ygo-import', channel: 'widget' }), '*'); };
+            // ir al minuto sin recargar el video (si ya está abierto)
+            const jump = (ts) => { if (showVideo && iframeRef.current) { ytCmd('seekTo', [ts || 0, true]); ytCmd('playVideo'); setPlayTime(ts || 0); } else { setStartAt(ts || 0); setPlayTime(ts || 0); setShowVideo(true); } };
+            const tsBtn = (ts) => videoId && ts !== null && ts !== undefined ? <button type="button" onClick={() => jump(ts)} title={t('importJump')} className="px-1.5 py-0.5 rounded bg-red-700/80 hover:bg-red-600 text-white text-[10px] font-bold whitespace-nowrap"><i className="fab fa-youtube mr-1"></i>{importFmtTs(ts)}</button> : null;
             const W = ({ w }) => <li>{t(w.key, w.p || {})}</li>;
             const act = (s) => { const a = YGO_ACTIONS.find(x => x.name === s.action) || {}; return `${a.emoji || ''} ${s.custom || trTerm(s.action)}`; };
             const handLabel = (i) => t('importHand', { n: i + 1 });
@@ -2383,26 +2445,39 @@
                 items: list.flatMap(({ h, i }) => [...(hands.length > 1 ? [{ kind: 'group', title: handLabel(i) + (h.title ? ' — ' + h.title : '') }] : []), ...h.items]),
                 endboard: list.some(({ h }) => h.endboard) ? list.filter(({ h }) => h.endboard).map(({ h, i }) => (hands.length > 1 ? handLabel(i) + ': ' : '') + h.endboard.join(' ')) : null,
             });
-            const apply = (list) => { onApply(asImport(list)); onClose(); setText(''); reset(); };
-            const doubtful = res && res.names ? res.names.filter(n => !n.sure && picks[n.key] === undefined).length : 0;
+            const apply = (list) => { onApply(asImport(list)); onClose(); clearAll(); };
+            const doubtful = baseNames.filter(n => !n.sure && picks[n.key] === undefined).length;
+            const videoOpen = showVideo && videoId;
+            // las palabras de la frase que son nombres detectados, en color (para ubicarlas rápido en la letra)
+            const nameKeys = new Set(baseNames.map(x => x.key));
+            const lyricHtml = (txt) => txt.split(/(\s+)/).map((w, i) => nameKeys.has(importNorm(w)) ? <b key={i} className="text-amber-300">{w}</b> : w);
             let n = 0;
             return (
-                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-3" onClick={onClose}>
-                    <div className={`bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full ${showVideo && videoId ? 'max-w-6xl' : 'max-w-3xl'} max-h-[92vh] flex flex-col overflow-hidden`} onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-3" onClick={onClose}>
+                    <div className={`bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full ${videoOpen ? 'max-w-[1500px] h-[94vh]' : 'max-w-3xl max-h-[92vh]'} flex flex-col overflow-hidden`} onClick={e => e.stopPropagation()}>
                         <div className="flex items-center gap-3 px-5 pt-4 pb-2">
                             <h3 className="text-lg font-bold text-violet-300 flex-1">{t('importText')} <span className="ml-1.5 px-1.5 py-0.5 rounded bg-slate-950 text-amber-300 text-[10px] font-bold uppercase tracking-wide align-middle">Beta</span></h3>
+                            {videoId && res && !res.error && <button type="button" onClick={() => setShowVideo(v => !v)} className="px-3 py-1.5 rounded bg-red-700 hover:bg-red-600 text-white text-sm font-semibold"><i className={`fas ${showVideo ? 'fa-eye-slash' : 'fa-play'} mr-1`}></i>{showVideo ? t('importHideVideo') : t('importWatch')}</button>}
                             <button onClick={onClose} aria-label={t('closeLabel')} className="w-10 h-10 rounded-full bg-black/30 text-gray-300 hover:text-white text-2xl">×</button>
                         </div>
                         <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
-                        {showVideo && videoId && (
-                            <div className="flex-none lg:order-2 lg:w-[440px] px-5 lg:pl-0 pb-2">
-                                <div className="relative w-full rounded-lg overflow-hidden bg-black" style={{ aspectRatio: '16 / 9' }}>
-                                    <iframe key={seek.n} title="YouTube" className="absolute inset-0 w-full h-full" src={`https://www.youtube-nocookie.com/embed/${videoId}?start=${Math.floor(seek.s)}${seek.n ? '&autoplay=1' : ''}&rel=0`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+                        {videoOpen && (
+                            <div className="flex-none lg:flex-1 lg:order-2 lg:min-w-0 flex flex-col px-3 sm:px-5 lg:pl-0 pb-2 gap-2 min-h-0">
+                                <div className="relative w-full rounded-lg overflow-hidden bg-black flex-none" style={{ aspectRatio: '16 / 9' }}>
+                                    <iframe ref={iframeRef} title="YouTube" className="absolute inset-0 w-full h-full" src={`https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&rel=0&playsinline=1&autoplay=1&start=${Math.floor(startAt)}&origin=${encodeURIComponent(window.location.origin)}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
                                 </div>
-                                <button type="button" onClick={() => setShowVideo(false)} className="mt-1 text-xs text-slate-400 hover:text-white"><i className="fas fa-eye-slash mr-1"></i>{t('importHideVideo')}</button>
+                                {lyrics.length > 0 && (
+                                    <div ref={lyricsRef} className="relative h-36 lg:h-auto lg:flex-1 min-h-0 overflow-y-auto rounded-lg bg-slate-950/70 border border-slate-800 px-3 py-2 text-sm">
+                                        {lyrics.map((l, i) => (
+                                            <button type="button" key={i} data-line={i} onClick={() => l.ts !== null && jump(l.ts)} className={`block w-full text-left rounded px-2 py-1 transition-all ${i === activeLine ? 'bg-violet-700/50 text-white text-base font-semibold' : 'text-slate-400 hover:text-slate-200'}`}>
+                                                {l.ts !== null && <span className="text-[10px] text-red-300 mr-2 font-mono">{importFmtTs(l.ts)}</span>}{lyricHtml(l.text)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
-                        <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-3 space-y-3">
+                        <div ref={listRef} className={`flex-1 min-h-0 overflow-y-auto px-3 sm:px-5 pb-3 space-y-3 ${videoOpen ? 'lg:flex-none lg:w-[44%]' : ''}`}>
                             <div className="rounded-lg border border-amber-500/50 bg-amber-900/20 p-3 text-xs text-amber-100">
                                 <p className="font-bold mb-1"><i className="fas fa-flask mr-1"></i>{t('importBetaTitle')}</p>
                                 <ul className="list-disc pl-5 space-y-0.5">
@@ -2410,11 +2485,13 @@
                                 </ul>
                             </div>
                             <p className="text-sm text-slate-300">{t('importTextHelp')}</p>
-                            <textarea value={text} onChange={e => { setText(e.target.value); reset(); }} onPaste={onPaste} rows="7" placeholder={t('importTextPlaceholder')} className="w-full p-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white font-mono" />
+                            <div className="relative">
+                                <textarea value={text} onChange={e => { setText(e.target.value); reset(); }} onPaste={onPaste} rows="7" placeholder={t('importTextPlaceholder')} className="w-full p-2 pr-24 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white font-mono" />
+                                {text && <button type="button" onClick={clearAll} className="absolute top-2 right-2 px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs text-slate-200"><i className="fas fa-eraser mr-1"></i>{t('importClear')}</button>}
+                            </div>
                             <div className="flex flex-wrap items-center gap-2 text-xs">
                                 <i className="fab fa-youtube text-red-500 text-base"></i>
                                 <input value={videoLink} onChange={e => setVideoLink(e.target.value)} placeholder={importVideoId(text) ? t('importVideoFound') : t('importVideoLink')} className="flex-1 min-w-[12rem] p-1.5 bg-slate-800 border border-slate-600 rounded text-white" />
-                                {videoId && <button type="button" onClick={() => setShowVideo(v => !v)} className="px-3 py-1.5 rounded bg-red-700 hover:bg-red-600 text-white font-semibold"><i className={`fas ${showVideo ? 'fa-eye-slash' : 'fa-play'} mr-1`}></i>{showVideo ? t('importHideVideo') : t('importWatch')}</button>}
                             </div>
                             {deckCards.length > 0 && <label className="flex items-start gap-2 text-xs text-slate-300 cursor-pointer"><input type="checkbox" className="mt-0.5 h-4 w-4" checked={useDeck} onChange={e => { setUseDeck(e.target.checked); reset(); }} />{t('importUseDeck', { n: deckCards.length })}</label>}
                             {res && res.error && <p className="text-sm text-red-300">{t('importError')}</p>}
@@ -2422,52 +2499,65 @@
                                 <div className="space-y-2">
                                     {res.transcript && <p className="text-xs text-sky-300"><i className="fas fa-closed-captioning mr-1"></i>{t('importTranscriptCleaned')}</p>}
                                     {res.warnings.length > 0 && <ul className="text-xs text-amber-300 list-disc pl-5">{res.warnings.map((w, i) => <W key={i} w={w} />)}</ul>}
-                                    {res.names.length > 0 && (
-                                        <details className="rounded-lg border border-slate-700 bg-slate-800/40 p-2" open={doubtful > 0}>
-                                            <summary className="cursor-pointer text-sm font-semibold text-slate-200">{t('importNames', { n: res.names.length })}{doubtful > 0 && <span className="text-amber-300"> · {t('importNamesDoubt', { n: doubtful })}</span>}</summary>
+                                    {baseNames.length > 0 && (
+                                        <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-2">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <p className="flex-1 text-sm font-semibold text-slate-200">{t('importNames', { n: baseNames.length })}{doubtful > 0 && <span className="text-amber-300"> · {t('importNamesDoubt', { n: doubtful })}</span>}</p>
+                                                <button type="button" onClick={undo} disabled={!history.length} className="px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-xs text-white"><i className="fas fa-undo mr-1"></i>{t('importUndo')}{history.length > 0 && ` (${history.length})`}</button>
+                                            </div>
                                             <p className="text-xs text-slate-400 mt-1 mb-2">{t('importNamesHelp')}</p>
                                             <div className="space-y-1">
-                                                {[...res.names].sort((a, b) => (a.sure - b.sure) || (b.count - a.count)).map(nm => {
-                                                    const cur = picks[nm.key] !== undefined ? picks[nm.key] : (nm.auto || '');
+                                                {/* el orden y el tamaño de cada fila no cambian al elegir: así el siguiente clic no cae en otra fila */}
+                                                {baseNames.map(nm => {
+                                                    const chosen = picks[nm.key] !== undefined;
+                                                    const cur = chosen ? picks[nm.key] : (nm.auto || '');
                                                     const opts = [...new Set([...(cur ? [cur] : []), ...nm.options])];
-                                                    const doubt = !nm.sure && picks[nm.key] === undefined;
+                                                    const wasDoubt = !nm.sure;
+                                                    const tp = typing[nm.key];
                                                     return (
-                                                        <div key={nm.key} className={`flex flex-wrap items-center gap-2 text-xs rounded px-2 py-1 ${doubt ? 'bg-amber-900/25 border border-amber-500/50' : ''}`}>
+                                                        <div key={nm.key} className={`flex flex-wrap items-center gap-2 text-xs rounded px-2 py-1 ${wasDoubt ? (chosen ? 'bg-emerald-900/20 border border-emerald-600/50' : 'bg-amber-900/25 border border-amber-500/50') : ''}`}>
                                                             <span className="font-mono text-slate-200 min-w-[7rem]">«{nm.text}»{nm.count > 1 && <span className="text-slate-500"> ×{nm.count}</span>}</span>
-                                                            <TsBtn ts={nm.ts} />
+                                                            {tsBtn(nm.ts)}
                                                             <span className="text-slate-500">→</span>
                                                             {cardImg(cur) ? <img src={cardImg(cur)} alt={cur} title={cur} className="w-8 rounded-sm flex-none" loading="lazy" /> : <span className="w-8 h-[2.9rem] rounded-sm border border-dashed border-slate-600 flex-none flex items-center justify-center text-slate-500">?</span>}
-                                                            {typing[nm.key] !== undefined
-                                                                ? <input autoFocus value={typing[nm.key]} onChange={e => setTyping(s => ({ ...s, [nm.key]: e.target.value }))} onKeyDown={e => { if (e.key === 'Enter') typeName(nm.key, typing[nm.key]); if (e.key === 'Escape') setTyping(s => ({ ...s, [nm.key]: undefined })); }} onBlur={() => typeName(nm.key, typing[nm.key])} placeholder={t('importTypeName')} className="flex-1 min-w-[10rem] p-1 bg-slate-900 border border-slate-600 rounded text-white" />
-                                                                : <select value={cur} onChange={e => { const v = e.target.value; if (v === '@type') setTyping(s => ({ ...s, [nm.key]: '' })); else setPicks(p => ({ ...p, [nm.key]: v })); }} className="flex-1 min-w-[10rem] max-w-full p-1 bg-slate-900 border border-slate-600 rounded text-white">
+                                                            {tp !== undefined
+                                                                ? <div className="relative flex-1 min-w-[10rem]">
+                                                                    <input autoFocus value={tp} onChange={e => onType(nm.key, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') typeName(nm.key, tp); if (e.key === 'Escape') { setTyping(s => ({ ...s, [nm.key]: undefined })); setSug(s => ({ ...s, [nm.key]: [] })); } }} placeholder={t('importTypeName')} className="w-full p-1 bg-slate-900 border border-violet-500 rounded text-white" />
+                                                                    {(sug[nm.key] || []).length > 0 && (
+                                                                        <div className="absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded border border-slate-600 bg-slate-900 shadow-xl">
+                                                                            {sug[nm.key].map(c => <button type="button" key={c.id || c.name} onMouseDown={e => { e.preventDefault(); choose(nm.key, c); }} className="w-full flex items-center gap-2 p-1.5 text-left hover:bg-slate-700"><img src={importImg(c)} alt="" className="w-7 rounded-sm" loading="lazy" /><span className="text-slate-100">{c.name}</span></button>)}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                : <select value={cur} onChange={e => { const v = e.target.value; if (v === '@type') setTyping(s => ({ ...s, [nm.key]: '' })); else setPick(nm.key, v); }} className="flex-1 min-w-[10rem] max-w-full p-1 bg-slate-900 border border-slate-600 rounded text-white">
                                                                     {opts.map(o => <option key={o} value={o}>{o}</option>)}
                                                                     <option value="">{t('importNotCard')}</option>
                                                                     <option value="@type">{t('importTypeName')}</option>
                                                                 </select>}
-                                                            {doubt && <span className="text-amber-300 font-semibold">{nm.auto ? t('importGuess') : t('importNoMatch')}</span>}
-                                                            {doubt && nm.options.length > 0 && (
+                                                            {wasDoubt && <span className={`font-semibold w-16 text-right ${chosen ? 'text-emerald-300' : 'text-amber-300'}`}>{chosen ? '✓ ' + t('importChosen') : (nm.auto ? t('importGuess') : t('importNoMatch'))}</span>}
+                                                            {wasDoubt && nm.options.length > 0 && (
                                                                 <div className="basis-full flex flex-wrap gap-1.5 pl-1 pt-1">
-                                                                    {nm.options.map(o => <button type="button" key={o} title={o} onClick={() => setPicks(p => ({ ...p, [nm.key]: o }))} className={`w-12 rounded-sm overflow-hidden border-2 ${o === cur ? 'border-violet-400' : 'border-transparent opacity-80 hover:opacity-100'}`}>{cardImg(o) ? <img src={cardImg(o)} alt={o} className="w-full" loading="lazy" /> : <span className="block text-[9px] p-1 text-slate-300">{o}</span>}</button>)}
+                                                                    {nm.options.map(o => <button type="button" key={o} title={o} onClick={() => setPick(nm.key, o)} className={`w-12 rounded-sm overflow-hidden border-2 ${o === cur ? 'border-violet-400' : 'border-transparent opacity-80 hover:opacity-100'}`}>{cardImg(o) ? <img src={cardImg(o)} alt={o} className="w-full" loading="lazy" /> : <span className="block text-[9px] p-1 text-slate-300">{o}</span>}</button>)}
                                                                 </div>
                                                             )}
                                                         </div>
                                                     );
                                                 })}
                                             </div>
-                                        </details>
+                                        </div>
                                     )}
                                     {hands.length > 1 && (
                                         <div className="flex flex-wrap gap-1 border-b border-slate-700" role="tablist">
                                             {hands.map((h, i) => <button key={i} role="tab" aria-selected={i === tab} title={h.title} onClick={() => setTab(i)} className={`px-3 py-1.5 text-sm font-semibold rounded-t-md ${i === tab ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>{handLabel(i)} <span className="opacity-70 text-xs">({stepsOf(h).length})</span></button>)}
                                         </div>
                                     )}
-                                    {hand.title && <p className="text-xs text-violet-200 italic flex items-center gap-2"><TsBtn ts={hand.ts} /><span>{hand.title}</span></p>}
+                                    {hand.title && <p className="text-xs text-violet-200 italic flex items-center gap-2">{tsBtn(hand.ts)}<span>{hand.title}</span></p>}
                                     <p className="text-sm font-semibold text-slate-200">{t('importPreview', { n: steps.length })}{flagged > 0 && <span className="text-amber-300"> · {t('importFlagged', { n: flagged })}</span>}</p>
                                     <ol className="space-y-1.5">
                                         {hand.items.map((it, i) => it.kind === 'group'
                                             ? <li key={i} className="text-amber-400 font-bold text-xs uppercase pt-2">{it.title}</li>
                                             : <li key={i} className={`rounded-md p-2 text-sm border ${it.warn.length ? 'border-amber-500/70 bg-amber-900/15' : 'border-slate-700 bg-slate-800/50'}`}>
-                                                <div className="flex items-start gap-2">{cardImg(it.main) && <img src={cardImg(it.main)} alt="" className="w-7 rounded-sm flex-none mt-0.5" loading="lazy" />}<div className="flex-1 min-w-0"><span className="font-bold text-slate-400 mr-1">{++n}.</span>{it.chainRole === 'resolve' && <span className="text-sky-300 mr-1">↳</span>}{it.chainRole === 'link' && <span className="text-sky-300 mr-1">⛓</span>}<span className="text-yellow-300 font-semibold">{act(it)}</span> <span className="font-semibold text-white">{it.main ? nameOf(it.main) : '—'}</span>{it.targets.length > 0 && <span className="text-slate-300"> → {it.targets.map(nameOf).join(', ')}</span>}</div><TsBtn ts={it.ts} /></div>
+                                                <div className="flex items-start gap-2">{cardImg(it.main) && <img src={cardImg(it.main)} alt="" className="w-7 rounded-sm flex-none mt-0.5" loading="lazy" />}<div className="flex-1 min-w-0"><span className="font-bold text-slate-400 mr-1">{++n}.</span>{it.chainRole === 'resolve' && <span className="text-sky-300 mr-1">↳</span>}{it.chainRole === 'link' && <span className="text-sky-300 mr-1">⛓</span>}<span className="text-yellow-300 font-semibold">{act(it)}</span> <span className="font-semibold text-white">{it.main ? nameOf(it.main) : '—'}</span>{it.targets.length > 0 && <span className="text-slate-300"> → {it.targets.map(nameOf).join(', ')}</span>}</div>{tsBtn(it.ts)}</div>
                                                 {it.desc && <div className="text-xs text-slate-400 mt-0.5">{it.desc}</div>}
                                                 {it.branch && <div className="text-xs text-red-300 mt-0.5">↳ {t('branchLabel')}: {it.branch.steps.length}</div>}
                                                 {it.warn.length > 0 && <ul className="text-xs text-amber-300 list-disc pl-5 mt-1">{it.warn.map((w, k) => <W key={k} w={w} />)}</ul>}

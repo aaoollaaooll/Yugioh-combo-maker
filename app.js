@@ -4383,6 +4383,10 @@ const importPrepare = async (text, opts = {}) => {
     transcript,
     docTitle,
     videoId: importVideoId(raw),
+    lyrics: transcript ? lines.map((l, i) => ({
+      text: l,
+      ts: times[i] === undefined ? null : times[i]
+    })) : [],
     memo: new Map()
   };
 };
@@ -4901,17 +4905,22 @@ const ImportTextModal = ({
 }) => {
   const [videoLink, setVideoLink] = useState('');
   const [showVideo, setShowVideo] = useState(false);
-  const [seek, setSeek] = useState({
-    s: 0,
-    n: 0
-  });
+  const [startAt, setStartAt] = useState(0);
+  const [playTime, setPlayTime] = useState(null);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [ctx, setCtx] = useState(null);
   const [picks, setPicks] = useState({});
+  const [history, setHistory] = useState([]);
   const [tab, setTab] = useState(0);
   const [useDeck, setUseDeck] = useState(true);
   const [typing, setTyping] = useState({});
+  const [sug, setSug] = useState({});
+  const sugTimers = useRef({});
+  const iframeRef = useRef(null);
+  const listRef = useRef(null);
+  const lyricsRef = useRef(null);
+  const savedScroll = useRef(null);
   const res = useMemo(() => {
     if (!ctx || ctx.error) return ctx;
     try {
@@ -4923,11 +4932,86 @@ const ImportTextModal = ({
       };
     }
   }, [ctx, picks]);
+  const baseNames = useMemo(() => {
+    if (!ctx || ctx.error) return [];
+    try {
+      return [...importBuild(ctx, {}).names].sort((a, b) => a.sure - b.sure || b.count - a.count);
+    } catch (e) {
+      return [];
+    }
+  }, [ctx]);
+  const videoId = importVideoId(videoLink) || res && res.videoId || importVideoId(text);
+  const lyrics = ctx && ctx.lyrics || [];
+  let activeLine = -1;
+  if (playTime !== null) lyrics.forEach((l, i) => {
+    if (l.ts !== null && l.ts <= playTime + 0.3) activeLine = i;
+  });
+  useEffect(() => {
+    if (!show || !showVideo) return;
+    const onMsg = e => {
+      if (!/youtube/.test(e.origin || '')) return;
+      let d = e.data;
+      try {
+        if (typeof d === 'string') d = JSON.parse(d);
+      } catch (er) {
+        return;
+      }
+      if (d && d.event === 'infoDelivery' && d.info && typeof d.info.currentTime === 'number') setPlayTime(d.info.currentTime);
+    };
+    window.addEventListener('message', onMsg);
+    const hello = setInterval(() => {
+      const w = iframeRef.current && iframeRef.current.contentWindow;
+      if (w) w.postMessage(JSON.stringify({
+        event: 'listening',
+        id: 'ygo-import',
+        channel: 'widget'
+      }), '*');
+    }, 1000);
+    return () => {
+      window.removeEventListener('message', onMsg);
+      clearInterval(hello);
+    };
+  }, [show, showVideo, videoId]);
+  useEffect(() => {
+    const box = lyricsRef.current;
+    if (!box || activeLine < 0) return;
+    const row = box.querySelector(`[data-line="${activeLine}"]`);
+    if (!row) return;
+    box.scrollTo({
+      top: Math.max(0, row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2),
+      behavior: 'smooth'
+    });
+  }, [activeLine]);
+  useEffect(() => {
+    if (!show) return;
+    const onFs = () => {
+      const box = listRef.current;
+      if (!box) return;
+      if (document.fullscreenElement) savedScroll.current = box.scrollTop;else if (savedScroll.current !== null) {
+        const y = savedScroll.current;
+        [30, 200, 500].forEach(ms => setTimeout(() => {
+          if (listRef.current) listRef.current.scrollTop = y;
+        }, ms));
+      }
+    };
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, [show]);
   if (!show) return null;
   const reset = () => {
     setCtx(null);
     setPicks({});
+    setHistory([]);
     setTab(0);
+    setTyping({});
+    setSug({});
+  };
+  const clearAll = () => {
+    setText('');
+    setVideoLink('');
+    setShowVideo(false);
+    setPlayTime(null);
+    reset();
   };
   const onPaste = e => {
     const html = e.clipboardData && e.clipboardData.getData('text/html');
@@ -4941,8 +5025,7 @@ const ImportTextModal = ({
   const analyze = async () => {
     setBusy(true);
     try {
-      setPicks({});
-      setTab(0);
+      reset();
       setCtx(await importPrepare(text, {
         deck: useDeck ? deckCards : []
       }));
@@ -4954,34 +5037,75 @@ const ImportTextModal = ({
     }
     setBusy(false);
   };
+  const setPick = (key, val) => {
+    setHistory(h => [...h.slice(-49), picks]);
+    setPicks(p => ({
+      ...p,
+      [key]: val
+    }));
+  };
+  const undo = () => {
+    if (!history.length) return;
+    setPicks(history[history.length - 1]);
+    setHistory(history.slice(0, -1));
+  };
+  const choose = (key, card) => {
+    if (!card || !ctx) return;
+    ctx.found[card.name.toLowerCase()] = card;
+    setPick(key, card.name);
+    setTyping(s => ({
+      ...s,
+      [key]: undefined
+    }));
+    setSug(s => ({
+      ...s,
+      [key]: []
+    }));
+  };
+  const onType = (key, v) => {
+    setTyping(s => ({
+      ...s,
+      [key]: v
+    }));
+    clearTimeout(sugTimers.current[key]);
+    const q = v.trim();
+    if (q.length < 2) {
+      setSug(s => ({
+        ...s,
+        [key]: []
+      }));
+      return;
+    }
+    sugTimers.current[key] = setTimeout(async () => {
+      let list = [];
+      try {
+        const r = await fetch(`${YGOPRODECK_API_BASE_URL}?fname=${encodeURIComponent(q)}`);
+        if (r.ok) list = ((await r.json()).data || []).slice(0, 8);
+      } catch (e) {}
+      if (!list.length && ctx) {
+        const nq = importNorm(q).replace(/ /g, '');
+        list = Object.values(ctx.found).map(c => ({
+          c,
+          s: Math.max(...importNorm(c.name).split(' ').map(w => importSim(nq, w)), importSim(nq, importNorm(c.name).replace(/ /g, '')))
+        })).filter(x => x.s >= 0.5).sort((a, b) => b.s - a.s).slice(0, 6).map(x => x.c);
+      }
+      setSug(s => ({
+        ...s,
+        [key]: list
+      }));
+    }, 300);
+  };
   const typeName = async (key, value) => {
     const v = String(value || '').trim();
     if (!v || !ctx) return;
+    const first = (sug[key] || [])[0];
     let card = ctx.found[v.toLowerCase()];
     if (!card) {
       const ex = await importLookupExact([v]);
       card = ex[v.toLowerCase()];
     }
-    if (!card) {
-      const fz = await importLookupFuzzy([v]);
-      const f = fz[v.toLowerCase()];
-      card = f && (f.card || (f.cards || [])[0]);
-    }
-    if (!card) {
-      alert(t('importWarnNotFound', {
-        x: v
-      }));
-      return;
-    }
-    ctx.found[card.name.toLowerCase()] = card;
-    setPicks(p => ({
-      ...p,
-      [key]: card.name
-    }));
-    setTyping(s => ({
-      ...s,
-      [key]: undefined
-    }));
+    if (!card && first) card = first;
+    if (card) choose(key, card);
   };
   const hands = res && res.hands ? res.hands : [];
   const hand = hands[Math.min(tab, hands.length - 1)] || {
@@ -4993,17 +5117,28 @@ const ImportTextModal = ({
   const flagged = steps.filter(s => s.warn.length).length;
   const nameOf = n => n === '@any' ? t('anyCard') : n;
   const cardImg = n => n && n !== '@any' && res && res.found ? importImg(res.found[String(n).toLowerCase()]) : null;
-  const videoId = importVideoId(videoLink) || res && res.videoId || importVideoId(text);
-  const jump = ts => {
-    setShowVideo(true);
-    setSeek({
-      s: ts || 0,
-      n: Date.now()
-    });
+  const ytCmd = (func, args = []) => {
+    const w = iframeRef.current && iframeRef.current.contentWindow;
+    if (w) w.postMessage(JSON.stringify({
+      event: 'command',
+      func,
+      args,
+      id: 'ygo-import',
+      channel: 'widget'
+    }), '*');
   };
-  const TsBtn = ({
-    ts
-  }) => videoId && ts !== null && ts !== undefined ? React.createElement("button", {
+  const jump = ts => {
+    if (showVideo && iframeRef.current) {
+      ytCmd('seekTo', [ts || 0, true]);
+      ytCmd('playVideo');
+      setPlayTime(ts || 0);
+    } else {
+      setStartAt(ts || 0);
+      setPlayTime(ts || 0);
+      setShowVideo(true);
+    }
+  };
+  const tsBtn = ts => videoId && ts !== null && ts !== undefined ? React.createElement("button", {
     type: "button",
     onClick: () => jump(ts),
     title: t('importJump'),
@@ -5042,16 +5177,21 @@ const ImportTextModal = ({
   const apply = list => {
     onApply(asImport(list));
     onClose();
-    setText('');
-    reset();
+    clearAll();
   };
-  const doubtful = res && res.names ? res.names.filter(n => !n.sure && picks[n.key] === undefined).length : 0;
+  const doubtful = baseNames.filter(n => !n.sure && picks[n.key] === undefined).length;
+  const videoOpen = showVideo && videoId;
+  const nameKeys = new Set(baseNames.map(x => x.key));
+  const lyricHtml = txt => txt.split(/(\s+)/).map((w, i) => nameKeys.has(importNorm(w)) ? React.createElement("b", {
+    key: i,
+    className: "text-amber-300"
+  }, w) : w);
   let n = 0;
   return React.createElement("div", {
-    className: "fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-3",
+    className: "fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-3",
     onClick: onClose
   }, React.createElement("div", {
-    className: `bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full ${showVideo && videoId ? 'max-w-6xl' : 'max-w-3xl'} max-h-[92vh] flex flex-col overflow-hidden`,
+    className: `bg-slate-900 border border-slate-700 rounded-lg shadow-xl w-full ${videoOpen ? 'max-w-[1500px] h-[94vh]' : 'max-w-3xl max-h-[92vh]'} flex flex-col overflow-hidden`,
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "flex items-center gap-3 px-5 pt-4 pb-2"
@@ -5059,34 +5199,46 @@ const ImportTextModal = ({
     className: "text-lg font-bold text-violet-300 flex-1"
   }, t('importText'), " ", React.createElement("span", {
     className: "ml-1.5 px-1.5 py-0.5 rounded bg-slate-950 text-amber-300 text-[10px] font-bold uppercase tracking-wide align-middle"
-  }, "Beta")), React.createElement("button", {
+  }, "Beta")), videoId && res && !res.error && React.createElement("button", {
+    type: "button",
+    onClick: () => setShowVideo(v => !v),
+    className: "px-3 py-1.5 rounded bg-red-700 hover:bg-red-600 text-white text-sm font-semibold"
+  }, React.createElement("i", {
+    className: `fas ${showVideo ? 'fa-eye-slash' : 'fa-play'} mr-1`
+  }), showVideo ? t('importHideVideo') : t('importWatch')), React.createElement("button", {
     onClick: onClose,
     "aria-label": t('closeLabel'),
     className: "w-10 h-10 rounded-full bg-black/30 text-gray-300 hover:text-white text-2xl"
   }, "\xD7")), React.createElement("div", {
     className: "flex-1 min-h-0 flex flex-col lg:flex-row"
-  }, showVideo && videoId && React.createElement("div", {
-    className: "flex-none lg:order-2 lg:w-[440px] px-5 lg:pl-0 pb-2"
+  }, videoOpen && React.createElement("div", {
+    className: "flex-none lg:flex-1 lg:order-2 lg:min-w-0 flex flex-col px-3 sm:px-5 lg:pl-0 pb-2 gap-2 min-h-0"
   }, React.createElement("div", {
-    className: "relative w-full rounded-lg overflow-hidden bg-black",
+    className: "relative w-full rounded-lg overflow-hidden bg-black flex-none",
     style: {
       aspectRatio: '16 / 9'
     }
   }, React.createElement("iframe", {
-    key: seek.n,
+    ref: iframeRef,
     title: "YouTube",
     className: "absolute inset-0 w-full h-full",
-    src: `https://www.youtube-nocookie.com/embed/${videoId}?start=${Math.floor(seek.s)}${seek.n ? '&autoplay=1' : ''}&rel=0`,
+    src: `https://www.youtube-nocookie.com/embed/${videoId}?enablejsapi=1&rel=0&playsinline=1&autoplay=1&start=${Math.floor(startAt)}&origin=${encodeURIComponent(window.location.origin)}`,
     allow: "autoplay; encrypted-media; picture-in-picture; fullscreen",
     allowFullScreen: true
-  })), React.createElement("button", {
+  })), lyrics.length > 0 && React.createElement("div", {
+    ref: lyricsRef,
+    className: "relative h-36 lg:h-auto lg:flex-1 min-h-0 overflow-y-auto rounded-lg bg-slate-950/70 border border-slate-800 px-3 py-2 text-sm"
+  }, lyrics.map((l, i) => React.createElement("button", {
     type: "button",
-    onClick: () => setShowVideo(false),
-    className: "mt-1 text-xs text-slate-400 hover:text-white"
-  }, React.createElement("i", {
-    className: "fas fa-eye-slash mr-1"
-  }), t('importHideVideo'))), React.createElement("div", {
-    className: "flex-1 min-h-0 overflow-y-auto px-5 pb-3 space-y-3"
+    key: i,
+    "data-line": i,
+    onClick: () => l.ts !== null && jump(l.ts),
+    className: `block w-full text-left rounded px-2 py-1 transition-all ${i === activeLine ? 'bg-violet-700/50 text-white text-base font-semibold' : 'text-slate-400 hover:text-slate-200'}`
+  }, l.ts !== null && React.createElement("span", {
+    className: "text-[10px] text-red-300 mr-2 font-mono"
+  }, importFmtTs(l.ts)), lyricHtml(l.text))))), React.createElement("div", {
+    ref: listRef,
+    className: `flex-1 min-h-0 overflow-y-auto px-3 sm:px-5 pb-3 space-y-3 ${videoOpen ? 'lg:flex-none lg:w-[44%]' : ''}`
   }, React.createElement("div", {
     className: "rounded-lg border border-amber-500/50 bg-amber-900/20 p-3 text-xs text-amber-100"
   }, React.createElement("p", {
@@ -5097,7 +5249,9 @@ const ImportTextModal = ({
     className: "list-disc pl-5 space-y-0.5"
   }, React.createElement("li", null, t('importLimitEnglish')), React.createElement("li", null, t('importLimitReview')), React.createElement("li", null, t('importLimitVideo')), React.createElement("li", null, t('importLimitChains')), React.createElement("li", null, t('importLimitZones')), React.createElement("li", null, t('importLimitCredit')))), React.createElement("p", {
     className: "text-sm text-slate-300"
-  }, t('importTextHelp')), React.createElement("textarea", {
+  }, t('importTextHelp')), React.createElement("div", {
+    className: "relative"
+  }, React.createElement("textarea", {
     value: text,
     onChange: e => {
       setText(e.target.value);
@@ -5106,8 +5260,14 @@ const ImportTextModal = ({
     onPaste: onPaste,
     rows: "7",
     placeholder: t('importTextPlaceholder'),
-    className: "w-full p-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white font-mono"
-  }), React.createElement("div", {
+    className: "w-full p-2 pr-24 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white font-mono"
+  }), text && React.createElement("button", {
+    type: "button",
+    onClick: clearAll,
+    className: "absolute top-2 right-2 px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs text-slate-200"
+  }, React.createElement("i", {
+    className: "fas fa-eraser mr-1"
+  }), t('importClear'))), React.createElement("div", {
     className: "flex flex-wrap items-center gap-2 text-xs"
   }, React.createElement("i", {
     className: "fab fa-youtube text-red-500 text-base"
@@ -5116,13 +5276,7 @@ const ImportTextModal = ({
     onChange: e => setVideoLink(e.target.value),
     placeholder: importVideoId(text) ? t('importVideoFound') : t('importVideoLink'),
     className: "flex-1 min-w-[12rem] p-1.5 bg-slate-800 border border-slate-600 rounded text-white"
-  }), videoId && React.createElement("button", {
-    type: "button",
-    onClick: () => setShowVideo(v => !v),
-    className: "px-3 py-1.5 rounded bg-red-700 hover:bg-red-600 text-white font-semibold"
-  }, React.createElement("i", {
-    className: `fas ${showVideo ? 'fa-eye-slash' : 'fa-play'} mr-1`
-  }), showVideo ? t('importHideVideo') : t('importWatch'))), deckCards.length > 0 && React.createElement("label", {
+  })), deckCards.length > 0 && React.createElement("label", {
     className: "flex items-start gap-2 text-xs text-slate-300 cursor-pointer"
   }, React.createElement("input", {
     type: "checkbox",
@@ -5147,35 +5301,43 @@ const ImportTextModal = ({
   }, res.warnings.map((w, i) => React.createElement(W, {
     key: i,
     w: w
-  }))), res.names.length > 0 && React.createElement("details", {
-    className: "rounded-lg border border-slate-700 bg-slate-800/40 p-2",
-    open: doubtful > 0
-  }, React.createElement("summary", {
-    className: "cursor-pointer text-sm font-semibold text-slate-200"
+  }))), baseNames.length > 0 && React.createElement("div", {
+    className: "rounded-lg border border-slate-700 bg-slate-800/40 p-2"
+  }, React.createElement("div", {
+    className: "flex flex-wrap items-center gap-2"
+  }, React.createElement("p", {
+    className: "flex-1 text-sm font-semibold text-slate-200"
   }, t('importNames', {
-    n: res.names.length
+    n: baseNames.length
   }), doubtful > 0 && React.createElement("span", {
     className: "text-amber-300"
   }, " \xB7 ", t('importNamesDoubt', {
     n: doubtful
-  }))), React.createElement("p", {
+  }))), React.createElement("button", {
+    type: "button",
+    onClick: undo,
+    disabled: !history.length,
+    className: "px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-xs text-white"
+  }, React.createElement("i", {
+    className: "fas fa-undo mr-1"
+  }), t('importUndo'), history.length > 0 && ` (${history.length})`)), React.createElement("p", {
     className: "text-xs text-slate-400 mt-1 mb-2"
   }, t('importNamesHelp')), React.createElement("div", {
     className: "space-y-1"
-  }, [...res.names].sort((a, b) => a.sure - b.sure || b.count - a.count).map(nm => {
-    const cur = picks[nm.key] !== undefined ? picks[nm.key] : nm.auto || '';
+  }, baseNames.map(nm => {
+    const chosen = picks[nm.key] !== undefined;
+    const cur = chosen ? picks[nm.key] : nm.auto || '';
     const opts = [...new Set([...(cur ? [cur] : []), ...nm.options])];
-    const doubt = !nm.sure && picks[nm.key] === undefined;
+    const wasDoubt = !nm.sure;
+    const tp = typing[nm.key];
     return React.createElement("div", {
       key: nm.key,
-      className: `flex flex-wrap items-center gap-2 text-xs rounded px-2 py-1 ${doubt ? 'bg-amber-900/25 border border-amber-500/50' : ''}`
+      className: `flex flex-wrap items-center gap-2 text-xs rounded px-2 py-1 ${wasDoubt ? chosen ? 'bg-emerald-900/20 border border-emerald-600/50' : 'bg-amber-900/25 border border-amber-500/50' : ''}`
     }, React.createElement("span", {
       className: "font-mono text-slate-200 min-w-[7rem]"
     }, "\xAB", nm.text, "\xBB", nm.count > 1 && React.createElement("span", {
       className: "text-slate-500"
-    }, " \xD7", nm.count)), React.createElement(TsBtn, {
-      ts: nm.ts
-    }), React.createElement("span", {
+    }, " \xD7", nm.count)), tsBtn(nm.ts), React.createElement("span", {
       className: "text-slate-500"
     }, "\u2192"), cardImg(cur) ? React.createElement("img", {
       src: cardImg(cur),
@@ -5185,34 +5347,52 @@ const ImportTextModal = ({
       loading: "lazy"
     }) : React.createElement("span", {
       className: "w-8 h-[2.9rem] rounded-sm border border-dashed border-slate-600 flex-none flex items-center justify-center text-slate-500"
-    }, "?"), typing[nm.key] !== undefined ? React.createElement("input", {
+    }, "?"), tp !== undefined ? React.createElement("div", {
+      className: "relative flex-1 min-w-[10rem]"
+    }, React.createElement("input", {
       autoFocus: true,
-      value: typing[nm.key],
-      onChange: e => setTyping(s => ({
-        ...s,
-        [nm.key]: e.target.value
-      })),
+      value: tp,
+      onChange: e => onType(nm.key, e.target.value),
       onKeyDown: e => {
-        if (e.key === 'Enter') typeName(nm.key, typing[nm.key]);
-        if (e.key === 'Escape') setTyping(s => ({
-          ...s,
-          [nm.key]: undefined
-        }));
+        if (e.key === 'Enter') typeName(nm.key, tp);
+        if (e.key === 'Escape') {
+          setTyping(s => ({
+            ...s,
+            [nm.key]: undefined
+          }));
+          setSug(s => ({
+            ...s,
+            [nm.key]: []
+          }));
+        }
       },
-      onBlur: () => typeName(nm.key, typing[nm.key]),
       placeholder: t('importTypeName'),
-      className: "flex-1 min-w-[10rem] p-1 bg-slate-900 border border-slate-600 rounded text-white"
-    }) : React.createElement("select", {
+      className: "w-full p-1 bg-slate-900 border border-violet-500 rounded text-white"
+    }), (sug[nm.key] || []).length > 0 && React.createElement("div", {
+      className: "absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded border border-slate-600 bg-slate-900 shadow-xl"
+    }, sug[nm.key].map(c => React.createElement("button", {
+      type: "button",
+      key: c.id || c.name,
+      onMouseDown: e => {
+        e.preventDefault();
+        choose(nm.key, c);
+      },
+      className: "w-full flex items-center gap-2 p-1.5 text-left hover:bg-slate-700"
+    }, React.createElement("img", {
+      src: importImg(c),
+      alt: "",
+      className: "w-7 rounded-sm",
+      loading: "lazy"
+    }), React.createElement("span", {
+      className: "text-slate-100"
+    }, c.name))))) : React.createElement("select", {
       value: cur,
       onChange: e => {
         const v = e.target.value;
         if (v === '@type') setTyping(s => ({
           ...s,
           [nm.key]: ''
-        }));else setPicks(p => ({
-          ...p,
-          [nm.key]: v
-        }));
+        }));else setPick(nm.key, v);
       },
       className: "flex-1 min-w-[10rem] max-w-full p-1 bg-slate-900 border border-slate-600 rounded text-white"
     }, opts.map(o => React.createElement("option", {
@@ -5222,18 +5402,15 @@ const ImportTextModal = ({
       value: ""
     }, t('importNotCard')), React.createElement("option", {
       value: "@type"
-    }, t('importTypeName'))), doubt && React.createElement("span", {
-      className: "text-amber-300 font-semibold"
-    }, nm.auto ? t('importGuess') : t('importNoMatch')), doubt && nm.options.length > 0 && React.createElement("div", {
+    }, t('importTypeName'))), wasDoubt && React.createElement("span", {
+      className: `font-semibold w-16 text-right ${chosen ? 'text-emerald-300' : 'text-amber-300'}`
+    }, chosen ? '✓ ' + t('importChosen') : nm.auto ? t('importGuess') : t('importNoMatch')), wasDoubt && nm.options.length > 0 && React.createElement("div", {
       className: "basis-full flex flex-wrap gap-1.5 pl-1 pt-1"
     }, nm.options.map(o => React.createElement("button", {
       type: "button",
       key: o,
       title: o,
-      onClick: () => setPicks(p => ({
-        ...p,
-        [nm.key]: o
-      })),
+      onClick: () => setPick(nm.key, o),
       className: `w-12 rounded-sm overflow-hidden border-2 ${o === cur ? 'border-violet-400' : 'border-transparent opacity-80 hover:opacity-100'}`
     }, cardImg(o) ? React.createElement("img", {
       src: cardImg(o),
@@ -5257,9 +5434,7 @@ const ImportTextModal = ({
     className: "opacity-70 text-xs"
   }, "(", stepsOf(h).length, ")")))), hand.title && React.createElement("p", {
     className: "text-xs text-violet-200 italic flex items-center gap-2"
-  }, React.createElement(TsBtn, {
-    ts: hand.ts
-  }), React.createElement("span", null, hand.title)), React.createElement("p", {
+  }, tsBtn(hand.ts), React.createElement("span", null, hand.title)), React.createElement("p", {
     className: "text-sm font-semibold text-slate-200"
   }, t('importPreview', {
     n: steps.length
@@ -5296,9 +5471,7 @@ const ImportTextModal = ({
     className: "font-semibold text-white"
   }, it.main ? nameOf(it.main) : '—'), it.targets.length > 0 && React.createElement("span", {
     className: "text-slate-300"
-  }, " \u2192 ", it.targets.map(nameOf).join(', '))), React.createElement(TsBtn, {
-    ts: it.ts
-  })), it.desc && React.createElement("div", {
+  }, " \u2192 ", it.targets.map(nameOf).join(', '))), tsBtn(it.ts)), it.desc && React.createElement("div", {
     className: "text-xs text-slate-400 mt-0.5"
   }, it.desc), it.branch && React.createElement("div", {
     className: "text-xs text-red-300 mt-0.5"
