@@ -1921,7 +1921,7 @@
 
         const IMPORT_STOP = new Set('the a an of and or to from in into on with for by if then when while it its this that your my their his her you we i is are be as at all any each both either one two three four five deck gy graveyard hand field zone zones extra main monster monsters spell spells trap traps card cards normal special summon summons summoned link xyz synchro fusion ritual pendulum set activate activates effect effects use uses search searches add adds send sends banish banishes discard discards draw draws detach attach tribute cost starter end endboard board chain cl step turn opponent opponents player emz mmz s/t st note notes optional otherwise instead also can may must once per target targets negate negates destroy destroys equip flip attack battle phase standby draw first second third last next level rank atk def'.split(' '));
         // palabras normales de los videos que no son cartas (para no buscarles parecido)
-        const IMPORT_FILLER = new Set('engrave random copiescopy more other ones itself just need needs couple sure under points make makes light dark fiend since using shuffling shuffle shuffled revive revives grave place places reveal choose again early during total version rest same exactly combo combos drew drawn skillfully drawing want also only even still both lot here there what where this these those them they going show start started already time times way some few let well now okay alright because remember make sure point pointing count counting music applause laughter thing things into onto back over around about after before since though through whole full play plays played get gets got give gives given took take takes using used than other another free disruptions disruption floodgate interruption interruptions omni hand traps materials material copies life points'.split(' '));
+        const IMPORT_FILLER = new Set('so engrave random copiescopy more other ones itself just need needs couple sure under points make makes light dark fiend since using shuffling shuffle shuffled revive revives grave place places reveal choose again early during total version rest same exactly combo combos drew drawn skillfully drawing want also only even still both lot here there what where this these those them they going show start started already time times way some few let well now okay alright because remember make sure point pointing count counting music applause laughter thing things into onto back over around about after before since though through whole full play plays played get gets got give gives given took take takes using used than other another free disruptions disruption floodgate interruption interruptions omni hand traps materials material copies life points'.split(' '));
         const importEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const importNorm = (s) => String(s || '').toLowerCase().replace(/['’]s\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
         const importLev = (a, b) => {
@@ -1941,10 +1941,11 @@
             const words = line.replace(/[«»"“”()|]/g, ' ').split(/\s+/).filter(Boolean);
             const runs = []; let cur = [];
             const flush = () => { while (cur.length && /^(the|of|and|&|in|with|from|to)$/i.test(cur[cur.length - 1])) cur.pop(); if (cur.length) runs.push(cur.join(' ')); cur = []; };
-            words.forEach(w0 => {
+            words.forEach((w0, wi) => {
                 const w = w0.replace(/['’]s$/i, '').replace(/[.,;:!?]+$/, '');
                 const bare = w.toLowerCase();
-                if (/^[A-Z0-9]/.test(w) && !/^\d+$/.test(w) && !IMPORT_STOP.has(bare) && !IMPORT_FILLER.has(bare) && !/^(you'll|i'll|we'll|it's|don't|let's)$/i.test(bare)) { cur.push(w); if (/[.,;:!?]$/.test(w0) || /['’]s$/i.test(w0)) flush(); }
+                const startsName = /^[A-Z]/.test(w) && /^of$/i.test(words[wi + 1] || '') && !/[.,;:!?]$/.test(w0); // «Card of the Soul», «Pot of Greed»
+                if (/^[A-Z0-9]/.test(w) && !/^\d+$/.test(w) && (startsName || (!IMPORT_STOP.has(bare) && !IMPORT_FILLER.has(bare) && !/^(you'll|i'll|we'll|it's|don't|let's)$/i.test(bare)))) { cur.push(w); if (/[.,;:!?]$/.test(w0) || /['’]s$/i.test(w0)) flush(); }
                 else if (cur.length && /^(the|of|&|in|with)$/i.test(w)) cur.push(w);
                 else flush();
             });
@@ -2015,7 +2016,7 @@
         // Busca en una frase palabras (o grupos de 2–4) que se parezcan a una clave del diccionario
         const importVocabMatch = (line, vocab, memo) => {
             const words = []; const re = /[A-Za-z0-9'’]+/g; let m;
-            while ((m = re.exec(line))) words.push({ w: importNorm(m[0]), at: m.index, end: m.index + m[0].length });
+            while ((m = re.exec(line))) { if (/['’](ll|re|ve|d|m|t)$/i.test(m[0])) { words.push({ w: '', at: m.index, end: m.index + m[0].length }); continue; } words.push({ w: importNorm(m[0]), at: m.index, end: m.index + m[0].length }); } // «I'll», «don't»: nunca son carta
             const look = (txt) => {
                 if (memo.has(txt)) return memo.get(txt);
                 const nt = txt.replace(/ /g, ''); const best = {};
@@ -2039,7 +2040,8 @@
                     if (txt.replace(/ /g, '').length < 3) continue;
                     const opts = look(txt);
                     if (!opts.length) continue;
-                    if (n === 1 && /^[a-z]/.test(line.slice(seg[0].at)) && opts[0].s < 0.7) continue; // palabra en minúscula: pido más parecido («changes» no es «Charmers»)
+                    if (n === 1 && /^[a-z]/.test(line.slice(seg[0].at)) && opts[0].s < 0.7) continue;
+                    if (n > 1 && opts[0].s < 0.75) continue; // varias palabras juntas: solo si se parecen bastante («So I'll» no es «Soul») // palabra en minúscula: pido más parecido («changes» no es «Charmers»)
                     const score = opts[0].s + n * 0.02;
                     if (!best || score > best.score) best = { at: seg[0].at, end: seg[n - 1].end, text: line.slice(seg[0].at, seg[n - 1].end), opts, score, n };
                     if (opts[0].s === 1) break;
@@ -2117,6 +2119,8 @@
             const exactRes = Object.keys(found).sort((a, b) => b.length - a.length).map(n => ({ n, re: new RegExp(`(^|[^a-z0-9])(${importEsc(n)})(?=[^a-z0-9]|$)`, 'ig') }));
             const note = (text, options, auto, sure, reg) => {
                 const key = importNorm(text);
+                const ex = (ctx.extraOpts || {})[key];
+                if (ex && ex.length) { options = [...new Set([...options, ...ex.map(x => x.name)])]; if (!auto && ex[0].s >= 0.7) auto = ex[0].name; }
                 if (reg) { let e = names.get(key); if (!e) { e = { key, text, options, auto, sure, count: 0, ts: curTs }; names.set(key, e); } e.count++; }
                 return picks[key] !== undefined ? picks[key] : auto;
             };
@@ -2169,6 +2173,14 @@
                 const pushStep = (target, st) => { (target || items).push(st); return st; };
                 // «it / itself» = la última carta de la que se habló (empieza con la del título de la mano)
                 let lastCard = hand.title ? (findCards(hand.title, false).hits[0] || {}).name || null : null;
+                // «you'll just need Hamon or Lightning Crash or Card of the Soul to search Hamon» → mano inicial (con «or» = manos alternas)
+                let starters = null;
+                if (hand.title && /\b(need|start(?:ing)? with|done with|open(?:ing)? with|using)\b/i.test(hand.title)) {
+                    curTs = hand.ts === undefined ? null : hand.ts;
+                    const part = hand.title.replace(/\b(to|and)\s+(search|add|get|send)\b.*$/i, '');
+                    const names0 = [...new Set(findCards(part, true).hits.map(h => h.name))];
+                    if (names0.length) starters = /\bor\b/i.test(part) ? names0.map(x => [x]) : [names0];
+                }
 
                 hand.lines.forEach((raw, li) => {
                     curTs = (hand.times || [])[li]; if (curTs === undefined) curTs = null;
@@ -2204,7 +2216,7 @@
                     if (key && seen[key] === undefined && (target || items).length > before) seen[key] = alt ? -1 : before;
                 });
                 closeAlt();
-                return { title: hand.title, ts: hand.ts, items, endboard: endboard && endboard.length ? endboard : null };
+                return { title: hand.title, ts: hand.ts, items, starters, endboard: endboard && endboard.length ? endboard : null };
 
                 function closeAlt() {
                     if (!alt) return;
@@ -2410,6 +2422,32 @@
                         const missing = [...new Set(importBuild(c, {}).names.flatMap(nm => nm.options))].filter(o => o && !c.found[o.toLowerCase()]);
                         if (missing.length) { const got = await importLookupExact(missing); Object.assign(c.found, got); setExtraTick(x => x + 1); }
                     } catch (e) {}
+                    // nombres sin ninguna coincidencia («Verudraas»): busco cartas que compartan pedacitos de 4 letras y me quedo con las más parecidas
+                    try {
+                        const unk = importBuild(c, {}).names.filter(nm => !nm.auto && importNorm(nm.text).replace(/ /g, '').length >= 5).slice(0, 15);
+                        if (unk.length) {
+                            const cache = {};
+                            const byGram = (g) => cache[g] || (cache[g] = fetch(`${YGOPRODECK_API_BASE_URL}?fname=${encodeURIComponent(g)}`).then(r => r.ok ? r.json() : {}).then(j => (j.data || []).slice(0, 400)).catch(() => []));
+                            c.extraOpts = {};
+                            await Promise.all(unk.map(async nm => {
+                                const w = importNorm(nm.text).replace(/ /g, '');
+                                const all = []; for (let i = 0; i + 4 <= w.length; i++) all.push(w.slice(i, i + 4));
+                                const gs = [...new Set(all.length <= 4 ? all : [all[0], all[Math.floor(all.length / 3)], all[Math.floor(2 * all.length / 3)], all[all.length - 1]])];
+                                const cards = (await Promise.all(gs.map(byGram))).flat();
+                                const best = {};
+                                cards.forEach(card => {
+                                    const ws = importNorm(card.name).split(' ');
+                                    const pieces = [...ws, ...ws.slice(1).map((x, i) => ws[i] + x)];
+                                    const sc = Math.max(...pieces.map(x => importSim(w, x)));
+                                    if (sc >= 0.6 && (!best[card.name] || best[card.name].s < sc)) best[card.name] = { name: card.name, s: sc, card };
+                                });
+                                const top = Object.values(best).sort((a, b) => b.s - a.s).slice(0, 4);
+                                top.forEach(x => { c.found[x.name.toLowerCase()] = x.card; });
+                                if (top.length) c.extraOpts[nm.key] = top.map(({ name, s }) => ({ name, s }));
+                            }));
+                            setCtx({ ...c });
+                        }
+                    } catch (e) {}
                 } catch (e) { console.error(e); setCtx({ error: true }); }
                 setBusy(false);
             };
@@ -2456,6 +2494,7 @@
             // cada mano entra como una sección con su título
             const asImport = (list) => ({
                 found: res.found,
+                starters: (list.find(({ h }) => h.starters) || {}).h ? list.find(({ h }) => h.starters).h.starters : null,
                 items: list.flatMap(({ h, i }) => [...(hands.length > 1 ? [{ kind: 'group', title: handLabel(i) + (h.title ? ' — ' + h.title : '') }] : []), ...h.items]),
                 endboard: list.some(({ h }) => h.endboard) ? list.filter(({ h }) => h.endboard).map(({ h, i }) => (hands.length > 1 ? handLabel(i) + ': ' : '') + h.endboard.join(' ')) : null,
             });
@@ -2566,6 +2605,7 @@
                                         </div>
                                     )}
                                     {hand.title && <p className="text-xs text-violet-200 italic flex items-center gap-2">{tsBtn(hand.ts)}<span>{hand.title}</span></p>}
+                                    {hand.starters && <div className="flex flex-wrap items-center gap-2 text-xs rounded-md border border-violet-700/60 bg-violet-900/20 p-2"><span className="font-semibold text-violet-200">{t('startingHandTitle')}:</span>{hand.starters.map((g, gi) => <React.Fragment key={gi}>{gi > 0 && <span className="text-violet-300 font-bold">{t('or')}</span>}{g.map(x => <span key={x} className="flex items-center gap-1">{cardImg(x) && <img src={cardImg(x)} alt="" className="w-6 rounded-sm" />}<span className="text-white">{x}</span></span>)}</React.Fragment>)}</div>}
                                     <p className="text-sm font-semibold text-slate-200">{t('importPreview', { n: steps.length })}{flagged > 0 && <span className="text-amber-300"> · {t('importFlagged', { n: flagged })}</span>}</p>
                                     <ol className="space-y-1.5">
                                         {hand.items.map((it, i) => it.kind === 'group'
@@ -4574,9 +4614,15 @@
                     ...(it.branch ? { branch: { title: it.branch.title || t('importAltLine'), steps: it.branch.steps.map(conv) } } : {}),
                 };
                 const newSteps = res.items.map(conv);
+                // mano inicial del texto («you'll need X or Y»): solo si todavía no hay una
+                let newHand = startingHand;
+                if (res.starters && !(startingHand || []).some(g => g && g.length)) {
+                    const groups = res.starters.map(g => g.map(idOf).filter(Boolean).map(instanceId => ({ instanceId, quantity: 1 }))).filter(g => g.length);
+                    if (groups.length) newHand = groups;
+                }
                 let newNotes = notes || '';
                 if (res.endboard) newNotes += (newNotes ? '<br><br>' : '') + `<b>${t('importEndboard')}:</b> ` + res.endboard.map(x => x.replace(/[<>&]/g, '')).join(' · ');
-                setComboState({ ...comboState, cardPool: pool, comboSteps: [...comboSteps, ...newSteps], notes: newNotes }, 'Imported text');
+                setComboState({ ...comboState, cardPool: pool, startingHand: newHand, comboSteps: [...comboSteps, ...newSteps], notes: newNotes }, 'Imported text');
                 setNotification({ show: true, message: t('importDone', { n: newSteps.filter(x => x.type === 'step').length, c: added }) });
             };
             const handleCopyText = async () => {
